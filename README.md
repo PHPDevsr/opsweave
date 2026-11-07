@@ -19,6 +19,9 @@ example in GOALS.md remains illustrative rather than a supported specification.
 - Network access to the Go module proxy and checksum database for initial
   dependency downloads.
 
+Editing Markdown also requires Node.js 24 or newer and npm. These tools are used
+only for documentation formatting; the Go binary does not need Node.js.
+
 The CLI uses `github.com/urfave/cli/v3` v3.14.0. Go Modules records the dependency
 version and checksums in `go.mod` and `go.sum`.
 
@@ -51,13 +54,13 @@ go run ./cmd/opsweave version
 
 ## CLI reference
 
-| Command | Behavior |
-| --- | --- |
-| `opsweave` | Show root help. |
-| `opsweave --help` | Show root help. |
-| `opsweave help version` | Show version command help. |
-| `opsweave version` | Print `opsweave version dev`. |
-| `opsweave version --json` | Print `{"version":"dev"}` followed by a newline. |
+| Command                       | Behavior                                                        |
+| ----------------------------- | --------------------------------------------------------------- |
+| `opsweave`                    | Show root help.                                                 |
+| `opsweave --help`             | Show root help.                                                 |
+| `opsweave help version`       | Show version command help.                                      |
+| `opsweave version`            | Print `opsweave version dev`.                                   |
+| `opsweave version --json`     | Print `{"version":"dev"}` followed by a newline.                |
 | `opsweave completion <shell>` | Print a completion script for `bash`, `zsh`, `fish`, or `pwsh`. |
 
 Successful commands return exit code `0`. Invalid commands, flags, extra
@@ -111,10 +114,29 @@ come later. Redis and RabbitMQ are not required infrastructure.
 
 See [CONTRIBUTING.md](CONTRIBUTING.md) for local checks and contribution rules.
 
-The `CI` workflow runs on pushes, pull requests, and manual dispatch. It checks
-formatting, module consistency, builds, vet, tests, CLI smoke tests, and race
-detection. Build, vet, and unit tests run on Linux and Windows with Go 1.27.3 and
-the latest stable Go release. Race detection runs on Linux with CGO enabled.
+The workflows run the checks relevant to changed files:
+
+| Workflow   | Push and pull request triggers                                                   | Checks                                                                                 |
+| ---------- | -------------------------------------------------------------------------------- | -------------------------------------------------------------------------------------- |
+| `CI`       | Go files, `go.mod`, `go.sum`, files under `testdata`, or the Go CI workflow      | Go format, build, vet, tests, module consistency, CLI smoke tests, and race detection. |
+| `Markdown` | Any `.md` file, formatter configuration, npm manifests, or the Markdown workflow | Markdown formatting with the locked Prettier version.                                  |
+
+Both workflows also support manual dispatch. Build, vet, and unit tests run on
+Linux and Windows with Go 1.27.3 and the latest stable Go release. Race detection
+runs on Linux with CGO enabled. External GitHub Actions use full commit SHA pins
+with release-tag comments. Dependabot checks Actions, Go Modules, and Markdown
+tooling dependencies weekly.
+
+Check or fix Markdown formatting locally:
+
+```sh
+npm ci --ignore-scripts
+npm run check:markdown
+npm run format:markdown
+```
+
+The CI check reports formatting differences without changing files. After a
+documentation-only change, the Go format and test workflow is not triggered.
 
 The separate `CodeQL` workflow analyzes Go on pushes and pull requests targeting
 `main`, manual dispatch, and Mondays at 03:00 UTC. It uses a manual Go build and

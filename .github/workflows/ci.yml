@@ -2,7 +2,19 @@ name: CI
 
 on:
   push:
+    paths:
+      - '**/*.go'
+      - go.mod
+      - go.sum
+      - '**/testdata/**'
+      - .github/workflows/ci.yml
   pull_request:
+    paths:
+      - '**/*.go'
+      - go.mod
+      - go.sum
+      - '**/testdata/**'
+      - .github/workflows/ci.yml
   workflow_dispatch:
 
 permissions:

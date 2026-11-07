@@ -53,6 +53,17 @@ Validate changes to GitHub Actions workflows with
 actionlint
 ```
 
+For Markdown changes, use Node.js 24 or newer and npm to install the locked
+formatter and check all `.md` files:
+
+```sh
+npm ci --ignore-scripts
+npm run check:markdown
+```
+
+Run `npm run format:markdown` to fix formatting before committing. Node.js and
+Prettier are documentation tools and are not required to build or run OpsWeave.
+
 ## Testing conventions
 
 Test observable behavior, invalid inputs, failures, and boundaries. Prefer
@@ -77,17 +88,26 @@ complete.
 ## CI and CodeQL
 
 The `CI` workflow contains format, cross-platform test, module consistency, and
-Linux race jobs. The `CodeQL` workflow performs Go security analysis and uploads
-results to GitHub Code Scanning. Both workflows have timeouts and cancel obsolete
-runs for the same branch or pull request. CI has read-only repository permissions;
-only the CodeQL analysis job receives `security-events: write`.
+Linux race jobs. Its push and pull request path filters cover `**/*.go`, `go.mod`,
+`go.sum`, `**/testdata/**`, and `.github/workflows/ci.yml`. Documentation-only
+changes do not trigger these Go checks.
+
+The separate `Markdown` workflow checks all `.md` files with Prettier. It triggers
+when Markdown files, formatter configuration, npm manifests, or its own workflow
+change. Both workflows can also be run manually.
+
+The `CodeQL` workflow performs Go security analysis and uploads results to GitHub
+Code Scanning. Its existing triggers are independent of the Go and Markdown
+format checks. All workflows have timeouts and cancel obsolete runs for the same
+branch or pull request. CI has read-only repository permissions; only the CodeQL
+analysis job receives `security-events: write`.
 
 Pin every external action to a full 40-character commit SHA and include its exact
 release tag in a trailing comment, for example `# v7.0.1`. Verify that the SHA
 belongs to the tagged release in the action's upstream repository before updating
 it. Keep CodeQL init and analyze pinned to the same release.
 
-Dependabot checks GitHub Actions and Go Modules weekly using
+Dependabot checks GitHub Actions, Go Modules, and npm Markdown tooling weekly using
 `.github/dependabot.yml`, with at most five open version-update pull requests per
 ecosystem. It targets the default branch (`main`) and starts version-update checks
 once this configuration is merged there. Review dependency updates and their CI
