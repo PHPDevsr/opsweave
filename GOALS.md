@@ -711,7 +711,7 @@ Distributed workers may be introduced later without requiring a complete archite
 
 - Language: Go.
 - HTTP: Go standard library `net/http` initially.
-- CLI: Cobra.
+- CLI: urfave/cli v3.
 - Configuration: Viper or a simpler alternative when sufficient.
 - Logging: `log/slog`.
 - Storage: SQLite and PostgreSQL.
