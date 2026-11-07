@@ -82,6 +82,17 @@ results to GitHub Code Scanning. Both workflows have timeouts and cancel obsolet
 runs for the same branch or pull request. CI has read-only repository permissions;
 only the CodeQL analysis job receives `security-events: write`.
 
+Pin every external action to a full 40-character commit SHA and include its exact
+release tag in a trailing comment, for example `# v7.0.1`. Verify that the SHA
+belongs to the tagged release in the action's upstream repository before updating
+it. Keep CodeQL init and analyze pinned to the same release.
+
+Dependabot checks GitHub Actions and Go Modules weekly using
+`.github/dependabot.yml`, with at most five open version-update pull requests per
+ecosystem. It targets the default branch (`main`) and starts version-update checks
+once this configuration is merged there. Review dependency updates and their CI
+results before merging; preserve action SHA pins and release comments.
+
 CodeQL uses advanced setup. A repository administrator must ensure code scanning
 is available and disable conflicting default setup. Verify the first workflow
 run and CodeQL upload after pushing. Local checks cannot establish that GitHub
