@@ -1,0 +1,11 @@
+/bin/
+/.cache/
+/node_modules/
+/coverage.out
+/coverage.html
+/opsweave
+/opsweave.exe
+/.env
+/.env.*
+!/.env.example
+/opsweave.local.yaml

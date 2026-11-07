@@ -245,29 +245,35 @@ Every action MUST define:
 Planned built-in actions:
 
 **HTTP**
+
 - `http.request`
 - `http.health_check`
 
 **Shell**
+
 - `shell.exec`
 
 **Docker**
+
 - `docker.start`
 - `docker.stop`
 - `docker.restart`
 - `docker.inspect`
 
 **File system**
+
 - `file.exists`
 - `file.cleanup`
 - `file.copy`
 
 **Database**
+
 - `database.query`
 - `database.backup`
 - `database.restore`
 
 **Notifications**
+
 - `notification.telegram`
 - `notification.slack`
 - `notification.email`
@@ -711,7 +717,7 @@ Distributed workers may be introduced later without requiring a complete archite
 
 - Language: Go.
 - HTTP: Go standard library `net/http` initially.
-- CLI: Cobra.
+- CLI: urfave/cli v3.
 - Configuration: Viper or a simpler alternative when sufficient.
 - Logging: `log/slog`.
 - Storage: SQLite and PostgreSQL.
@@ -834,18 +840,18 @@ Do not manually maintain separate version-specific source directories in the rep
 
 The roadmap describes intended delivery milestones. It does not imply that features are already implemented.
 
-| Release | Primary goals |
-|---|---|
-| v0.1.x | Workflow parser, validator, CLI, SQLite, manual execution, state machine |
-| v0.2.x | Scheduler, webhook, worker pool, retry, timeout, cancellation, recovery |
-| v0.3.x | HTTP, shell, Docker, file-system, and notification actions |
-| v0.4.x | REST API, authentication, secrets management |
-| v0.5.x | Observability, Prometheus, execution history improvements |
-| v0.6.x | Web dashboard and workflow management |
-| v0.7.x | PostgreSQL and distributed workers |
-| v0.8.x | Plugin SDK, external plugin protocol, integrations |
-| v0.9.x | Security hardening, performance, compatibility testing |
-| v1.0.0 | Stable production release |
+| Release | Primary goals                                                            |
+| ------- | ------------------------------------------------------------------------ |
+| v0.1.x  | Workflow parser, validator, CLI, SQLite, manual execution, state machine |
+| v0.2.x  | Scheduler, webhook, worker pool, retry, timeout, cancellation, recovery  |
+| v0.3.x  | HTTP, shell, Docker, file-system, and notification actions               |
+| v0.4.x  | REST API, authentication, secrets management                             |
+| v0.5.x  | Observability, Prometheus, execution history improvements                |
+| v0.6.x  | Web dashboard and workflow management                                    |
+| v0.7.x  | PostgreSQL and distributed workers                                       |
+| v0.8.x  | Plugin SDK, external plugin protocol, integrations                       |
+| v0.9.x  | Security hardening, performance, compatibility testing                   |
+| v1.0.0  | Stable production release                                                |
 
 A feature must only be marked completed after its acceptance criteria and required tests pass.
 

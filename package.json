@@ -1,0 +1,11 @@
+{
+  "name": "opsweave-docs-tooling",
+  "private": true,
+  "scripts": {
+    "check:markdown": "prettier --check \"**/*.md\"",
+    "format:markdown": "prettier --write \"**/*.md\""
+  },
+  "devDependencies": {
+    "prettier": "3.9.10"
+  }
+}

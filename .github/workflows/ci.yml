@@ -1,0 +1,128 @@
+name: CI
+
+on:
+  push:
+    paths:
+      - '**/*.go'
+      - go.mod
+      - go.sum
+      - '**/testdata/**'
+      - .github/workflows/ci.yml
+  pull_request:
+    paths:
+      - '**/*.go'
+      - go.mod
+      - go.sum
+      - '**/testdata/**'
+      - .github/workflows/ci.yml
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: ${{ github.workflow }}-${{ github.event.pull_request.number || github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  format:
+    name: Format
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          persist-credentials: false
+      - uses: actions/setup-go@b7ad1dad31e06c5925ef5d2fc7ad053ef454303e # v7.0.0
+        with:
+          go-version-file: go.mod
+          cache: true
+      - name: Check formatting
+        shell: bash
+        run: |
+          unformatted=$(gofmt -l .)
+          if [[ -n "$unformatted" ]]; then
+            printf 'Run gofmt on these files:\n%s\n' "$unformatted"
+            exit 1
+          fi
+
+  test:
+    name: Test (${{ matrix.os }}, Go ${{ matrix.go }})
+    runs-on: ${{ matrix.os }}
+    timeout-minutes: 15
+    strategy:
+      fail-fast: false
+      matrix:
+        os: [ubuntu-latest, windows-latest, macos-latest]
+        go: ['1.27.3', stable]
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          persist-credentials: false
+      - uses: actions/setup-go@b7ad1dad31e06c5925ef5d2fc7ad053ef454303e # v7.0.0
+        with:
+          go-version: ${{ matrix.go }}
+          cache: true
+      - name: Verify dependencies
+        run: go mod verify
+      - name: Build
+        run: go build ./...
+      - name: Vet
+        run: go vet ./...
+      - name: Test
+        run: go test -count=1 ./...
+      - name: CLI smoke test
+        shell: bash
+        run: |
+          go build -o bin/opsweave${{ runner.os == 'Windows' && '.exe' || '' }} ./cmd/opsweave
+          binary=./bin/opsweave${{ runner.os == 'Windows' && '.exe' || '' }}
+          "$binary" --help
+          [[ "$("$binary" version)" == 'opsweave version dev' ]]
+          [[ "$("$binary" version --json)" == '{"version":"dev"}' ]]
+          for shell in bash zsh fish pwsh; do
+            "$binary" completion "$shell" > "$RUNNER_TEMP/opsweave-completion-$shell"
+            test -s "$RUNNER_TEMP/opsweave-completion-$shell"
+          done
+          if "$binary" unknown > "$RUNNER_TEMP/opsweave-stdout" 2> "$RUNNER_TEMP/opsweave-stderr"; then
+            exit 1
+          else
+            status=$?
+          fi
+          [[ "$status" -eq 1 ]]
+          test ! -s "$RUNNER_TEMP/opsweave-stdout"
+          [[ "$(wc -l < "$RUNNER_TEMP/opsweave-stderr")" -eq 1 ]]
+          grep -q '^Error: ' "$RUNNER_TEMP/opsweave-stderr"
+
+  modules:
+    name: Module consistency
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          persist-credentials: false
+      - uses: actions/setup-go@b7ad1dad31e06c5925ef5d2fc7ad053ef454303e # v7.0.0
+        with:
+          go-version-file: go.mod
+          cache: true
+      - name: Check module files
+        run: |
+          go mod tidy
+          git diff --exit-code -- go.mod go.sum
+
+  race:
+    name: Race
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    env:
+      CGO_ENABLED: '1'
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          persist-credentials: false
+      - uses: actions/setup-go@b7ad1dad31e06c5925ef5d2fc7ad053ef454303e # v7.0.0
+        with:
+          go-version-file: go.mod
+          cache: true
+      - name: Race test
+        run: go test -race -count=1 ./...
