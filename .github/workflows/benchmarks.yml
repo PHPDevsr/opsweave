@@ -53,7 +53,7 @@ jobs:
           go test -run '^$' -bench '^Benchmark' -benchmem -benchtime=200ms -count=3 -cpu=1 \
             ./internal/workflow ./internal/registry ./internal/storage/sqlite ./internal/execution ./internal/engine \
             | tee benchmark-results.txt
-          for family in Parse ValidateCondition EvaluateCondition Prepare SQLiteApply SQLiteGet SQLiteList SQLiteMigrate Transition ManualExecution ExecutionHistory ReliablePolicy ReliableHistory; do
+          for family in Parse ValidateCondition EvaluateCondition Prepare SQLiteApply SQLiteGet SQLiteList SQLiteMigrate Transition ManualExecution ExecutionHistory ReliablePolicy ReliableHistory DispatcherClaim DispatcherThroughput; do
             grep -q "^Benchmark${family}" benchmark-results.txt
           done
       - name: Upload benchmark results

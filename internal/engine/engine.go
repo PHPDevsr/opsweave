@@ -183,7 +183,10 @@ func stepOutcome(execErr, stepErr, actionErr error, oversized bool) (execution.S
 }
 
 func safeRepositoryError(err error) error {
-	for _, safe := range []error{execution.ErrConflict, execution.ErrNotFound, execution.ErrLimit, execution.ErrInvalid, execution.ErrReference, execution.ErrUncertain, registry.ErrNotFound, registry.ErrArchived, context.Canceled, context.DeadlineExceeded} {
+	if err == nil {
+		return nil
+	}
+	for _, safe := range []error{execution.ErrBusy, execution.ErrQueueFull, execution.ErrUnmanaged, execution.ErrConflict, execution.ErrNotFound, execution.ErrLimit, execution.ErrInvalid, execution.ErrReference, execution.ErrUncertain, registry.ErrNotFound, registry.ErrArchived, context.Canceled, context.DeadlineExceeded} {
 		if errors.Is(err, safe) {
 			return safe
 		}

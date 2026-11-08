@@ -82,7 +82,7 @@ func foundationCommands(out, diagnostics io.Writer, catalog registry.Catalog) []
 				if err != nil {
 					return err
 				}
-				candidates, err := registry.PrepareReliable(ctx, sources, catalog)
+				candidates, err := registry.PrepareDispatcher(ctx, sources, catalog)
 				if err != nil {
 					return err
 				}

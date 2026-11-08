@@ -1,6 +1,6 @@
 # Phase 03 bounded single-node dispatcher proposal
 
-Status: `AWAITING_CONTRACT_REVIEW`, 2026-11-08 (Asia/Jakarta). Phase 03 and the
+Status: `ACCEPTED_FOR_IMPLEMENTATION`, 2026-11-08 (Asia/Jakarta). The user accepted all three decisions with "ACCEPT". Phase 03 and the
 [reliable execution contract](reliable-execution.md) are approved. This is the
 next contract required to activate parallel capacity and restart recovery; it
 does not re-request phase authorization or finalize a listener/trigger API.

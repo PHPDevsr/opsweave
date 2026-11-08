@@ -297,14 +297,14 @@ func versionTwoFixture(t *testing.T, s *Store) {
 		t.Fatal(err)
 	}
 	statements := []string{
-		"DROP TABLE execution_admissions", "DROP TABLE execution_attempts", "DROP TABLE execution_policies",
+		"DROP TABLE dispatcher_audit", "DROP TABLE execution_queue", "DROP TABLE dispatcher", "DROP TABLE execution_admissions", "DROP TABLE execution_attempts", "DROP TABLE execution_policies",
 		"DROP TRIGGER execution_events_no_update", "DROP TRIGGER execution_events_no_delete",
 		"ALTER TABLE execution_events RENAME TO fixture_events",
 		`CREATE TABLE execution_events(execution_id TEXT NOT NULL REFERENCES executions(id),sequence INTEGER NOT NULL CHECK(sequence>0 AND sequence<=1024),body TEXT NOT NULL,PRIMARY KEY(execution_id,sequence))`,
 		"INSERT INTO execution_events SELECT * FROM fixture_events", "DROP TABLE fixture_events",
 		`CREATE TRIGGER execution_events_no_update BEFORE UPDATE ON execution_events BEGIN SELECT RAISE(ABORT,'execution events are immutable'); END`,
 		`CREATE TRIGGER execution_events_no_delete BEFORE DELETE ON execution_events BEGIN SELECT RAISE(ABORT,'execution events are immutable'); END`,
-		"DELETE FROM schema_migrations WHERE version=3",
+		"DELETE FROM schema_migrations WHERE version>=3",
 	}
 	for _, statement := range statements {
 		if _, err := tx.ExecContext(t.Context(), statement); err != nil {

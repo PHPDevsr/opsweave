@@ -35,6 +35,13 @@ func (s *Store) Submit(ctx context.Context, expected registry.Record, owner stri
 		return result, err
 	}
 	defer rollback(tx, &err)
+	var generation int64
+	if err = tx.QueryRowContext(ctx, "SELECT generation FROM dispatcher WHERE singleton=1").Scan(&generation); err != nil {
+		return result, err
+	}
+	if generation > 0 {
+		return result, execution.ErrConflict
+	}
 	current, err := get(ctx, tx, expected.Name, "")
 	if err != nil {
 		return result, err

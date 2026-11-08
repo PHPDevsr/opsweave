@@ -3,7 +3,7 @@
 OpsWeave measures the parser, expression validator, registry preflight, single-node
 SQLite repository and Phase 02 manual execution/history. Execution uses only
 deterministic in-process action doubles. These measurements do not represent real
-integrations, the future scheduler or worker pool. No product optimization or
+integrations or the future scheduler. No product optimization or
 dependency change is included in this measurement baseline.
 
 ## Running locally
@@ -64,10 +64,15 @@ OS/filesystem latency, not just SQL statement execution time.
 
 Phase 03 adds condition evaluation, a deterministic retry-policy lifecycle and
 format-2 attempt-history/log reads (`EvaluateCondition`, `ReliablePolicy` and
-`ReliableHistory`). These test completed core behavior, not the pending global
-dispatcher/recovery implementation. `ManualExecution` now measures the production
+`ReliableHistory`). The dispatcher adds `DispatcherClaim` and
+`DispatcherThroughput/Workers1,Workers4`: an atomic durable claim, and full
+admission-to-completion of eight independent no-op steps using a bounded pool.
+Native ownership/setup and claim-fixture admission/settlement are excluded from
+the claim timer; throughput includes admission, policy persistence and polling.
+Both workloads cap each database at 128 histories and reset only isolated files
+outside timing. They do not measure real external-action speedup. `ManualExecution` now measures the production
 format-2 serial coordinator, including durable attempt boundaries and owned control
-polling. Migration measurements include migration 003. These workloads differ from
+polling. Migration measurements now include migration 004. These workloads differ from
 earlier Phase 02 reports; compare like code/toolchains and retain commit attribution.
 
 Phase 02 adds `BenchmarkTransition`, which validates and advances an independent
@@ -79,12 +84,12 @@ not external network/process latency. It caps each temporary database at 128 run
 resets only its owned file outside timing, and excludes setup/migration costs.
 History reads use fixed data prepared before timing. Every case checks outcomes
 and fails on errors. That Phase 02 baseline included additive migration 002; current measurements also
-include migration 003 and must not be treated as identical migration workloads.
+include migration 004 and must not be treated as identical migration workloads.
 
 The `Benchmarks` workflow runs on relevant pull requests, matching pushes to
 `main`, and manual dispatch. A Linux job uses the declared Go version, one logical
 CPU setting (`-cpu=1`), three samples and 200 ms target measurement windows. It
-verifies that all thirteen benchmark families appeared. Benchmark errors or missing
+verifies that all fifteen benchmark families appeared. Benchmark errors or missing
 families fail the job; shell pipe failures cannot be hidden by `tee`.
 
 Each run uploads `benchmark-results.txt` plus `benchmark-environment.txt` with

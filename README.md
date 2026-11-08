@@ -14,7 +14,7 @@ alongside help, version information, JSON output and shell completion. See the
 The production action catalog is empty: real workflow registration requires later
 action implementations. The [manual execution engine and history CLI](docs/execution.md)
 are implemented with test-only action injection; production execution still needs
-those future integrations. The server and automatic triggers remain planned.
+those future integrations. The [single-node dispatcher server](docs/dispatcher.md) drains explicitly queued work; automatic triggers remain planned.
 The GOALS.md example remains illustrative.
 
 Phase 01 and both [workflow](harness/designs/workflow-v1.md) and
@@ -23,7 +23,7 @@ are approved. Phases 01 and 02 are accepted and merged. Phase 03 is authorized;
 its first [reliable execution contract](harness/designs/reliable-execution.md) is
 accepted, and the [serial reliability core](docs/reliability.md) adds conditional
 DAG execution, retry/deadline policies, cancellation and exact-revision replay.
-Bounded dispatcher ownership, parallelism and automatic recovery remain gated. Later phases remain unapproved
+The accepted [dispatcher](docs/dispatcher.md) adds bounded workers, parallel steps, durable queued claims and conservative recovery. Later phases remain unapproved
 except the scoped release packaging extension. See [PLANS.md](PLANS.md) for current status.
 
 ## Requirements

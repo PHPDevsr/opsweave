@@ -115,6 +115,15 @@ func AdmissionFor(key string, record registry.Record, parent string, ack bool) (
 // NewReliable builds a format-2 snapshot without invoking actions. Execution ownership
 // and action catalog validation are prerequisites for executing the resulting work.
 func NewReliable(ctx context.Context, id string, record registry.Record, now time.Time) (Snapshot, error) {
+	return newReliable(ctx, id, record, now, false)
+}
+
+// NewDispatcher creates bounded parallel policy without admitting or claiming work.
+func NewDispatcher(ctx context.Context, id string, record registry.Record, now time.Time) (Snapshot, error) {
+	return newReliable(ctx, id, record, now, true)
+}
+
+func newReliable(ctx context.Context, id string, record registry.Record, now time.Time, managed bool) (Snapshot, error) {
 	now = now.UTC()
 	if !ValidID(id) || !ValidID(record.Revision) {
 		return Snapshot{}, ErrInvalid
@@ -123,7 +132,7 @@ func NewReliable(ctx context.Context, id string, record registry.Record, now tim
 	if err != nil {
 		return Snapshot{}, err
 	}
-	if definition.Metadata.Name != record.Name || definition.Spec.Concurrency != 1 || definition.Spec.Parallelism != 1 {
+	if definition.Metadata.Name != record.Name || (!managed && (definition.Spec.Concurrency != 1 || definition.Spec.Parallelism != 1)) {
 		return Snapshot{}, ErrInvalid
 	}
 	normalized, err := registry.Normalize(definition)
@@ -142,6 +151,10 @@ func NewReliable(ctx context.Context, id string, record registry.Record, now tim
 		return Snapshot{}, context.DeadlineExceeded
 	}
 	result := Snapshot{ID: id, Workflow: record.Name, Revision: record.Revision, State: Running, Format: 2, CreatedAt: now, UpdatedAt: now, Deadline: &deadline, Definition: append(json.RawMessage(nil), record.Definition...), Steps: []Step{}}
+	result.Managed = managed
+	if managed {
+		result.Parallelism = definition.Spec.Parallelism
+	}
 	steps := map[string]workflow.Step{}
 	for _, step := range definition.Spec.Steps {
 		steps[step.ID] = step
@@ -300,8 +313,19 @@ func ApplyReliable(s *Snapshot, m ReliableMutation, now time.Time) ([]Event, err
 				step.FinishedAt = stamp(now)
 				break
 			}
+			activeCount := 0
+			limit := 1
+			if next.Managed {
+				limit = next.Parallelism
+				if limit < 1 || limit > 256 {
+					return nil, ErrInvalid
+				}
+			}
 			for _, active := range next.Steps {
 				if active.State == Running {
+					activeCount++
+				}
+				if activeCount >= limit {
 					return nil, ErrInvalid
 				}
 			}

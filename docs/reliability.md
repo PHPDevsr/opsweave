@@ -6,18 +6,19 @@ references, bounded retry/backoff, execution/step deadlines, durable cancellatio
 requests, seven-day admission deduplication and whole-workflow replay. New runs
 use execution format 2 with separate durable attempt history.
 
-Parallelism and workflow concurrency still require a value of one. Global workers,
-durable queued claims, automatic restart recovery, scheduler, triggers and network
-listeners are not enabled by this unit. Their reviewed prerequisites must be
-implemented before exposure. The production action catalog remains empty until
-Phase 04; deterministic handlers are test-only and cannot be enabled by CLI flags.
+The production CLI now uses the accepted [single-node dispatcher](dispatcher.md)
+for bounded parallelism, queued claims and conservative restart recovery. This
+page describes the underlying policy core; the dispatcher guide supplies current
+commands, configuration and ownership/migration procedures. Scheduler, triggers
+and network listeners remain unavailable. The production action catalog is still
+empty until Phase 04; deterministic handlers are test-only.
 
 ## Definition and execution policies
 
 Use the [reviewed workflow syntax](workflow-parsing.md). The existing `if`, `needs`,
 `retry`, `timeout` and output-reference fields now pass reliable CLI preflight with
 a compatible action catalog. Planning and apply still reject unavailable actions,
-secret references, unsupported concurrency/parallelism and trigger definitions.
+secret references, trigger definitions.
 No new expression grammar or arbitrary environment/code evaluation is added.
 
 Readiness follows stable topological order, with authored order for ties. An
@@ -106,13 +107,12 @@ they are safe. Inspect source history before choosing it.
 
 ## Restart, schema and operations
 
-This core can audit/classify recovery evidence but does not automatically reclaim
-old running work. After a crash or ambiguous storage failure, an active row remains
-visible and blocks a new unowned invocation. Do not edit rows to bypass that guard.
-The [dispatcher ownership proposal](../harness/designs/single-node-dispatcher.md)
-must be accepted and implemented before automatic recovery can run. Unfinished
-actions are uncertain; completed failed attempts in backoff have different evidence.
-No action is silently repeated by classification or receipt lookup.
+The original serial coordinator remains a compatibility path. Production CLI
+execution uses the [dispatcher](dispatcher.md), whose server can recover managed
+running work after acquiring native ownership and advancing its durable generation.
+Unmanaged active work requires explicit adoption after every old executor stops.
+Unfinished invocations are uncertain and never automatically replayed. Receipt
+lookup does not itself invoke work.
 
 Migration 003 adds policy/attempt/admission storage and transactionally rebuilds
 the event table without altering migrations 001/002 or old terminal snapshots.
@@ -125,8 +125,8 @@ Stop processes and back up the database/configuration before upgrading, includin
 when upgrading only for this core. Older binaries reject a newer schema. Rollback
 requires restoring the pre-upgrade backup with its compatible binary; there is no
 in-place history down migration. SQLite remains single-node, without broker,
-distributed lease or PostgreSQL claims. Configuration and minimum Go version are
-unchanged by this unit.
+distributed lease or PostgreSQL claims. The dispatcher adds optional execution configuration and migration 004 without
+changing the minimum Go version.
 
 See [core implementation review](../harness/reviews/phase-03-core.md) and the
 [build log](../harness/build-log.md) for actual verification. Source-level core

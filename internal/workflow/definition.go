@@ -106,6 +106,16 @@ func (d *Definition) SerialReliability() error {
 	return nil
 }
 
+// DispatcherCapabilities allows bounded reviewed concurrency and serial policies.
+func (d *Definition) DispatcherCapabilities() error {
+	for i, step := range d.Spec.Steps {
+		if hasSecretReference(step.Inputs) {
+			return &ValidationError{Code: "unsupported_capability", Path: fmt.Sprintf("spec.steps[%d].with", i)}
+		}
+	}
+	return nil
+}
+
 func hasSecretReference(value any) bool {
 	switch v := value.(type) {
 	case Reference:

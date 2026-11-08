@@ -15,7 +15,7 @@ import (
 )
 
 func executionCommands(out, diagnostics io.Writer, runtime *action.Runtime) []*urfave.Command {
-	run := &urfave.Command{Name: "run", Usage: "Execute the current workflow revision synchronously", OnUsageError: usageError, ArgValidator: exactArguments(1), Flags: []urfave.Flag{jsonFlag(), &urfave.StringFlag{Name: "idempotency-key", Usage: "Deduplicate admission for seven days"}}, Action: func(ctx context.Context, cmd *urfave.Command) error {
+	run := &urfave.Command{Name: "run", Usage: "Execute the current workflow revision synchronously", OnUsageError: usageError, ArgValidator: exactArguments(1), Flags: []urfave.Flag{jsonFlag(), &urfave.BoolFlag{Name: "enqueue", Usage: "Return durable queued admission without running work"}, &urfave.StringFlag{Name: "idempotency-key", Usage: "Deduplicate admission for seven days"}}, Action: func(ctx context.Context, cmd *urfave.Command) error {
 		if cmd.IsSet("idempotency-key") && cmd.String("idempotency-key") == "" {
 			return execution.ErrInvalid
 		}
@@ -23,17 +23,7 @@ func executionCommands(out, diagnostics io.Writer, runtime *action.Runtime) []*u
 		if err != nil {
 			return err
 		}
-		return withStore(ctx, cfg.StoragePath, func(store *sqlite.Store) error {
-			snap, runErr := (engine.Engine{Workflows: store, Executions: store, Reliable: store, Actions: runtime}).RunReliable(ctx, cmd.Args().First(), engine.RunOptions{IdempotencyKey: cmd.String("idempotency-key")})
-			if snap.ID != "" {
-				snap.Steps = nil
-				snap.Definition = nil
-				if err := writeExecution(out, cmd.Bool("json"), snap); err != nil {
-					return err
-				}
-			}
-			return executionDiagnostic(runErr)
-		})
+		return managedRun(ctx, cfg, runtime, out, cmd.Bool("json"), cmd.Args().First(), engine.RunOptions{IdempotencyKey: cmd.String("idempotency-key")}, cmd.Bool("enqueue"))
 	}}
 	group := &urfave.Command{Name: "execution", Usage: "Inspect and manage durable executions", OnUsageError: usageError, ArgValidator: noArguments}
 	for _, verb := range []string{"list", "get", "logs"} {
@@ -73,7 +63,7 @@ func executionCommands(out, diagnostics io.Writer, runtime *action.Runtime) []*u
 		if verb == "cancel" {
 			flags = append(flags, &urfave.StringFlag{Name: "step", Usage: "Cancel one step only"})
 		} else {
-			flags = append(flags, &urfave.BoolFlag{Name: "ack-uncertain", Usage: "Acknowledge possible repeated external effects"}, &urfave.StringFlag{Name: "idempotency-key", Usage: "Deduplicate admission for seven days"})
+			flags = append(flags, &urfave.BoolFlag{Name: "enqueue", Usage: "Return durable queued replay admission"}, &urfave.BoolFlag{Name: "ack-uncertain", Usage: "Acknowledge possible repeated external effects"}, &urfave.StringFlag{Name: "idempotency-key", Usage: "Deduplicate admission for seven days"})
 		}
 		group.Commands = append(group.Commands, &urfave.Command{Name: verb, Usage: verb + " an execution", OnUsageError: usageError, ArgValidator: exactArguments(1), Flags: flags, Action: func(ctx context.Context, cmd *urfave.Command) error {
 			id := cmd.Args().First()
@@ -83,6 +73,9 @@ func executionCommands(out, diagnostics io.Writer, runtime *action.Runtime) []*u
 			cfg, err := loadConfig(ctx, cmd, diagnostics)
 			if err != nil {
 				return err
+			}
+			if verb == "retry" {
+				return managedRun(ctx, cfg, runtime, out, cmd.Bool("json"), "", engine.RunOptions{Parent: id, IdempotencyKey: cmd.String("idempotency-key"), AcknowledgedUncertain: cmd.Bool("ack-uncertain")}, cmd.Bool("enqueue"))
 			}
 			return withStore(ctx, cfg.StoragePath, func(store *sqlite.Store) error {
 				if verb == "cancel" {
@@ -96,15 +89,7 @@ func executionCommands(out, diagnostics io.Writer, runtime *action.Runtime) []*u
 					}
 					return writeCancellation(out, cmd.Bool("json"), status, snap, cmd.String("step"))
 				}
-				snap, runErr := (engine.Engine{Workflows: store, Executions: store, Reliable: store, Actions: runtime}).Retry(ctx, id, engine.RunOptions{IdempotencyKey: cmd.String("idempotency-key"), AcknowledgedUncertain: cmd.Bool("ack-uncertain")})
-				if snap.ID != "" {
-					snap.Steps = nil
-					snap.Definition = nil
-					if err := writeExecution(out, cmd.Bool("json"), snap); err != nil {
-						return err
-					}
-				}
-				return executionDiagnostic(runErr)
+				return execution.ErrInvalid
 			})
 		}})
 	}
@@ -143,7 +128,7 @@ func executionDiagnostic(err error) error {
 	if err == nil {
 		return nil
 	}
-	for _, safe := range []error{execution.ErrInvalid, execution.ErrConflict, execution.ErrNotFound, execution.ErrLimit, execution.ErrAction, execution.ErrPermission, execution.ErrUnavailable, execution.ErrOutput, execution.ErrReference, execution.ErrUncertain, context.Canceled, context.DeadlineExceeded} {
+	for _, safe := range []error{execution.ErrInvalid, execution.ErrConflict, execution.ErrNotFound, execution.ErrLimit, execution.ErrAction, execution.ErrPermission, execution.ErrUnavailable, execution.ErrOutput, execution.ErrReference, execution.ErrUncertain, execution.ErrBusy, execution.ErrQueueFull, execution.ErrUnmanaged, context.Canceled, context.DeadlineExceeded} {
 		if errors.Is(err, safe) {
 			return safe
 		}

@@ -49,6 +49,9 @@ func Terminal(s State) bool {
 
 // Safe error categories distinguish durable storage failures from action outcomes.
 var (
+	ErrBusy        = errors.New("dispatcher is busy")
+	ErrQueueFull   = errors.New("execution queue is full")
+	ErrUnmanaged   = errors.New("unmanaged active executions require explicit adoption after stopping old executors")
 	ErrInvalid     = errors.New("invalid execution request or transition")
 	ErrConflict    = errors.New("execution ownership, revision or active-run conflict")
 	ErrNotFound    = errors.New("execution not found")
@@ -103,6 +106,9 @@ type Snapshot struct {
 	UpdatedAt             time.Time       `json:"updatedAt"`
 	Steps                 []Step          `json:"steps,omitempty"`
 	Definition            json.RawMessage `json:"definition,omitempty,omitzero"`
+	UncertainEffects      bool            `json:"uncertainEffects,omitempty"`
+	Managed               bool            `json:"managed,omitempty"`
+	Parallelism           int             `json:"parallelism,omitempty"`
 	Format                int             `json:"format,omitempty,omitzero"`
 	Deadline              *time.Time      `json:"deadline,omitempty"`
 	Parent                string          `json:"parent,omitempty"`

@@ -10,6 +10,7 @@ import (
 
 	"github.com/PHPDevsr/opsweave/internal/execution"
 	"github.com/PHPDevsr/opsweave/internal/registry"
+	"github.com/PHPDevsr/opsweave/internal/workflow"
 )
 
 var _ execution.ReliableRepository = (*Store)(nil)
@@ -17,6 +18,10 @@ var _ execution.ReliableRepository = (*Store)(nil)
 // CreateReliable persists format-2 serial policy and admission atomically.
 // It does not claim queued work or take over another execution's ownership.
 func (s *Store) CreateReliable(ctx context.Context, expected registry.Record, options execution.AdmissionOptions) (result execution.AdmissionResult, err error) {
+	return s.admitReliable(ctx, expected, options, nil)
+}
+
+func (s *Store) admitReliable(ctx context.Context, expected registry.Record, options execution.AdmissionOptions, queue *execution.Capacity) (result execution.AdmissionResult, err error) {
 	if !execution.ValidID(options.Owner) || !execution.ValidID(expected.Revision) || (options.Parent != "" && !execution.ValidID(options.Parent)) {
 		return result, execution.ErrInvalid
 	}
@@ -29,6 +34,15 @@ func (s *Store) CreateReliable(ctx context.Context, expected registry.Record, op
 		return result, err
 	}
 	defer rollback(tx, &err)
+	if queue == nil {
+		var generation int64
+		if err = tx.QueryRowContext(ctx, "SELECT generation FROM dispatcher WHERE singleton=1").Scan(&generation); err != nil {
+			return result, err
+		}
+		if generation > 0 {
+			return result, execution.ErrConflict
+		}
+	}
 	current, err := get(ctx, tx, expected.Name, "")
 	if err != nil {
 		return result, err
@@ -54,7 +68,7 @@ func (s *Store) CreateReliable(ctx context.Context, expected registry.Record, op
 		if parent.Workflow != actual.Name || parent.Revision != actual.Revision || (parent.State != execution.Failed && parent.State != execution.Cancelled && parent.State != execution.TimedOut) {
 			return result, execution.ErrInvalid
 		}
-		uncertain := false
+		uncertain := parent.UncertainEffects
 		for _, step := range parent.Steps {
 			uncertain = uncertain || step.Reason == "uncertain_effect"
 		}
@@ -99,16 +113,34 @@ func (s *Store) CreateReliable(ctx context.Context, expected registry.Record, op
 	if err := tx.QueryRowContext(ctx, "SELECT count(*) FROM executions WHERE workflow_name=? AND state IN ('pending','queued','running')", actual.Name).Scan(&active); err != nil {
 		return result, err
 	}
-	if active != 0 {
+	if queue == nil && active != 0 {
 		return result, execution.ErrConflict
+	}
+	if queue != nil {
+		var count int
+		if err = tx.QueryRowContext(ctx, "SELECT count(*) FROM executions WHERE state='queued'").Scan(&count); err != nil {
+			return result, err
+		}
+		if count >= queue.QueuedExecutions {
+			return result, execution.ErrQueueFull
+		}
 	}
 	id, err := opaqueID()
 	if err != nil {
 		return result, err
 	}
-	snap, err := execution.NewReliable(ctx, id, actual, now)
+	var snap execution.Snapshot
+	if queue == nil {
+		snap, err = execution.NewReliable(ctx, id, actual, now)
+	} else {
+		snap, err = execution.NewDispatcher(ctx, id, actual, now)
+	}
 	if err != nil {
 		return result, err
+	}
+	if queue != nil {
+		snap.State = execution.Queued
+		snap.Deadline = nil
 	}
 	snap.Parent = options.Parent
 	snap.AcknowledgedUncertain = options.AcknowledgedUncertain
@@ -135,7 +167,18 @@ func (s *Store) CreateReliable(ctx context.Context, expected registry.Record, op
 			return result, err
 		}
 	}
-	for _, state := range []execution.State{execution.Pending, execution.Queued, execution.Running} {
+	states := []execution.State{execution.Pending, execution.Queued, execution.Running}
+	if queue != nil {
+		states = states[:2]
+		d, parseErr := workflow.Parse(ctx, actual.Source)
+		if parseErr != nil {
+			return result, parseErr
+		}
+		if _, err = tx.ExecContext(ctx, "INSERT INTO execution_queue VALUES(?,?,?,?,?,0)", id, now.Format(time.RFC3339Nano), now.Add(queue.QueueTimeout).Format(time.RFC3339Nano), int64(d.Spec.Timeout), d.Spec.Concurrency); err != nil {
+			return result, err
+		}
+	}
+	for _, state := range states {
 		if err := appendEvent(ctx, tx, execution.Event{Time: now, Execution: id, Code: "execution_state", State: state}); err != nil {
 			return result, err
 		}
@@ -160,10 +203,14 @@ func stepBody(step execution.Step) (string, error) {
 
 // ChangeReliable commits attempt/state/event changes under the same expected owner/version.
 func (s *Store) ChangeReliable(ctx context.Context, m execution.ReliableMutation) (result execution.Snapshot, err error) {
-	return s.changeReliable(ctx, m, time.Now)
+	return s.changeFenced(ctx, m, time.Now, nil)
 }
 
-func (s *Store) changeReliable(ctx context.Context, m execution.ReliableMutation, clock func() time.Time) (result execution.Snapshot, err error) {
+func (s *Store) changeReliable(ctx context.Context, m execution.ReliableMutation, clock func() time.Time) (execution.Snapshot, error) {
+	return s.changeFenced(ctx, m, clock, nil)
+}
+
+func (s *Store) changeFenced(ctx context.Context, m execution.ReliableMutation, clock func() time.Time, fence *execution.Fence) (result execution.Snapshot, err error) {
 	if !execution.ValidID(m.ID) || !execution.ValidID(m.Owner) {
 		return result, execution.ErrInvalid
 	}
@@ -185,6 +232,16 @@ func (s *Store) changeReliable(ctx context.Context, m execution.ReliableMutation
 	result, err = readExecution(ctx, tx, m.ID)
 	if err != nil {
 		return result, err
+	}
+	if result.Managed {
+		if fence == nil {
+			return result, execution.ErrConflict
+		}
+		if err = checkFence(ctx, tx, *fence, result.ID); err != nil {
+			return result, err
+		}
+	} else if fence != nil {
+		return result, execution.ErrConflict
 	}
 	previous := result
 	events, err := execution.ApplyReliable(&result, m, clock().UTC())
@@ -214,7 +271,7 @@ func saveReliable(ctx context.Context, tx *sql.Tx, snap execution.Snapshot, expe
 	if err != nil {
 		return err
 	}
-	update, err := tx.ExecContext(ctx, "UPDATE executions SET body=?,state=?,version=? WHERE id=? AND owner=? AND version=? AND state='running'", body, snap.State, snap.Version, snap.ID, owner, expectedVersion)
+	update, err := tx.ExecContext(ctx, "UPDATE executions SET body=?,state=?,version=? WHERE id=? AND owner=? AND version=? AND state IN ('queued','running')", body, snap.State, snap.Version, snap.ID, owner, expectedVersion)
 	if err != nil {
 		return err
 	}
@@ -340,12 +397,15 @@ func readReliable(ctx context.Context, q executionQuerier, snap *execution.Snaps
 	if err := q.QueryRowContext(ctx, "SELECT format,event_limit,parent_id,acknowledged_uncertain FROM execution_policies WHERE execution_id=?", snap.ID).Scan(&format, &limit, &parent, &ack); err != nil {
 		return err
 	}
-	if format != 2 || limit != 16384 || parent.String != snap.Parent || ack != snap.AcknowledgedUncertain || snap.Deadline == nil {
+	if format != 2 || limit != 16384 || parent.String != snap.Parent || ack != snap.AcknowledgedUncertain || (snap.Deadline == nil && !(snap.Managed && (snap.State == execution.Queued || execution.Terminal(snap.State)))) {
+		return execution.ErrInvalid
+	}
+	if snap.Managed && (snap.Parallelism < 1 || snap.Parallelism > 256) {
 		return execution.ErrInvalid
 	}
 	index := map[string]int{}
 	for i, step := range snap.Steps {
-		if step.Policy == nil {
+		if step.Policy == nil || (step.State == execution.Running && step.Deadline == nil) {
 			return execution.ErrInvalid
 		}
 		index[step.ID] = i

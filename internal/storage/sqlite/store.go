@@ -179,6 +179,8 @@ func (s *Store) Apply(ctx context.Context, candidates []registry.Candidate) (res
 		policyErr := d.Phase01()
 		if len(c.Capabilities) == 1 && c.Capabilities[0] == "serial_reliability" {
 			policyErr = d.SerialReliability()
+		} else if len(c.Capabilities) == 1 && c.Capabilities[0] == "dispatcher" {
+			policyErr = d.DispatcherCapabilities()
 		} else if len(c.Capabilities) > 0 {
 			return nil, errors.New("unsupported registry capability")
 		}

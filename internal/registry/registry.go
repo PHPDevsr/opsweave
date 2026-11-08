@@ -79,15 +79,20 @@ var (
 
 // Prepare validates a complete batch without any storage or external side effects.
 func Prepare(ctx context.Context, sources []Source, catalog Catalog) ([]Candidate, error) {
-	return prepare(ctx, sources, catalog, false)
+	return prepare(ctx, sources, catalog, 0)
 }
 
 // PrepareReliable validates the reviewed serial reliability capability set.
 func PrepareReliable(ctx context.Context, sources []Source, catalog Catalog) ([]Candidate, error) {
-	return prepare(ctx, sources, catalog, true)
+	return prepare(ctx, sources, catalog, 1)
 }
 
-func prepare(ctx context.Context, sources []Source, catalog Catalog, reliable bool) ([]Candidate, error) {
+// PrepareDispatcher validates bounded worker capabilities without authorizing an action invocation.
+func PrepareDispatcher(ctx context.Context, sources []Source, catalog Catalog) ([]Candidate, error) {
+	return prepare(ctx, sources, catalog, 2)
+}
+
+func prepare(ctx context.Context, sources []Source, catalog Catalog, capability int) ([]Candidate, error) {
 	if len(sources) == 0 || len(sources) > 256 {
 		return nil, errors.New("batch must contain 1 to 256 workflows")
 	}
@@ -112,8 +117,11 @@ func prepare(ctx context.Context, sources []Source, catalog Catalog, reliable bo
 			return nil, err
 		}
 		capabilityErr := d.Phase01()
-		if reliable {
+		if capability > 0 {
 			capabilityErr = d.SerialReliability()
+			if capability == 2 {
+				capabilityErr = d.DispatcherCapabilities()
+			}
 		}
 		if capabilityErr != nil {
 			return nil, capabilityErr
@@ -123,8 +131,11 @@ func prepare(ctx context.Context, sources []Source, catalog Catalog, reliable bo
 			return nil, fmt.Errorf("normalize workflow: %w", err)
 		}
 		result = append(result, Candidate{Name: d.Metadata.Name, Source: d.Source(), Normalized: normalized, Bindings: bindings, Order: append([]string(nil), d.Order...), Capabilities: []string{}})
-		if reliable {
+		if capability > 0 {
 			result[len(result)-1].Capabilities = []string{"serial_reliability"}
+			if capability == 2 {
+				result[len(result)-1].Capabilities = []string{"dispatcher"}
+			}
 		}
 	}
 	return result, ctx.Err()
