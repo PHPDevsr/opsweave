@@ -34,7 +34,7 @@ Owned IDs: `G-0-001`, `G-1-001`, `G-1-002`, `G-1-003`, `G-1-004`, `G-1-005`, `G-
 
 ## Verification and review checklist
 
-Reconcile every GOALS item/prose constraint/command/release row with the ledger; check unique IDs, valid owners and acyclic prerequisites; resolve local document links. Run `npm run check:markdown` and `git diff --check`. Record baseline Go checks and limitations without claiming product acceptance.
+Reconcile every GOALS item/prose constraint/command/release row with the ledger; check unique IDs, valid owners and acyclic prerequisites; resolve local document links. Run `bun fmt --check "**/*.md"` and `git diff --check`. Record baseline Go checks and limitations without claiming product acceptance.
 
 - [ ] Every owned row has exact test/review and documentation evidence attached; shared policy obligations audited.
 - [ ] All applicable checks passed; unavailable checks remain explicit open gates.

@@ -60,16 +60,18 @@ Validate changes to GitHub Actions workflows with
 actionlint
 ```
 
-For Markdown changes, use Node.js 24 or newer and npm to install the locked
-formatter and check all `.md` files:
+For Markdown changes, use the Bun version pinned in `.bun-version` (1.4.4) and
+its built-in formatter to check all `.md` files:
 
 ```sh
-npm ci --ignore-scripts
-npm run check:markdown
+bun --version
+bun fmt --check "**/*.md"
 ```
 
-Run `npm run format:markdown` to fix formatting before committing. Node.js and
-Prettier are documentation tools and are not required to build or run OpsWeave.
+Run `bun fmt "**/*.md"` to fix Markdown formatting before committing. No dependency
+installation is needed. Bun reads the existing `.prettierrc.json` and
+`.prettierignore` natively to preserve style; Go formatting still uses `gofmt`.
+The OpsWeave binary does not require Bun or Node.js.
 
 ## Testing conventions
 
@@ -105,9 +107,9 @@ Linux race jobs. Its push and pull request path filters cover `**/*.go`, `go.mod
 `go.sum`, `**/testdata/**`, `**/migrations/**`, and `.github/workflows/ci.yml`. Documentation-only
 changes do not trigger these Go checks.
 
-The separate `Markdown` workflow checks all `.md` files with Prettier. It triggers
-when Markdown files, formatter configuration, npm manifests, or its own workflow
-change. Both workflows can also be run manually.
+The separate `Markdown` workflow installs the pinned Bun version and runs
+`bun fmt --check "**/*.md"`. It triggers when Markdown files, formatter rules,
+`.bun-version`, or its own workflow change. Both workflows can also run manually.
 
 The `CodeQL` workflow performs Go security analysis and uploads results to GitHub
 Code Scanning. Its existing triggers are independent of the Go and Markdown
@@ -120,11 +122,13 @@ release tag in a trailing comment, for example `# v7.0.1`. Verify that the SHA
 belongs to the tagged release in the action's upstream repository before updating
 it. Keep CodeQL init and analyze pinned to the same release.
 
-Dependabot checks GitHub Actions, Go Modules, and npm Markdown tooling weekly using
+Dependabot checks GitHub Actions and Go Modules weekly using
 `.github/dependabot.yml`, with at most five open version-update pull requests per
 ecosystem. It targets the default branch (`main`) and starts version-update checks
 once this configuration is merged there. Review dependency updates and their CI
-results before merging; preserve action SHA pins and release comments.
+results before merging; preserve action SHA pins and release comments. Review
+Bun runtime updates through `.bun-version` and verify native formatter output
+before changing that pin.
 
 CodeQL uses advanced setup. A repository administrator must ensure code scanning
 is available and disable conflicting default setup. Verify the first workflow

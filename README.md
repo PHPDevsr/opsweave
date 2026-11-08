@@ -27,8 +27,8 @@ later phases remain unapproved. See [PLANS.md](PLANS.md) for current status.
 - Network access to the Go module proxy and checksum database for initial
   dependency downloads.
 
-Editing Markdown also requires Node.js 24 or newer and npm. These tools are used
-only for documentation formatting; the Go binary does not need Node.js.
+Editing Markdown uses Bun 1.4.4, pinned in `.bun-version`, with the built-in
+`bun fmt` formatter. The Go binary does not require Bun or Node.js.
 
 The CLI uses `github.com/urfave/cli/v3` v3.14.0. Go Modules records the dependency
 version and checksums in `go.mod` and `go.sum`.
@@ -142,23 +142,25 @@ The workflows run the checks relevant to changed files:
 | ------------ | ------------------------------------------------------------------------------------------- | -------------------------------------------------------------------------------------- |
 | `CI`         | Go files, `go.mod`, `go.sum`, files under `testdata` or `migrations`, or the Go CI workflow | Go format, build, vet, tests, module consistency, CLI smoke tests, and race detection. |
 | `Benchmarks` | Changes under `internal`, module files, or benchmark workflow; PRs and pushes to `main`     | Parser/expression/preflight/SQLite timing, allocations and environment artifacts.      |
-| `Markdown`   | Any `.md` file, formatter configuration, npm manifests, or the Markdown workflow            | Markdown formatting with the locked Prettier version.                                  |
+| `Markdown`   | Any `.md` file, formatter configuration, `.bun-version`, or the Markdown workflow           | Native `bun fmt --check` with the pinned Bun version.                                  |
 
-Both workflows also support manual dispatch. Build, vet, and unit tests run on
+All three workflows above support manual dispatch. Build, vet, and unit tests run on
 Linux and Windows with Go 1.27.3 and the latest stable Go release. Race detection
 runs on Linux with CGO enabled. External GitHub Actions use full commit SHA pins
-with release-tag comments. Dependabot checks Actions, Go Modules, and Markdown
-tooling dependencies weekly.
+with release-tag comments. Dependabot checks Actions and Go Modules weekly. Bun version updates are reviewed
+through `.bun-version`.
 
 Check or fix Markdown formatting locally:
 
 ```sh
-npm ci --ignore-scripts
-npm run check:markdown
-npm run format:markdown
+bun --version
+bun fmt --check "**/*.md"
+bun fmt "**/*.md"
 ```
 
-The CI check reports formatting differences without changing files. After a
+Use the version in `.bun-version`; no package installation is needed. The existing
+`.prettierrc.json` and `.prettierignore` retain the formatting/ignore rules and are
+read natively by Bun. The CI check reports differences without changing files. After a
 documentation-only change, the Go format and test workflow is not triggered.
 
 The separate `CodeQL` workflow analyzes Go on pushes and pull requests targeting
