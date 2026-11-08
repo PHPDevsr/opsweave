@@ -215,7 +215,7 @@ func TestConcurrentApplyAndCancellation(t *testing.T) {
 func TestMigrationFailurePreservesState(t *testing.T) {
 	for _, mutation := range []string{
 		"UPDATE schema_migrations SET checksum='incorrect'",
-		"UPDATE schema_migrations SET version=99",
+		"UPDATE schema_migrations SET version=99 WHERE version=1",
 	} {
 		t.Run(mutation, func(t *testing.T) {
 			path := filepath.Join(t.TempDir(), "db.sqlite")

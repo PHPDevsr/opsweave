@@ -1,6 +1,8 @@
 # Phase 02 — Durable manual execution
 
-Milestone: v0.1.x. Requirement status: `PLANNED`. Review state: NOT_APPROVED.
+Milestone: v0.1.x. Requirement status: `IMPLEMENTED` (all 68 owned rows; local checks passed, CI/phase acceptance pending). Review state: APPROVED_FOR_IMPLEMENTATION, including the execution/action contract (user reply "ACCEPT", 2026-11-08, Asia/Jakarta).
+
+Authorization: on 2026-11-08 (Asia/Jakarta), the user confirmed merging PR #3 and requested "git fetch origin & rebase origin/main. Next phase". Phase 01 user acceptance and Phase 02 authorization are recorded independently from the unresolved CodeQL configuration check. The user subsequently accepted all four [manual execution contract](../designs/manual-execution.md) decisions with "ACCEPT". Implementation is described in the [execution guide](../../docs/execution.md) and [self-review](../reviews/phase-02.md); Phases 03–10 remain unapproved.
 
 ## Goal, ownership and prerequisites
 

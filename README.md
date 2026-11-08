@@ -12,13 +12,16 @@ planning, a revision registry, single-node SQLite and workflow administration CL
 alongside help, version information, JSON output and shell completion. See the
 [foundation guide](docs/foundation.md) and [workflow parsing](docs/workflow-parsing.md).
 The production action catalog is empty: real workflow registration requires later
-action implementations. Workflow execution, the server and automatic triggers
-remain planned. The GOALS.md example remains illustrative.
+action implementations. The [manual execution engine and history CLI](docs/execution.md)
+are implemented with test-only action injection; production execution still needs
+those future integrations. The server and automatic triggers remain planned.
+The GOALS.md example remains illustrative.
 
 Phase 01 and both [workflow](harness/designs/workflow-v1.md) and
 [storage/configuration/CLI](harness/designs/foundation-storage-cli.md) contracts
-are approved. Phase acceptance depends on the documented verification evidence;
-later phases remain unapproved. See [PLANS.md](PLANS.md) for current status.
+are approved. Phase 01 is merged; Phase 02 and its [manual execution contract](harness/designs/manual-execution.md)
+are approved for implementation. Phase acceptance depends on verification and
+review; Phases 03–10 remain unapproved. See [PLANS.md](PLANS.md) for current status.
 
 ## Requirements
 

@@ -321,6 +321,12 @@ func actionSegment(value string) bool {
 	return identifier(strings.ReplaceAll(value, "_", "-"))
 }
 
+// ValidActionID reports whether an action identifier follows the reviewed two-segment grammar.
+func ValidActionID(value string) bool {
+	parts := strings.Split(value, ".")
+	return len(parts) == 2 && actionSegment(parts[0]) && actionSegment(parts[1])
+}
+
 func parseRetry(n *yaml.Node, path string) (Retry, error) {
 	r := Retry{1, time.Second, time.Minute}
 	if n == nil {
