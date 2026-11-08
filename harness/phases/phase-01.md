@@ -43,3 +43,13 @@ Run `gofmt -l .`, `go vet ./...`, `go test -count=1 ./...`, `go test -race -coun
 - [ ] Security, compatibility and migration implications reviewed; source changes scoped.
 - [ ] Append commands, exit codes, evidence, limitations and next steps to [build log](../build-log.md).
 - [ ] Present results and obtain user acceptance before advancing. Do not treat code presence or this checklist as acceptance evidence.
+
+## Foundation performance measurements
+
+The user requested benchmarks and their CI before any next phase. See the
+[benchmark guide](../../docs/benchmarks.md): seven families/17 cases cover parsing,
+condition syntax, registry preflight and SQLite apply/get/list/migrations. The
+`Benchmarks` workflow publishes three timing/allocation samples and environment
+metadata for each relevant PR/main run. Fixtures are isolated and bounded; SQLite
+production durability settings remain active. No engine/scheduler/worker benchmark
+is claimed before those components exist. The CodeQL owner gate remains open.

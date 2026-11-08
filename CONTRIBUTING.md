@@ -73,6 +73,12 @@ Prettier are documentation tools and are not required to build or run OpsWeave.
 
 ## Testing conventions
 
+Run the [foundation benchmarks](docs/benchmarks.md) before performance changes.
+The dedicated `Benchmarks` workflow captures timing/allocation results and runtime
+metadata as downloadable artifacts. Keep durability/security settings unchanged
+and compare repeated samples on comparable machines; benchmark errors fail CI,
+while timing values establish an initial measurement baseline.
+
 Test observable behavior, invalid inputs, failures, and boundaries. Prefer
 deterministic, table-driven tests and standard-library assertions. Use temporary
 directories, isolated resources, context deadlines, and cleanup functions. Use

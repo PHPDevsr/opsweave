@@ -132,12 +132,17 @@ come later. Redis and RabbitMQ are not required infrastructure.
 
 See [CONTRIBUTING.md](CONTRIBUTING.md) for local checks and contribution rules.
 
+See [foundation benchmarks](docs/benchmarks.md) for parser, preflight and SQLite
+measurements. The dedicated `Benchmarks` workflow runs them for pull requests and
+`main`, and uploads allocation/timing reports with environment metadata.
+
 The workflows run the checks relevant to changed files:
 
-| Workflow   | Push and pull request triggers                                                              | Checks                                                                                 |
-| ---------- | ------------------------------------------------------------------------------------------- | -------------------------------------------------------------------------------------- |
-| `CI`       | Go files, `go.mod`, `go.sum`, files under `testdata` or `migrations`, or the Go CI workflow | Go format, build, vet, tests, module consistency, CLI smoke tests, and race detection. |
-| `Markdown` | Any `.md` file, formatter configuration, npm manifests, or the Markdown workflow            | Markdown formatting with the locked Prettier version.                                  |
+| Workflow     | Push and pull request triggers                                                              | Checks                                                                                 |
+| ------------ | ------------------------------------------------------------------------------------------- | -------------------------------------------------------------------------------------- |
+| `CI`         | Go files, `go.mod`, `go.sum`, files under `testdata` or `migrations`, or the Go CI workflow | Go format, build, vet, tests, module consistency, CLI smoke tests, and race detection. |
+| `Benchmarks` | Changes under `internal`, module files, or benchmark workflow; PRs and pushes to `main`     | Parser/expression/preflight/SQLite timing, allocations and environment artifacts.      |
+| `Markdown`   | Any `.md` file, formatter configuration, npm manifests, or the Markdown workflow            | Markdown formatting with the locked Prettier version.                                  |
 
 Both workflows also support manual dispatch. Build, vet, and unit tests run on
 Linux and Windows with Go 1.27.3 and the latest stable Go release. Race detection

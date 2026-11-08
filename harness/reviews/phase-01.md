@@ -86,3 +86,17 @@ heavy unit/coverage/race/fuzz runs exceeded SQLite's configured busy timeout;
 sequential unit, coverage and race commands passed without relaxing timeouts or
 assertions. These results do not promise that every contended write must succeed
 beyond the documented five-second timeout.
+
+## Benchmark extension review
+
+Added the user-requested [foundation benchmarks](../../docs/benchmarks.md) without
+product changes. Parser/preflight fixtures are generated before timing; Go
+`b.Loop` retains measured results without shared mutable sinks. SQLite write
+fixtures close/reset only their own temporary file, cap each history at 128 total
+revisions and measure migrations separately. Production synchronous FULL and
+foreign-key settings stay enabled. Errors/incomplete results fail benchmarks, and
+a forced nine-iteration Batch16 run exercises the reset boundary. CI uses read-only
+repository permissions, pinned actions, pipe failure propagation and explicit
+benchmark family checks. Only timing/allocation and selected environment reports
+are uploaded; no database or secret-bearing files are included. Hosted-runner
+numbers are observations, without an arbitrary absolute timing threshold.
