@@ -1,0 +1,3 @@
+# Default owner for all repository files, including this CODEOWNERS file.
+# Changes require owner approval when enforced by branch protection or rulesets.
+* @ddevsr
