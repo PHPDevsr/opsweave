@@ -7,10 +7,12 @@ automated verification, not an independent reviewer or a remote CI result.
 
 ## Result
 
-Implementation is prepared for phase review. No known functional defect remains
-from this review. Two security acceptance tests need Linux or a Windows process
-permitted to create symlinks. They skipped in both local sandboxed and unsandboxed
-Windows runs, so Phase 01 is not marked completed. Phases 02–10 remain unapproved.
+Implementation is prepared in [draft PR #3](https://github.com/PHPDevsr/opsweave/pull/3)
+targeting `main`. Remote CI/Markdown passed on `f10f596`, including both explicit
+Linux symlink tests, all six OS/Go matrix jobs and the race job. CodeQL result
+upload is blocked by missing repository Advanced Security enablement. Phase 01
+remains incomplete pending that owner decision and phase review; phases 02–10
+remain unapproved.
 
 ## Reviewed behavior and evidence
 
@@ -56,22 +58,23 @@ Windows runs, so Phase 01 is not marked completed. Phases 02–10 remain unappro
   state and reports failure. Debug output uses structured logging, includes command
   context only, and propagates short/failed writes before storage access.
 - Existing CLI behavior and tests were retained. Added migration path filters
-  ensure SQL-only changes trigger Go CI. `actionlint` passed; remote CI execution
-  has not occurred for this worktree. No minimum Go version increase, extra runtime
+  ensure SQL-only changes trigger Go CI. `actionlint` passed; remote CI on `f10f596` passed across Linux/Windows/macOS,
+  minimum/stable Go, modules, formatting and race testing. No minimum Go version increase, extra runtime
   service, release tag, deployment or historical documentation rewrite occurred.
 
 ## Open acceptance gate
 
-`TestInitRefusesSymlinkAndConfigDirectory` and
-`TestReadSourcesRejectsSymlinks` cannot create their isolated symlinks because
-Windows returns a privilege error. Source guards remain enforced; tests are not
-removed or weakened. An existing Linux environment was sought: no Docker command
-was available and WSL listed no installed distribution. Do not change Windows
-security settings or claim the skipped branches ran.
+The Windows symlink limitation is resolved by actual Linux evidence in
+[CI run 42437553488](https://github.com/PHPDevsr/opsweave/actions/runs/42437553488).
+The explicit Linux step logged `--- PASS` for both
+`TestInitRefusesSymlinkAndConfigDirectory` and `TestReadSourcesRejectsSymlinks`.
+Only Windows may skip setup failures; Linux/macOS fail if symlink creation fails.
 
-The existing Linux CI suite can execute these tests after the reviewed changes
-are committed and published to a branch/PR. The user has now explicitly authorized that commit/publication and a PR targeting
-`main`. Phase 02 still requires its separate approval after phase review.
+[CodeQL run 42437553495](https://github.com/PHPDevsr/opsweave/actions/runs/42437553495)
+failed result upload with the repository configuration error that Advanced
+Security must be enabled. No upload enforcement, failure handling or security
+setting was weakened. An owner decision is required; the PR stays draft and phase
+02 still needs separate approval after phase review.
 
 ## Verification notes
 

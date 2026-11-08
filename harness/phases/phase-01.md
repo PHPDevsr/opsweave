@@ -1,8 +1,8 @@
 # Phase 01 — Workflow foundation
 
-Milestone: v0.1.x. Requirement status: `IMPLEMENTED` with security acceptance still open; the two broad security rows remain `IN_PROGRESS`. Review state: APPROVED (2026-11-08, Asia/Jakarta; user reply "Ya, ACCEPT"). Phase completion: AWAITING_LINUX_VERIFICATION.
+Milestone: v0.1.x. Requirement status: `IMPLEMENTED` with CodeQL configuration/phase acceptance still open; all 70 owned rows are `IMPLEMENTED`, none `COMPLETED`. Review state: APPROVED (2026-11-08, Asia/Jakarta; user reply "Ya, ACCEPT"). Phase completion: AWAITING_CODE_SCANNING.
 
-Both [workflow](../designs/workflow-v1.md) and [foundation](../designs/foundation-storage-cli.md) contracts were accepted in separate "setuju" replies. All four ordered implementation tasks are prepared with tests, [documentation](../../docs/foundation.md) and [self-review](../reviews/phase-01.md). Sequential unit/integration, coverage, unsandboxed race and bounded fuzz checks passed. `TestInitRefusesSymlinkAndConfigDirectory` and `TestReadSourcesRejectsSymlinks` skipped for Windows privileges, so no owned requirement is marked completed. Linux/CI verification and user phase acceptance remain open; phase 02 is not authorized.
+Both [workflow](../designs/workflow-v1.md) and [foundation](../designs/foundation-storage-cli.md) contracts were accepted in separate "setuju" replies. All four ordered implementation tasks are prepared with tests, [documentation](../../docs/foundation.md) and [self-review](../reviews/phase-01.md). Sequential unit/integration, coverage, unsandboxed race and bounded fuzz checks passed. Both symlink security tests passed in the explicit Linux CI step on `f10f596`, alongside all six OS/Go matrix jobs and race testing. [PR #3](https://github.com/PHPDevsr/opsweave/pull/3) targets `main`; CodeQL upload remains blocked by repository Advanced Security configuration. No owned requirement is completed until quality gates/phase review close; phase 02 is not authorized.
 
 ## Goal, ownership and prerequisites
 

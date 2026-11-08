@@ -2,7 +2,7 @@
 
 Assessment date: 2026-11-08 (Asia/Jakarta). Baseline commit: `59c5b3f02a155f5979698bfde53c944063222be5`.
 
-Harness state: `PHASE_01_AWAITING_LINUX_VERIFICATION`. On 2026-11-08 (Asia/Jakarta), the user accepted phase 00 and authorized phase 01 ("Ya, ACCEPT"), then accepted the [workflow contract](harness/designs/workflow-v1.md) and the five [foundation contract](harness/designs/foundation-storage-cli.md) decisions (separate "setuju" replies). Phase 01 implementation, documentation and [self-review](harness/reviews/phase-01.md) are prepared. Local unit/integration, race, fuzz and dependency checks passed; two symlink security tests skipped for Windows privilege limitations and require supported Linux/CI evidence before completion. Phases 02–10 remain unapproved. This is a documentation workflow, not an executable autonomous runner.
+Harness state: `PHASE_01_AWAITING_CODE_SCANNING`. On 2026-11-08 (Asia/Jakarta), the user accepted phase 00 and authorized phase 01 ("Ya, ACCEPT"), then accepted the [workflow contract](harness/designs/workflow-v1.md) and the five [foundation contract](harness/designs/foundation-storage-cli.md) decisions (separate "setuju" replies). Phase 01 implementation, documentation and [self-review](harness/reviews/phase-01.md) are prepared. Local checks and remote cross-platform CI/Markdown passed on `f10f596`; both symlink security tests passed explicitly on Linux. CodeQL result upload is blocked because GitHub Advanced Security is not enabled for the repository, requiring an owner decision before phase acceptance. Phases 02–10 remain unapproved. This is a documentation workflow, not an executable autonomous runner.
 
 ## Repository assessment
 
@@ -52,6 +52,6 @@ Important dependencies apply before exposure: phase 01 reviews the full DSL cont
 
 ## Review and next action
 
-Both phase 01 contracts are accepted and implemented. Read the [foundation guide](docs/foundation.md), [self-review](harness/reviews/phase-01.md) and build-log evidence. The earlier race-toolchain gate is resolved by a verified portable compiler and passing unsandboxed race run. Obtain Linux evidence for the two skipped symlink tests, then complete phase acceptance before phase 02. The user has authorized committing and publishing this worktree on `codex/phase-01-foundation` with a PR targeting `main`; Linux CI and phase review remain pending. Phase 02 remains unapproved.
+Both phase 01 contracts are accepted and implemented. Read the [foundation guide](docs/foundation.md), [self-review](harness/reviews/phase-01.md) and build-log evidence. The earlier race-toolchain gate is resolved by a verified portable compiler and passing unsandboxed race run. The branch is published in [draft PR #3](https://github.com/PHPDevsr/opsweave/pull/3) targeting `main`; Linux verification passed. Resolve the repository CodeQL configuration gate and complete phase review before phase 02. Phase 02 remains unapproved.
 
-See [harness operating instructions](harness/README.md) for resumption, status rules and log requirements. No runtime dependency, executable runner, background process, scheduled automation or public SDK is added here.
+See [harness operating instructions](harness/README.md) for resumption, status rules and log requirements. The harness itself remains documentation; no executable runner, background process, scheduled automation or public SDK is installed.
