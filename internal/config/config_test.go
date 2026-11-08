@@ -5,6 +5,7 @@ import (
 	"errors"
 	"os"
 	"path/filepath"
+	"runtime"
 	"strings"
 	"testing"
 
@@ -95,7 +96,10 @@ func TestInitRefusesSymlinkAndConfigDirectory(t *testing.T) {
 	}
 	link := filepath.Join(dir, "link.yaml")
 	if err := os.Symlink(target, link); err != nil {
-		t.Skipf("OS does not permit test symlink creation: %v", err)
+		if runtime.GOOS == "windows" {
+			t.Skipf("Windows does not permit test symlink creation: %v", err)
+		}
+		t.Fatalf("create test symlink: %v", err)
 	}
 	if err := Init(t.Context(), link); err == nil {
 		t.Fatal("init overwrote a symlink")

@@ -6,6 +6,7 @@ import (
 	"os"
 	"path/filepath"
 	"reflect"
+	"runtime"
 	"strings"
 	"testing"
 	"time"
@@ -187,7 +188,10 @@ func TestReadSourcesRejectsSymlinks(t *testing.T) {
 	}
 	link := filepath.Join(dir, "link.yaml")
 	if err := os.Symlink(target, link); err != nil {
-		t.Skipf("OS does not permit test symlink creation: %v", err)
+		if runtime.GOOS == "windows" {
+			t.Skipf("Windows does not permit test symlink creation: %v", err)
+		}
+		t.Fatalf("create test symlink: %v", err)
 	}
 	for _, path := range []string{link, dir} {
 		if _, err := ReadSources(t.Context(), path); err == nil {
