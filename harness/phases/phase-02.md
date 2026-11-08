@@ -1,8 +1,8 @@
 # Phase 02 — Durable manual execution
 
-Milestone: v0.1.x. Requirement status: `IMPLEMENTED` (all 68 owned rows; local checks passed, CI/phase acceptance pending). Review state: APPROVED_FOR_IMPLEMENTATION, including the execution/action contract (user reply "ACCEPT", 2026-11-08, Asia/Jakarta).
+Milestone: v0.1.x. Requirement status: `IMPLEMENTED` (all 68 owned rows; CodeQL upload configuration remains open). Review state: ACCEPTED_BY_USER (2026-11-08, Asia/Jakarta; PR #4 merged and Phase 03 explicitly requested).
 
-Authorization: on 2026-11-08 (Asia/Jakarta), the user confirmed merging PR #3 and requested "git fetch origin & rebase origin/main. Next phase". Phase 01 user acceptance and Phase 02 authorization are recorded independently from the unresolved CodeQL configuration check. The user subsequently accepted all four [manual execution contract](../designs/manual-execution.md) decisions with "ACCEPT". Implementation is described in the [execution guide](../../docs/execution.md) and [self-review](../reviews/phase-02.md); Phases 03–10 remain unapproved.
+Authorization: on 2026-11-08 (Asia/Jakarta), the user confirmed merging PR #3 and requested "git fetch origin & rebase origin/main. Next phase". Phase 01 user acceptance and Phase 02 authorization are recorded independently from the unresolved CodeQL configuration check. The user subsequently accepted all four [manual execution contract](../designs/manual-execution.md) decisions with "ACCEPT". Implementation is described in the [execution guide](../../docs/execution.md) and [self-review](../reviews/phase-02.md). The user subsequently merged PR #4 at `e7d7177` and explicitly authorized Phase 03. Phases 04–10 remain unapproved except the scoped release packaging extension.
 
 ## Goal, ownership and prerequisites
 

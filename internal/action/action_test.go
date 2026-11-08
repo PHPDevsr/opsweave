@@ -213,3 +213,28 @@ func FuzzOutputCapture(f *testing.F) {
 		}
 	})
 }
+
+func TestValidateResolvedInputsNeverInvokesHandler(t *testing.T) {
+	d := descriptor()
+	r, err := New([]Registration{{Descriptor: d, Run: func(context.Context, map[string]any) (map[string]any, error) {
+		t.Fatal("validation invoked handler")
+		return nil, nil
+	}}}, nil)
+	if err != nil {
+		t.Fatal(err)
+	}
+	if err := r.ValidateInputs(t.Context(), d.ID, d.Version, map[string]any{"message": "ok"}); err != nil {
+		t.Fatal(err)
+	}
+	if err := r.ValidateInputs(t.Context(), d.ID, d.Version, map[string]any{"message": false}); err != execution.ErrInvalid {
+		t.Fatal(err)
+	}
+	if err := r.ValidateInputs(t.Context(), d.ID, "missing", nil); err != execution.ErrUnavailable {
+		t.Fatal(err)
+	}
+	ctx, cancel := context.WithCancel(t.Context())
+	cancel()
+	if err := r.ValidateInputs(ctx, d.ID, d.Version, nil); err != context.Canceled {
+		t.Fatal(err)
+	}
+}

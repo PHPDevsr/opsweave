@@ -1,6 +1,8 @@
 # Phase 03 — Reliable orchestration
 
-Milestone: v0.2.x. Requirement status: `PLANNED`. Review state: NOT_APPROVED.
+Milestone: v0.2.x. Requirement status: `IN_PROGRESS` (serial core locally verified; dispatcher review required). Review state: APPROVED_FOR_PHASE_03; execution contract ACCEPTED (user reply "ACCEPT", 2026-11-08, Asia/Jakarta); dispatcher contract AWAITING_REVIEW.
+
+Authorization: the user confirmed merging Phase 02 and requested "git fetch origin dan git rebase origin/main. Lanjut phase 3" on 2026-11-08 (Asia/Jakarta). Phase 02 user acceptance is separate from the unresolved CodeQL configuration check. The [reliable execution proposal](../designs/reliable-execution.md) was accepted in a subsequent "ACCEPT" reply. The serial core is described in the [core guide](../../docs/reliability.md) and [review](../reviews/phase-03-core.md). The next [dispatcher proposal](../designs/single-node-dispatcher.md) requires its own ownership/capacity review before activation. It does not finalize scheduler/trigger/listener or dispatcher ownership contracts. No later phase is authorized.
 
 ## Goal, ownership and prerequisites
 

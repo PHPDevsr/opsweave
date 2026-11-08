@@ -71,7 +71,7 @@ func foundationCommands(out, diagnostics io.Writer, catalog registry.Catalog) []
 	}}
 	for _, verb := range []string{"validate", "plan", "apply"} {
 		commands = append(commands, &urfave.Command{
-			Name: verb, Usage: verb + " workflow definitions (Phase 01 has no built-in actions)",
+			Name: verb, Usage: verb + " workflow definitions",
 			OnUsageError: usageError, ArgValidator: exactArguments(1), Flags: []urfave.Flag{jsonFlag()},
 			Action: func(ctx context.Context, cmd *urfave.Command) error {
 				cfg, err := loadConfig(ctx, cmd, diagnostics)
@@ -82,7 +82,7 @@ func foundationCommands(out, diagnostics io.Writer, catalog registry.Catalog) []
 				if err != nil {
 					return err
 				}
-				candidates, err := registry.Prepare(ctx, sources, catalog)
+				candidates, err := registry.PrepareReliable(ctx, sources, catalog)
 				if err != nil {
 					return err
 				}

@@ -8,6 +8,11 @@ flag, configuration setting, public SDK or plugin loader to enable those fixture
 Consequently, production cannot register or run a usable workflow yet. Successful
 parser validation alone never implies an available executable action.
 
+The [Phase 03 serial reliability core](reliability.md) extends new runs with
+conditions, references, retry/deadline policies, cancellation, replay, idempotency
+and format-2 attempt history. The remaining Phase 02 description below records the
+foundation behavior; use the reliability guide for those reviewed extensions.
+
 ## Build, configuration and commands
 
 Follow [installation and configuration](foundation.md). The same Go binary and

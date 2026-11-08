@@ -118,15 +118,19 @@ func snapshotBody(s execution.Snapshot) (string, error) {
 }
 
 func appendEvent(ctx context.Context, tx *sql.Tx, e execution.Event) error {
-	if err := tx.QueryRowContext(ctx, "SELECT COALESCE(MAX(sequence),0)+1 FROM execution_events WHERE execution_id=?", e.Execution).Scan(&e.Sequence); err != nil {
+	var limit int
+	if err := tx.QueryRowContext(ctx, "SELECT COALESCE(MAX(sequence),0)+1,(SELECT COALESCE(MAX(event_limit),1024) FROM execution_policies WHERE execution_id=?) FROM execution_events WHERE execution_id=?", e.Execution, e.Execution).Scan(&e.Sequence, &limit); err != nil {
 		return err
 	}
-	if e.Sequence > 1024 {
+	if e.Sequence > limit {
 		return execution.ErrLimit
 	}
 	b, err := json.Marshal(e)
 	if err != nil {
 		return err
+	}
+	if len(b) > 1024 {
+		return execution.ErrLimit
 	}
 	_, err = tx.ExecContext(ctx, "INSERT INTO execution_events VALUES(?,?,?)", e.Execution, e.Sequence, string(b))
 	return err
@@ -219,6 +223,9 @@ func readExecution(ctx context.Context, q executionQuerier, id string) (executio
 	if len(body) > 65536 || json.Unmarshal([]byte(body), &result) != nil || result.ID != id || result.Workflow != workflowName || result.Revision != revision || string(result.State) != state || result.Version != version {
 		return execution.Snapshot{}, execution.ErrInvalid
 	}
+	if result.Format != 0 && result.Format != 1 && result.Format != 2 {
+		return execution.Snapshot{}, execution.ErrInvalid
+	}
 	var definition string
 	if err := q.QueryRowContext(ctx, "SELECT normalized FROM workflow_revisions WHERE workflow_name=? AND id=?", workflowName, revision).Scan(&definition); err != nil {
 		return execution.Snapshot{}, err
@@ -247,6 +254,11 @@ func readExecution(ctx context.Context, q executionQuerier, id string) (executio
 	}
 	if err := errors.Join(rows.Err(), rows.Close()); err != nil {
 		return execution.Snapshot{}, err
+	}
+	if result.Format == 2 {
+		if err := readReliable(ctx, q, &result); err != nil {
+			return execution.Snapshot{}, err
+		}
 	}
 	return result, nil
 }
@@ -304,14 +316,14 @@ func (s *Store) Events(ctx context.Context, id string) ([]execution.Event, error
 	if !execution.ValidID(id) {
 		return nil, execution.ErrInvalid
 	}
-	var found int
-	if err := s.db.QueryRowContext(ctx, "SELECT 1 FROM executions WHERE id=?", id).Scan(&found); err != nil {
+	var limit int
+	if err := s.db.QueryRowContext(ctx, "SELECT COALESCE(p.event_limit,1024) FROM executions e LEFT JOIN execution_policies p ON p.execution_id=e.id WHERE e.id=?", id).Scan(&limit); err != nil {
 		if errors.Is(err, sql.ErrNoRows) {
 			return nil, execution.ErrNotFound
 		}
 		return nil, err
 	}
-	rows, err := s.db.QueryContext(ctx, "SELECT body FROM execution_events WHERE execution_id=? ORDER BY sequence LIMIT 1025", id)
+	rows, err := s.db.QueryContext(ctx, "SELECT body FROM execution_events WHERE execution_id=? ORDER BY sequence LIMIT 16385", id)
 	if err != nil {
 		return nil, err
 	}
@@ -323,7 +335,7 @@ func (s *Store) Events(ctx context.Context, id string) ([]execution.Event, error
 			return nil, errors.Join(err, rows.Close())
 		}
 		total += len(b)
-		if len(result) >= 1024 || total > 64<<20 {
+		if len(result) >= limit || total > 64<<20 {
 			return nil, errors.Join(execution.ErrLimit, rows.Close())
 		}
 		var event execution.Event

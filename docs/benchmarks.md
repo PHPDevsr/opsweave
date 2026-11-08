@@ -62,6 +62,14 @@ OS/filesystem latency, not just SQL statement execution time.
 
 ## CI and artifacts
 
+Phase 03 adds condition evaluation, a deterministic retry-policy lifecycle and
+format-2 attempt-history/log reads (`EvaluateCondition`, `ReliablePolicy` and
+`ReliableHistory`). These test completed core behavior, not the pending global
+dispatcher/recovery implementation. `ManualExecution` now measures the production
+format-2 serial coordinator, including durable attempt boundaries and owned control
+polling. Migration measurements include migration 003. These workloads differ from
+earlier Phase 02 reports; compare like code/toolchains and retain commit attribution.
+
 Phase 02 adds `BenchmarkTransition`, which validates and advances an independent
 step snapshot without I/O; `BenchmarkManualExecution`, which runs the two-step
 engine against SQLite with empty-output deterministic doubles; and
@@ -70,13 +78,13 @@ Manual execution measures preflight, durable step boundaries and final history,
 not external network/process latency. It caps each temporary database at 128 runs,
 resets only its owned file outside timing, and excludes setup/migration costs.
 History reads use fixed data prepared before timing. Every case checks outcomes
-and fails on errors. Migration measurements now include additive migration 002;
-do not compare them as identical workloads to earlier one-migration reports.
+and fails on errors. That Phase 02 baseline included additive migration 002; current measurements also
+include migration 003 and must not be treated as identical migration workloads.
 
 The `Benchmarks` workflow runs on relevant pull requests, matching pushes to
 `main`, and manual dispatch. A Linux job uses the declared Go version, one logical
 CPU setting (`-cpu=1`), three samples and 200 ms target measurement windows. It
-verifies that all ten benchmark families appeared. Benchmark errors or missing
+verifies that all thirteen benchmark families appeared. Benchmark errors or missing
 families fail the job; shell pipe failures cannot be hidden by `tee`.
 
 Each run uploads `benchmark-results.txt` plus `benchmark-environment.txt` with

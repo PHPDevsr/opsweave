@@ -176,7 +176,13 @@ func (s *Store) Apply(ctx context.Context, candidates []registry.Candidate) (res
 		if err != nil {
 			return nil, err
 		}
-		if d.Metadata.Name != c.Name || seen[c.Name] || d.Phase01() != nil || !json.Valid(c.Normalized) {
+		policyErr := d.Phase01()
+		if len(c.Capabilities) == 1 && c.Capabilities[0] == "serial_reliability" {
+			policyErr = d.SerialReliability()
+		} else if len(c.Capabilities) > 0 {
+			return nil, errors.New("unsupported registry capability")
+		}
+		if d.Metadata.Name != c.Name || seen[c.Name] || policyErr != nil || !json.Valid(c.Normalized) {
 			return nil, errors.New("invalid registry candidate")
 		}
 		normalized, err := registry.Normalize(d)

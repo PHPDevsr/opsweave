@@ -92,6 +92,40 @@ func (d *Definition) Phase01() error {
 	return nil
 }
 
+// SerialReliability permits reviewed execution policies while dispatcher capacity
+// and fenced recovery remain unavailable. Secrets still require Phase 05.
+func (d *Definition) SerialReliability() error {
+	if d.Spec.Concurrency != 1 || d.Spec.Parallelism != 1 {
+		return &ValidationError{Code: "unsupported_capability", Path: "spec"}
+	}
+	for i, step := range d.Spec.Steps {
+		if hasSecretReference(step.Inputs) {
+			return &ValidationError{Code: "unsupported_capability", Path: fmt.Sprintf("spec.steps[%d].with", i)}
+		}
+	}
+	return nil
+}
+
+func hasSecretReference(value any) bool {
+	switch v := value.(type) {
+	case Reference:
+		return v.Kind != "output"
+	case map[string]any:
+		for _, child := range v {
+			if hasSecretReference(child) {
+				return true
+			}
+		}
+	case []any:
+		for _, child := range v {
+			if hasSecretReference(child) {
+				return true
+			}
+		}
+	}
+	return false
+}
+
 func hasReference(value any) bool {
 	switch v := value.(type) {
 	case Reference:

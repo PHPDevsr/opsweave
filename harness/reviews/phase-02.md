@@ -71,11 +71,15 @@ No release tags exist and no historical release documentation was modified.
 Local formatting, vet, unit/integration/E2E, race, modules, build, vulnerability,
 fuzz, benchmark, Markdown and traceability checks passed. Engine coverage is
 94.5%, state machine 95.5% and parser 97.5%. Exact commands, warnings and counts
-are in the build log. Phase 02 implementation acceptance awaits actual CI and
-phase review.
-Repository CodeQL upload still requires Advanced Security configuration; it is not
-claimed passed. No requirement is completed from implementation or contract approval
-alone. Phase 03 remains unapproved and must not start automatically.
+are in the build log. At the time of preparation, acceptance awaited CI and phase
+review. Subsequently, CI, benchmarks, Markdown and
+all six release package jobs/assembly passed on `7aa93ed`; publication was correctly
+skipped for a PR. Evidence is attached to [merged PR #4](https://github.com/PHPDevsr/opsweave/pull/4).
+The user merged it at `e7d7177` and explicitly accepted Phase 02/authorized Phase 03
+on 2026-11-08 (Asia/Jakarta). CodeQL upload still requires repository Advanced
+Security configuration; user acceptance does not mark that check passed or owned
+requirements completed. Phases 04–10 remain unapproved except the existing release
+packaging extension.
 
 ## User-requested release packaging extension
 
@@ -92,4 +96,7 @@ exact remote tag commit, verifies archive hashes, and creates rather than overwr
 a release. PRs/manual previews cannot publish. No action/library runtime dependency,
 paid ARM runner, signing credential, live release or tag was introduced. Local
 unit/race/static/module/fuzz and archive smoke evidence is in the build log;
-actual matrix execution evidence must be attached to PR #4 before claiming it passed.
+all six actual package jobs and assembly passed in [Release run 42478643656](https://github.com/PHPDevsr/opsweave/actions/runs/42478643656).
+The [preview bundle](https://github.com/PHPDevsr/opsweave/actions/runs/42478643656/artifacts/13616627733)
+contains all six platform archives plus checksums. Linux/Windows ARM runtime
+qualification and live tag publication remain unclaimed.

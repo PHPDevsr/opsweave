@@ -23,10 +23,15 @@ type Engine struct {
 	Workflows  registry.Repository
 	Executions execution.Repository
 	Actions    *action.Runtime
+	Reliable   execution.ReliableRepository
+	Clock      Clock
 }
 
 // Run pins the current revision, commits ownership, and waits for a durable terminal result.
 func (e Engine) Run(ctx context.Context, name string) (execution.Snapshot, error) {
+	if e.Reliable != nil {
+		return e.RunReliable(ctx, name, RunOptions{})
+	}
 	var snap execution.Snapshot
 	if err := ctx.Err(); err != nil {
 		return snap, err
@@ -178,7 +183,7 @@ func stepOutcome(execErr, stepErr, actionErr error, oversized bool) (execution.S
 }
 
 func safeRepositoryError(err error) error {
-	for _, safe := range []error{execution.ErrConflict, execution.ErrNotFound, execution.ErrLimit, execution.ErrInvalid, registry.ErrNotFound, registry.ErrArchived, context.Canceled, context.DeadlineExceeded} {
+	for _, safe := range []error{execution.ErrConflict, execution.ErrNotFound, execution.ErrLimit, execution.ErrInvalid, execution.ErrReference, execution.ErrUncertain, registry.ErrNotFound, registry.ErrArchived, context.Canceled, context.DeadlineExceeded} {
 		if errors.Is(err, safe) {
 			return safe
 		}

@@ -13,6 +13,10 @@ an independent copy of the original source. It does not invoke actions, perform
 network requests, read secrets or persist anything. `Source()` preserves comments,
 BOM and document markers for future lossless export.
 
+The [serial reliability core](reliability.md) now executes reviewed conditions,
+output references and retry/deadline policies with an injected compatible catalog.
+Parallelism/concurrency above one, trigger definitions and secrets remain gated.
+
 The following example is structurally valid for parser development. `test.echo`
 is a fictional identifier, not a shipped action or supported integration:
 

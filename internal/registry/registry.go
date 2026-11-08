@@ -79,6 +79,15 @@ var (
 
 // Prepare validates a complete batch without any storage or external side effects.
 func Prepare(ctx context.Context, sources []Source, catalog Catalog) ([]Candidate, error) {
+	return prepare(ctx, sources, catalog, false)
+}
+
+// PrepareReliable validates the reviewed serial reliability capability set.
+func PrepareReliable(ctx context.Context, sources []Source, catalog Catalog) ([]Candidate, error) {
+	return prepare(ctx, sources, catalog, true)
+}
+
+func prepare(ctx context.Context, sources []Source, catalog Catalog, reliable bool) ([]Candidate, error) {
 	if len(sources) == 0 || len(sources) > 256 {
 		return nil, errors.New("batch must contain 1 to 256 workflows")
 	}
@@ -102,14 +111,21 @@ func Prepare(ctx context.Context, sources []Source, catalog Catalog) ([]Candidat
 		if err != nil {
 			return nil, err
 		}
-		if err := d.Phase01(); err != nil {
-			return nil, err
+		capabilityErr := d.Phase01()
+		if reliable {
+			capabilityErr = d.SerialReliability()
+		}
+		if capabilityErr != nil {
+			return nil, capabilityErr
 		}
 		normalized, err := Normalize(d)
 		if err != nil {
 			return nil, fmt.Errorf("normalize workflow: %w", err)
 		}
 		result = append(result, Candidate{Name: d.Metadata.Name, Source: d.Source(), Normalized: normalized, Bindings: bindings, Order: append([]string(nil), d.Order...), Capabilities: []string{}})
+		if reliable {
+			result[len(result)-1].Capabilities = []string{"serial_reliability"}
+		}
 	}
 	return result, ctx.Err()
 }
@@ -120,7 +136,7 @@ func validateActions(d *workflow.Definition, catalog Catalog) (map[string]string
 	for _, step := range d.Spec.Steps {
 		descriptor, exists := catalog[step.Uses]
 		if !exists {
-			return nil, errors.New("action unavailable: Phase 01 production catalog contains no built-in actions")
+			return nil, errors.New("action unavailable: production catalog contains no built-in actions")
 		}
 		if descriptor.ID != step.Uses || descriptor.APIVersion != d.APIVersion || descriptor.Version == "" || !schemaValid(descriptor.Inputs, 0) || descriptor.Inputs.Type != "object" {
 			return nil, errors.New("invalid or incompatible action descriptor")

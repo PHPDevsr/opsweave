@@ -223,8 +223,8 @@ func TestExecutionReadAndRequestErrors(t *testing.T) {
 
 func TestUpgradeFoundationPreservesRevisions(t *testing.T) {
 	s, record, path := executionFixture(t)
-	// Construct an actual version-1 database with existing workflow data, then reopen with v2.
-	for _, sql := range []string{"DROP TABLE execution_events", "DROP TABLE execution_steps", "DROP TABLE executions", "DELETE FROM schema_migrations WHERE version=2"} {
+	// Construct an actual version-1 database with existing workflow data, then reopen with all current migrations.
+	for _, sql := range []string{"DROP TABLE execution_admissions", "DROP TABLE execution_attempts", "DROP TABLE execution_policies", "DROP TABLE execution_events", "DROP TABLE execution_steps", "DROP TABLE executions", "DELETE FROM schema_migrations WHERE version>1"} {
 		if _, err := s.db.ExecContext(t.Context(), sql); err != nil {
 			t.Fatal(err)
 		}
@@ -239,7 +239,7 @@ func TestUpgradeFoundationPreservesRevisions(t *testing.T) {
 		t.Fatal(snap, err)
 	}
 	var count int
-	if err := upgraded.db.QueryRowContext(t.Context(), "SELECT count(*) FROM schema_migrations").Scan(&count); err != nil || count != 2 {
+	if err := upgraded.db.QueryRowContext(t.Context(), "SELECT count(*) FROM schema_migrations").Scan(&count); err != nil || count != 3 {
 		t.Fatal(count, err)
 	}
 }
@@ -282,7 +282,7 @@ func TestExecutionEventLimitRollsBackState(t *testing.T) {
 
 func TestExecutionMigrationFailurePreservesFoundation(t *testing.T) {
 	s, record, path := executionFixture(t)
-	for _, statement := range []string{"DROP TABLE execution_events", "DROP TABLE execution_steps", "DROP TABLE executions", "DELETE FROM schema_migrations WHERE version=2", "CREATE TABLE executions(marker TEXT)", "INSERT INTO executions VALUES('preserved')"} {
+	for _, statement := range []string{"DROP TABLE execution_admissions", "DROP TABLE execution_attempts", "DROP TABLE execution_policies", "DROP TABLE execution_events", "DROP TABLE execution_steps", "DROP TABLE executions", "DELETE FROM schema_migrations WHERE version>1", "CREATE TABLE executions(marker TEXT)", "INSERT INTO executions VALUES('preserved')"} {
 		if _, err := s.db.ExecContext(t.Context(), statement); err != nil {
 			t.Fatal(err)
 		}
