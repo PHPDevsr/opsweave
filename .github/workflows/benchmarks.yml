@@ -51,9 +51,9 @@ jobs:
             lscpu
           } > benchmark-environment.txt
           go test -run '^$' -bench '^Benchmark' -benchmem -benchtime=200ms -count=3 -cpu=1 \
-            ./internal/workflow ./internal/registry ./internal/storage/sqlite \
+            ./internal/workflow ./internal/registry ./internal/storage/sqlite ./internal/execution ./internal/engine \
             | tee benchmark-results.txt
-          for family in Parse ValidateCondition Prepare SQLiteApply SQLiteGet SQLiteList SQLiteMigrate; do
+          for family in Parse ValidateCondition Prepare SQLiteApply SQLiteGet SQLiteList SQLiteMigrate Transition ManualExecution ExecutionHistory; do
             grep -q "^Benchmark${family}" benchmark-results.txt
           done
       - name: Upload benchmark results

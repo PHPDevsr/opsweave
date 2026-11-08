@@ -1,16 +1,17 @@
 # Foundation benchmarks
 
-OpsWeave measures the implemented Phase 01 parser, expression validator, registry
-preflight and single-node SQLite repository. The benchmarks do not execute actions
-or represent the future engine, scheduler or worker pool. No product optimization
-or dependency change is included in this measurement baseline.
+OpsWeave measures the parser, expression validator, registry preflight, single-node
+SQLite repository and Phase 02 manual execution/history. Execution uses only
+deterministic in-process action doubles. These measurements do not represent real
+integrations, the future scheduler or worker pool. No product optimization or
+dependency change is included in this measurement baseline.
 
 ## Running locally
 
 From the repository root, with the Go version declared in `go.mod`:
 
 ```sh
-go test -run '^$' -bench '^Benchmark' -benchmem -benchtime=200ms -count=3 -cpu=1 ./internal/workflow ./internal/registry ./internal/storage/sqlite
+go test -run '^$' -bench '^Benchmark' -benchmem -benchtime=200ms -count=3 -cpu=1 ./internal/workflow ./internal/registry ./internal/storage/sqlite ./internal/execution ./internal/engine
 ```
 
 Use `-benchtime=1x -count=1` for a one-iteration correctness smoke run, or
@@ -61,10 +62,21 @@ OS/filesystem latency, not just SQL statement execution time.
 
 ## CI and artifacts
 
+Phase 02 adds `BenchmarkTransition`, which validates and advances an independent
+step snapshot without I/O; `BenchmarkManualExecution`, which runs the two-step
+engine against SQLite with empty-output deterministic doubles; and
+`BenchmarkExecutionHistory/Get` and `/Logs`, which read a seeded terminal history.
+Manual execution measures preflight, durable step boundaries and final history,
+not external network/process latency. It caps each temporary database at 128 runs,
+resets only its owned file outside timing, and excludes setup/migration costs.
+History reads use fixed data prepared before timing. Every case checks outcomes
+and fails on errors. Migration measurements now include additive migration 002;
+do not compare them as identical workloads to earlier one-migration reports.
+
 The `Benchmarks` workflow runs on relevant pull requests, matching pushes to
 `main`, and manual dispatch. A Linux job uses the declared Go version, one logical
 CPU setting (`-cpu=1`), three samples and 200 ms target measurement windows. It
-verifies that all seven benchmark families appeared. Benchmark errors or missing
+verifies that all ten benchmark families appeared. Benchmark errors or missing
 families fail the job; shell pipe failures cannot be hidden by `tee`.
 
 Each run uploads `benchmark-results.txt` plus `benchmark-environment.txt` with

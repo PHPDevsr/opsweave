@@ -2,7 +2,8 @@
 
 Phase 01 provides strict configuration, workflow parsing/preflight, an immutable
 revision registry, single-node SQLite storage and administration commands. It does
-not execute workflows. Production currently ships an empty action catalog:
+not itself execute workflows; the [Phase 02 engine](execution.md) adds that internal
+boundary and execution history commands. Production currently ships an empty action catalog:
 `validate`, `plan` and `apply` reject action identifiers as unavailable. Tests inject
 validation-only fixture descriptors to verify the full registration lifecycle;
 fixture actions cannot be enabled from configuration or CLI flags. Real action

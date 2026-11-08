@@ -2,7 +2,13 @@
 
 Assessment date: 2026-11-08 (Asia/Jakarta). Baseline commit: `59c5b3f02a155f5979698bfde53c944063222be5`.
 
-Harness state: `PHASE_01_AWAITING_CODE_SCANNING`. On 2026-11-08 (Asia/Jakarta), the user accepted phase 00 and authorized phase 01 ("Ya, ACCEPT"), then accepted the [workflow contract](harness/designs/workflow-v1.md) and the five [foundation contract](harness/designs/foundation-storage-cli.md) decisions (separate "setuju" replies). Phase 01 implementation, documentation and [self-review](harness/reviews/phase-01.md) are prepared. Local checks and remote cross-platform CI/Markdown passed on `f10f596`; both symlink security tests passed explicitly on Linux. CodeQL result upload is blocked because GitHub Advanced Security is not enabled for the repository, requiring an owner decision before phase acceptance. Phases 02–10 remain unapproved. This is a documentation workflow, not an executable autonomous runner.
+Harness state: `PHASE_02_AWAITING_CI_REVIEW`. The user merged [PR #3](https://github.com/PHPDevsr/opsweave/pull/3), authorized Phase 02, and accepted all four [manual execution contract](harness/designs/manual-execution.md) decisions with "ACCEPT" on 2026-11-08 (Asia/Jakarta). Fetch/rebase completed at `401935d1ff13624aa7f02cf40669bf49bb4067f3`; work continues on `codex/phase-02-manual-execution`. State machine, internal action runtime, durable manual engine/history and execution CLI are implemented and locally verified. See the [execution guide](docs/execution.md) and [self-review](harness/reviews/phase-02.md). CodeQL upload remains blocked by repository Advanced Security configuration; no pass or requirement completion is inferred. Phases 03–10 remain unapproved. This is a documentation workflow, not an executable autonomous runner.
+
+The user additionally authorized multi-OS release CI before Phase 03 on
+2026-11-08 (Asia/Jakarta). This is a narrow early packaging extension from Phase
+10: six target archives, version injection, checksums and tag-based publication.
+It does not approve Phase 03 or the remaining production-qualification work.
+See [release procedure](docs/releases.md); no tag or release is created by this task.
 
 ## Repository assessment
 
@@ -52,6 +58,6 @@ Important dependencies apply before exposure: phase 01 reviews the full DSL cont
 
 ## Review and next action
 
-Both phase 01 contracts are accepted and implemented. Read the [foundation guide](docs/foundation.md), [self-review](harness/reviews/phase-01.md) and build-log evidence. The earlier race-toolchain gate is resolved by a verified portable compiler and passing unsandboxed race run. The branch is published in [draft PR #3](https://github.com/PHPDevsr/opsweave/pull/3) targeting `main`; Linux verification passed. Resolve the repository CodeQL configuration gate and complete phase review before phase 02. Phase 02 remains unapproved.
+Phase 01 is merged and accepted; Phase 02 and its manual execution contract are authorized. Local verification passed; publish the scoped Phase 02 changes for CI/review before advancement. Keep the independent CodeQL configuration gate explicit. No Phase 03 work is authorized.
 
 See [harness operating instructions](harness/README.md) for resumption, status rules and log requirements. The harness itself remains documentation; no executable runner, background process, scheduled automation or public SDK is installed.

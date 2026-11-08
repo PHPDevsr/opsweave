@@ -7,12 +7,14 @@ import (
 	"fmt"
 	"io"
 
+	"github.com/PHPDevsr/opsweave/internal/action"
 	"github.com/PHPDevsr/opsweave/internal/registry"
 
 	urfave "github.com/urfave/cli/v3"
 )
 
-const version = "dev"
+// version is assigned only by the release linker; runtime code never changes it.
+var version = "dev"
 
 // Run executes a fresh command tree and returns a process exit code.
 // Args includes the executable name, as in os.Args. Output and diagnostics are
@@ -32,6 +34,10 @@ func execute(ctx context.Context, args []string, stdout, stderr io.Writer) error
 }
 
 func executeWithCatalog(ctx context.Context, args []string, stdout, stderr io.Writer, catalog registry.Catalog) error {
+	return executeWithRuntime(ctx, args, stdout, stderr, catalog, nil)
+}
+
+func executeWithRuntime(ctx context.Context, args []string, stdout, stderr io.Writer, catalog registry.Catalog, runtime *action.Runtime) error {
 	if err := ctx.Err(); err != nil {
 		return err
 	}
@@ -88,6 +94,7 @@ func executeWithCatalog(ctx context.Context, args []string, stdout, stderr io.Wr
 		},
 	}
 	cmd.Commands = append(cmd.Commands, foundationCommands(output, stderr, catalog)...)
+	cmd.Commands = append(cmd.Commands, executionCommands(output, stderr, runtime)...)
 	if err := cmd.Run(ctx, args); err != nil {
 		return err
 	}

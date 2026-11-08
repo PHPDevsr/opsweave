@@ -167,6 +167,19 @@ func schemaValid(f Field, depth int) bool {
 	return false
 }
 
+// ValidDescriptor checks the common metadata contract for trusted compiled actions.
+func ValidDescriptor(d Descriptor) bool {
+	if !workflow.ValidActionID(d.ID) || d.Version == "" || d.APIVersion != "opsweave.io/v1" || d.Inputs.Type != "object" || !schemaValid(d.Inputs, 0) || len(d.Capabilities) > 0 {
+		return false
+	}
+	for _, f := range d.Outputs {
+		if !schemaValid(f, 0) {
+			return false
+		}
+	}
+	return true
+}
+
 func matches(value any, f Field, steps map[string]Descriptor, depth int) bool {
 	if depth > 32 {
 		return false

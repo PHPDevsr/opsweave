@@ -4,7 +4,7 @@ This harness is a documentation workflow. Start with [PLANS.md](../PLANS.md), [G
 
 ## Authorization and reviews
 
-Current state: `PHASE_01_AWAITING_CODE_SCANNING`. The user accepted phase 00/phase 01 authorization, the [workflow contract](designs/workflow-v1.md), then all five [foundation decisions](designs/foundation-storage-cli.md), including the action-name correction. Implementation, docs and [self-review](reviews/phase-01.md) are prepared. Local checks and unsandboxed race testing passed. Published [draft PR #3](https://github.com/PHPDevsr/opsweave/pull/3) targets `main`. Remote CI/Markdown and explicit Linux symlink checks passed on `f10f596`; CodeQL upload requires repository Advanced Security enablement. Phase 01 remains incomplete pending that owner decision and phase review. Phases 02–10 remain `NOT_APPROVED`.
+Current state: `PHASE_02_AWAITING_CI_REVIEW`. The user merged PR #3, accepted Phase 01, authorized Phase 02 and accepted its [manual execution contract](designs/manual-execution.md) with "ACCEPT" on 2026-11-08 (Asia/Jakarta). Branch `codex/phase-02-manual-execution` starts from merge commit `401935d`. The [implementation review](reviews/phase-02.md) and [execution guide](../docs/execution.md) describe current work; local verification passed; actual CI and phase review remain pending. CodeQL upload still requires repository Advanced Security configuration; it is not marked passed. Phases 03–10 remain `NOT_APPROVED`.
 
 Track reviews independently from GOALS requirement status. Record explicit user approval with date, authorized phase/scope and conversation reference or a faithful summary in the build log. Update the master/phase review state together. An approval of one phase never silently approves the next.
 
