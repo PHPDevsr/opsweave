@@ -4,6 +4,12 @@ Assessment date: 2026-11-08 (Asia/Jakarta). Baseline commit: `59c5b3f02a155f5979
 
 Harness state: `PHASE_02_AWAITING_CI_REVIEW`. The user merged [PR #3](https://github.com/PHPDevsr/opsweave/pull/3), authorized Phase 02, and accepted all four [manual execution contract](harness/designs/manual-execution.md) decisions with "ACCEPT" on 2026-11-08 (Asia/Jakarta). Fetch/rebase completed at `401935d1ff13624aa7f02cf40669bf49bb4067f3`; work continues on `codex/phase-02-manual-execution`. State machine, internal action runtime, durable manual engine/history and execution CLI are implemented and locally verified. See the [execution guide](docs/execution.md) and [self-review](harness/reviews/phase-02.md). CodeQL upload remains blocked by repository Advanced Security configuration; no pass or requirement completion is inferred. Phases 03–10 remain unapproved. This is a documentation workflow, not an executable autonomous runner.
 
+The user additionally authorized multi-OS release CI before Phase 03 on
+2026-11-08 (Asia/Jakarta). This is a narrow early packaging extension from Phase
+10: six target archives, version injection, checksums and tag-based publication.
+It does not approve Phase 03 or the remaining production-qualification work.
+See [release procedure](docs/releases.md); no tag or release is created by this task.
+
 ## Repository assessment
 
 This section records the original baseline assessment. Current implementation and

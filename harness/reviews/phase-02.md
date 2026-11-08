@@ -76,3 +76,20 @@ phase review.
 Repository CodeQL upload still requires Advanced Security configuration; it is not
 claimed passed. No requirement is completed from implementation or contract approval
 alone. Phase 03 remains unapproved and must not start automatically.
+
+## User-requested release packaging extension
+
+The user requested multi-OS binary release CI before Phase 03. This authorizes
+only the early packaging part of Phase 10; the rest of that phase remains planned.
+Review covered six explicit OS/CPU targets, tested archives with fixed metadata,
+validated version/linker arguments, copied installation instructions, checksum
+generation/verification, native version/help/SQLite smoke tests, and the documented
+Linux/Windows ARM runtime qualification limitation for this private repository.
+
+Build/preview jobs have read-only permissions. Publication is isolated to intentional
+tag pushes after all matrix/assembly jobs pass, checks main reachability and the
+exact remote tag commit, verifies archive hashes, and creates rather than overwrites
+a release. PRs/manual previews cannot publish. No action/library runtime dependency,
+paid ARM runner, signing credential, live release or tag was introduced. Local
+unit/race/static/module/fuzz and archive smoke evidence is in the build log;
+actual matrix execution evidence must be attached to PR #4 before claiming it passed.

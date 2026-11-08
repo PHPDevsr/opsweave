@@ -25,6 +25,11 @@ review; Phases 03–10 remain unapproved. See [PLANS.md](PLANS.md) for current s
 
 ## Requirements
 
+For published binaries, follow [release installation](docs/install.md); users do
+not need a Go toolchain. The [release workflow](docs/releases.md) produces
+Linux, Windows and macOS archives for amd64/arm64 after an intentional version tag.
+No release tag is created merely by merging that workflow.
+
 - Go **1.27.3 or newer**.
 - Git to clone the repository.
 - Network access to the Go module proxy and checksum database for initial
@@ -80,8 +85,8 @@ goes to stdout; failures produce a single diagnostic on stderr when writable.
 No configuration file, environment settings, database, or background service is
 required by the help/version/completion commands above. Administration commands
 and their configuration are documented in the [foundation guide](docs/foundation.md).
-The development version is `dev`; a release version
-injection mechanism is not implemented yet.
+Source builds report `dev`; release archives report their validated Git tag through
+the linker's version assignment.
 
 ### Shell completion
 

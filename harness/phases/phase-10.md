@@ -2,6 +2,13 @@
 
 Milestone: v0.9.x–v1.0.0. Requirement status: `PLANNED`. Review state: NOT_APPROVED.
 
+Explicit exception, 2026-11-08 (Asia/Jakarta): the user requested multi-OS release
+CI before Phase 03 so users can download binaries. Only binary packaging,
+version injection, release automation and installation documentation are
+authorized early; this does not approve the rest of Phase 10 or Phase 03. See
+[release procedure](../../docs/releases.md) and build-log evidence. Requirement
+`G-13-011` is in progress for this scoped extension, not completed.
+
 ## Goal, ownership and prerequisites
 
 Deliver production qualification with evidence for every owned row in the [requirement ledger](../requirements.md). Ownership includes the exact source text and context; shared rules in phases 00 and 02 apply wherever relevant.

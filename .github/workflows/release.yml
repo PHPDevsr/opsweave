@@ -1,0 +1,200 @@
+name: Release
+
+on:
+  push:
+    tags: ['v*']
+  pull_request:
+    paths:
+      - '**/*.go'
+      - go.mod
+      - go.sum
+      - docs/install.md
+      - .github/workflows/release.yml
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: release-${{ github.ref }}
+  cancel-in-progress: false
+
+jobs:
+  metadata:
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    outputs:
+      version: ${{ steps.version.outputs.version }}
+      commit: ${{ steps.version.outputs.commit }}
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          fetch-depth: 0
+          persist-credentials: false
+      - uses: actions/setup-go@b7ad1dad31e06c5925ef5d2fc7ad053ef454303e # v7.0.0
+        with:
+          go-version-file: go.mod
+      - name: Validate release identity
+        id: version
+        shell: bash
+        env:
+          REF_TYPE: ${{ github.ref_type }}
+          REF_NAME: ${{ github.ref_name }}
+          EVENT_NAME: ${{ github.event_name }}
+        run: |
+          set -euo pipefail
+          version=v0.0.0-preview
+          if [[ "$EVENT_NAME" == push && "$REF_TYPE" == tag ]]; then
+            version="$REF_NAME"
+            git merge-base --is-ancestor HEAD origin/main
+          fi
+          go run ./tools/release -validate-only -version "$version"
+          echo "version=$version" >> "$GITHUB_OUTPUT"
+          echo "commit=$(git rev-parse HEAD)" >> "$GITHUB_OUTPUT"
+
+  build:
+    name: Package (${{ matrix.goos }}/${{ matrix.arch }})
+    needs: metadata
+    runs-on: ${{ matrix.runner }}
+    timeout-minutes: 20
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - {runner: ubuntu-latest, goos: linux, arch: amd64}
+          - {runner: ubuntu-latest, goos: linux, arch: arm64}
+          - {runner: windows-latest, goos: windows, arch: amd64}
+          - {runner: windows-latest, goos: windows, arch: arm64}
+          - {runner: macos-15-intel, goos: darwin, arch: amd64}
+          - {runner: macos-latest, goos: darwin, arch: arm64}
+    env:
+      CGO_ENABLED: '0'
+      RELEASE_VERSION: ${{ needs.metadata.outputs.version }}
+      TARGET_OS: ${{ matrix.goos }}
+      TARGET_ARCH: ${{ matrix.arch }}
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          persist-credentials: false
+      - uses: actions/setup-go@b7ad1dad31e06c5925ef5d2fc7ad053ef454303e # v7.0.0
+        with:
+          go-version-file: go.mod
+          cache: true
+      - name: Verify and test build host
+        shell: bash
+        run: |
+          set -euo pipefail
+          [[ "$(go env GOOS)" == "$TARGET_OS" ]]
+          go mod verify
+          go vet ./...
+          go test -count=1 ./...
+      - name: Build archive
+        run: go run ./tools/release -version "$env:RELEASE_VERSION" -goos "$env:TARGET_OS" -goarch "$env:TARGET_ARCH"
+        shell: pwsh
+      - name: Verify extracted binary and SQLite
+        shell: pwsh
+        run: |
+          $ErrorActionPreference = 'Stop'
+          $archive = @(Get-ChildItem -LiteralPath dist -File | Where-Object { $_.Name -match '\.(zip|tar\.gz)$' })
+          if ($archive.Count -ne 1) { throw 'Expected one release archive' }
+          $expected = ((Get-Content -LiteralPath ($archive[0].FullName + '.sha256')) -split ' ')[0]
+          if ((Get-FileHash -LiteralPath $archive[0].FullName -Algorithm SHA256).Hash.ToLowerInvariant() -ne $expected) { throw 'Checksum mismatch' }
+          $smoke = Join-Path $env:RUNNER_TEMP 'release-smoke'
+          New-Item -ItemType Directory -Path $smoke | Out-Null
+          if ($env:TARGET_OS -eq 'windows') {
+            Expand-Archive -LiteralPath $archive[0].FullName -DestinationPath $smoke
+            $binary = Join-Path $smoke 'opsweave.exe'
+          } else {
+            tar -xzf $archive[0].FullName -C $smoke
+            if ($LASTEXITCODE -ne 0) { throw 'Extraction failed' }
+            $binary = Join-Path $smoke 'opsweave'
+          }
+          $metadata = & go version -m $binary
+          if ($LASTEXITCODE -ne 0 -or !($metadata -match "GOOS=$env:TARGET_OS") -or !($metadata -match "GOARCH=$env:TARGET_ARCH")) { throw 'Incorrect binary target metadata' }
+          if ($env:TARGET_ARCH -ne (& go env GOARCH)) {
+            Write-Host 'Cross-built ARM target: archive/hash/build metadata verified; native execution requires an ARM machine.'
+            exit 0
+          }
+          $actual = & $binary version --json
+          if ($LASTEXITCODE -ne 0 -or ($actual | ConvertFrom-Json).version -ne $env:RELEASE_VERSION) { throw 'Incorrect binary version' }
+          & $binary --help
+          if ($LASTEXITCODE -ne 0) { throw 'Binary help failed' }
+          $env:OPSWEAVE_STORAGE_PATH = Join-Path $smoke 'data/opsweave.db'
+          & $binary execution list --json
+          if ($LASTEXITCODE -ne 0 -or !(Test-Path -LiteralPath $env:OPSWEAVE_STORAGE_PATH)) { throw 'SQLite smoke test failed' }
+      - uses: actions/upload-artifact@cf430e030ddbb5b0abf93d22962f4752f3646cd9 # v7.0.2
+        with:
+          name: release-${{ matrix.goos }}-${{ matrix.arch }}
+          path: dist/*
+          if-no-files-found: error
+          retention-days: 14
+
+  assemble:
+    needs: [metadata, build]
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    steps:
+      - uses: actions/download-artifact@9000827ccba6bdab643e8b6fd33ac0654aef8333 # v8.0.2
+        with:
+          pattern: release-*
+          merge-multiple: true
+          path: dist
+      - name: Verify complete release set
+        shell: bash
+        env:
+          RELEASE_VERSION: ${{ needs.metadata.outputs.version }}
+        run: |
+          set -euo pipefail
+          cd dist
+          for os in linux windows darwin; do
+            for arch in amd64 arm64; do
+              ext=tar.gz
+              [[ "$os" != windows ]] || ext=zip
+              file="opsweave_${RELEASE_VERSION}_${os}_${arch}.${ext}"
+              test -s "$file"
+              test -s "$file.sha256"
+            done
+          done
+          [[ "$(find . -maxdepth 1 -type f | wc -l)" -eq 12 ]]
+          cat ./*.sha256 | LC_ALL=C sort -k2 > checksums.txt
+          [[ "$(wc -l < checksums.txt)" -eq 6 ]]
+          sha256sum -c checksums.txt
+      - uses: actions/upload-artifact@cf430e030ddbb5b0abf93d22962f4752f3646cd9 # v7.0.2
+        with:
+          name: release-bundle
+          path: |
+            dist/*.tar.gz
+            dist/*.zip
+            dist/checksums.txt
+          if-no-files-found: error
+          retention-days: 14
+
+  publish:
+    if: github.event_name == 'push' && startsWith(github.ref, 'refs/tags/v')
+    needs: [metadata, assemble]
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    permissions:
+      contents: write
+    steps:
+      - uses: actions/download-artifact@9000827ccba6bdab643e8b6fd33ac0654aef8333 # v8.0.2
+        with:
+          name: release-bundle
+          path: dist
+      - name: Publish a new tagged release
+        shell: bash
+        env:
+          GH_TOKEN: ${{ github.token }}
+          GH_REPO: ${{ github.repository }}
+          RELEASE_VERSION: ${{ needs.metadata.outputs.version }}
+          EXPECTED_COMMIT: ${{ needs.metadata.outputs.commit }}
+        run: |
+          set -euo pipefail
+          cd dist
+          sha256sum -c checksums.txt
+          [[ "$(gh api "repos/$GH_REPO/commits/$RELEASE_VERSION" --jq '.sha')" == "$EXPECTED_COMMIT" ]]
+          args=(--verify-tag --generate-notes --title "$RELEASE_VERSION")
+          if [[ "$RELEASE_VERSION" == *-* ]]; then
+            args+=(--prerelease --latest=false)
+          fi
+          gh release create "$RELEASE_VERSION" ./*.tar.gz ./*.zip checksums.txt "${args[@]}"

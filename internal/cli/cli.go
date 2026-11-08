@@ -13,7 +13,8 @@ import (
 	urfave "github.com/urfave/cli/v3"
 )
 
-const version = "dev"
+// version is assigned only by the release linker; runtime code never changes it.
+var version = "dev"
 
 // Run executes a fresh command tree and returns a process exit code.
 // Args includes the executable name, as in os.Args. Output and diagnostics are

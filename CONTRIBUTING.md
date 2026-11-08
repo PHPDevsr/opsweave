@@ -15,6 +15,10 @@ checksum verification.
 
 ## Required checks
 
+Binary packaging and tag publication are documented in [release procedure](docs/releases.md).
+Preview builds run on pull requests without publishing a release; use the
+packager tests and extracted-binary smoke tests when changing that workflow.
+
 Run these commands from the repository root:
 
 ```sh
