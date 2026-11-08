@@ -4,7 +4,7 @@ This harness is a documentation workflow. Start with [PLANS.md](../PLANS.md), [G
 
 ## Authorization and reviews
 
-Current state: `AWAITING_INITIAL_REVIEW`. Authorization to generate this harness does not approve product implementation. Phase 00 artifacts are ready for review; phases 01–10 are `NOT_APPROVED`.
+Current state: `PHASE_01_AWAITING_CODE_SCANNING`. The user accepted phase 00/phase 01 authorization, the [workflow contract](designs/workflow-v1.md), then all five [foundation decisions](designs/foundation-storage-cli.md), including the action-name correction. Implementation, docs and [self-review](reviews/phase-01.md) are prepared. Local checks and unsandboxed race testing passed. Published [draft PR #3](https://github.com/PHPDevsr/opsweave/pull/3) targets `main`. Remote CI/Markdown and explicit Linux symlink checks passed on `f10f596`; CodeQL upload requires repository Advanced Security enablement. Phase 01 remains incomplete pending that owner decision and phase review. Phases 02–10 remain `NOT_APPROVED`.
 
 Track reviews independently from GOALS requirement status. Record explicit user approval with date, authorized phase/scope and conversation reference or a faithful summary in the build log. Update the master/phase review state together. An approval of one phase never silently approves the next.
 
@@ -40,7 +40,7 @@ go test -count=1 ./...
 go test -race -count=1 ./...
 go mod verify
 go build ./...
-npm run check:markdown
+bun fmt --check "**/*.md"
 git diff --check
 ```
 

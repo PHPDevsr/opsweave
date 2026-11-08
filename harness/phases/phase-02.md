@@ -35,7 +35,7 @@ Owned IDs: `G-5.1-020`, `G-5.1-021`, `G-5.2-001`, `G-5.2-002`, `G-5.2-003`, `G-5
 
 ## Verification and review checklist
 
-Run `gofmt -l .`, `go vet ./...`, `go test -count=1 ./...`, `go test -race -count=1 ./...`, `go mod verify`, `go build ./...`, `npm run check:markdown` and relevant phase acceptance suites. Add bounded fuzz runs for introduced parsers and isolated integration resources. Use deterministic synchronization and context deadlines. Record exact test/benchmark commands when introduced.
+Run `gofmt -l .`, `go vet ./...`, `go test -count=1 ./...`, `go test -race -count=1 ./...`, `go mod verify`, `go build ./...`, `bun fmt --check "**/*.md"` and relevant phase acceptance suites. Add bounded fuzz runs for introduced parsers and isolated integration resources. Use deterministic synchronization and context deadlines. Record exact test/benchmark commands when introduced.
 
 - [ ] Every owned row has exact test/review and documentation evidence attached; shared policy obligations audited.
 - [ ] All applicable checks passed; unavailable checks remain explicit open gates.

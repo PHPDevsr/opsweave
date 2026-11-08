@@ -2,9 +2,13 @@
 
 Assessment date: 2026-11-08 (Asia/Jakarta). Baseline commit: `59c5b3f02a155f5979698bfde53c944063222be5`.
 
-Harness state: `AWAITING_INITIAL_REVIEW`. The user approved creation of these planning artifacts; product implementation and phase 01 remain unapproved. This is a documentation-only orchestrator, not an executable autonomous runner.
+Harness state: `PHASE_01_AWAITING_CODE_SCANNING`. On 2026-11-08 (Asia/Jakarta), the user accepted phase 00 and authorized phase 01 ("Ya, ACCEPT"), then accepted the [workflow contract](harness/designs/workflow-v1.md) and the five [foundation contract](harness/designs/foundation-storage-cli.md) decisions (separate "setuju" replies). Phase 01 implementation, documentation and [self-review](harness/reviews/phase-01.md) are prepared. Local checks and remote cross-platform CI/Markdown passed on `f10f596`; both symlink security tests passed explicitly on Linux. CodeQL result upload is blocked because GitHub Advanced Security is not enabled for the repository, requiring an owner decision before phase acceptance. Phases 02–10 remain unapproved. This is a documentation workflow, not an executable autonomous runner.
 
 ## Repository assessment
+
+This section records the original baseline assessment. Current implementation and
+acceptance evidence are in the [foundation guide](docs/foundation.md) and
+[phase 01 self-review](harness/reviews/phase-01.md).
 
 Read [GOALS.md](GOALS.md), [AGENTS.md](AGENTS.md), README, contribution instructions, all source/tests, manifests, formatter configuration, and GitHub workflow/Dependabot configuration. No prior PLANS or harness files existed. The assessed worktree was clean and had no release tags.
 
@@ -48,6 +52,6 @@ Important dependencies apply before exposure: phase 01 reviews the full DSL cont
 
 ## Review and next action
 
-Review the generated ledger, phase ownership, acceptance criteria and operating instructions. Phase 00 artifacts are prepared; review acceptance is pending. No phase 01 implementation is authorized by this initialization. After approval, proceed only within the approved phase and present evidence for review before advancing.
+Both phase 01 contracts are accepted and implemented. Read the [foundation guide](docs/foundation.md), [self-review](harness/reviews/phase-01.md) and build-log evidence. The earlier race-toolchain gate is resolved by a verified portable compiler and passing unsandboxed race run. The branch is published in [draft PR #3](https://github.com/PHPDevsr/opsweave/pull/3) targeting `main`; Linux verification passed. Resolve the repository CodeQL configuration gate and complete phase review before phase 02. Phase 02 remains unapproved.
 
-See [harness operating instructions](harness/README.md) for resumption, status rules and log requirements. No runtime dependency, executable runner, background process, scheduled automation or public SDK is added here.
+See [harness operating instructions](harness/README.md) for resumption, status rules and log requirements. The harness itself remains documentation; no executable runner, background process, scheduled automation or public SDK is installed.

@@ -1,6 +1,8 @@
 # Phase 01 — Workflow foundation
 
-Milestone: v0.1.x. Requirement status: `PLANNED`. Review state: NOT_APPROVED.
+Milestone: v0.1.x. Requirement status: `IMPLEMENTED` with CodeQL configuration/phase acceptance still open; all 70 owned rows are `IMPLEMENTED`, none `COMPLETED`. Review state: APPROVED (2026-11-08, Asia/Jakarta; user reply "Ya, ACCEPT"). Phase completion: AWAITING_CODE_SCANNING.
+
+Both [workflow](../designs/workflow-v1.md) and [foundation](../designs/foundation-storage-cli.md) contracts were accepted in separate "setuju" replies. All four ordered implementation tasks are prepared with tests, [documentation](../../docs/foundation.md) and [self-review](../reviews/phase-01.md). Sequential unit/integration, coverage, unsandboxed race and bounded fuzz checks passed. Both symlink security tests passed in the explicit Linux CI step on `f10f596`, alongside all six OS/Go matrix jobs and race testing. [PR #3](https://github.com/PHPDevsr/opsweave/pull/3) targets `main`; CodeQL upload remains blocked by repository Advanced Security configuration. No owned requirement is completed until quality gates/phase review close; phase 02 is not authorized.
 
 ## Goal, ownership and prerequisites
 
@@ -34,10 +36,20 @@ Owned IDs: `G-5.1-001`, `G-5.1-002`, `G-5.1-003`, `G-5.1-004`, `G-5.1-005`, `G-5
 
 ## Verification and review checklist
 
-Run `gofmt -l .`, `go vet ./...`, `go test -count=1 ./...`, `go test -race -count=1 ./...`, `go mod verify`, `go build ./...`, `npm run check:markdown` and relevant phase acceptance suites. Add bounded fuzz runs for introduced parsers and isolated integration resources. Use deterministic synchronization and context deadlines. Record exact test/benchmark commands when introduced.
+Run `gofmt -l .`, `go vet ./...`, `go test -count=1 ./...`, `go test -race -count=1 ./...`, `go mod verify`, `go build ./...`, `bun fmt --check "**/*.md"` and relevant phase acceptance suites. Add bounded fuzz runs for introduced parsers and isolated integration resources. Use deterministic synchronization and context deadlines. Record exact test/benchmark commands when introduced.
 
 - [ ] Every owned row has exact test/review and documentation evidence attached; shared policy obligations audited.
 - [ ] All applicable checks passed; unavailable checks remain explicit open gates.
 - [ ] Security, compatibility and migration implications reviewed; source changes scoped.
 - [ ] Append commands, exit codes, evidence, limitations and next steps to [build log](../build-log.md).
 - [ ] Present results and obtain user acceptance before advancing. Do not treat code presence or this checklist as acceptance evidence.
+
+## Foundation performance measurements
+
+The user requested benchmarks and their CI before any next phase. See the
+[benchmark guide](../../docs/benchmarks.md): seven families/17 cases cover parsing,
+condition syntax, registry preflight and SQLite apply/get/list/migrations. The
+`Benchmarks` workflow publishes three timing/allocation samples and environment
+metadata for each relevant PR/main run. Fixtures are isolated and bounded; SQLite
+production durability settings remain active. No engine/scheduler/worker benchmark
+is claimed before those components exist. The CodeQL owner gate remains open.

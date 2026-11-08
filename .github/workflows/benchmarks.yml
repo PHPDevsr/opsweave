@@ -1,0 +1,68 @@
+name: Benchmarks
+
+on:
+  push:
+    branches: [main]
+    paths:
+      - 'internal/**'
+      - go.mod
+      - go.sum
+      - .github/workflows/benchmarks.yml
+  pull_request:
+    paths:
+      - 'internal/**'
+      - go.mod
+      - go.sum
+      - .github/workflows/benchmarks.yml
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: ${{ github.workflow }}-${{ github.event.pull_request.number || github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  foundation:
+    name: Foundation benchmarks
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          persist-credentials: false
+      - uses: actions/setup-go@b7ad1dad31e06c5925ef5d2fc7ad053ef454303e # v7.0.0
+        with:
+          go-version-file: go.mod
+          cache: true
+      - name: Verify dependencies
+        run: go mod verify
+      - name: Run benchmarks
+        id: benchmark
+        shell: bash
+        run: |
+          set -euo pipefail
+          {
+            git rev-parse HEAD
+            go version
+            go env GOOS GOARCH CGO_ENABLED
+            uname -a
+            lscpu
+          } > benchmark-environment.txt
+          go test -run '^$' -bench '^Benchmark' -benchmem -benchtime=200ms -count=3 -cpu=1 \
+            ./internal/workflow ./internal/registry ./internal/storage/sqlite \
+            | tee benchmark-results.txt
+          for family in Parse ValidateCondition Prepare SQLiteApply SQLiteGet SQLiteList SQLiteMigrate; do
+            grep -q "^Benchmark${family}" benchmark-results.txt
+          done
+      - name: Upload benchmark results
+        if: ${{ !cancelled() && steps.benchmark.outcome != 'skipped' }}
+        uses: actions/upload-artifact@cf430e030ddbb5b0abf93d22962f4752f3646cd9 # v7.0.2
+        with:
+          name: foundation-benchmarks-${{ github.sha }}
+          path: |
+            benchmark-results.txt
+            benchmark-environment.txt
+          if-no-files-found: error
+          retention-days: 14
