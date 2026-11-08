@@ -1,6 +1,8 @@
 # Phase 01 — Workflow foundation
 
-Milestone: v0.1.x. Requirement status: `PLANNED`. Review state: NOT_APPROVED.
+Milestone: v0.1.x. Requirement status: `IMPLEMENTED` with security acceptance still open; the two broad security rows remain `IN_PROGRESS`. Review state: APPROVED (2026-11-08, Asia/Jakarta; user reply "Ya, ACCEPT"). Phase completion: AWAITING_LINUX_VERIFICATION.
+
+Both [workflow](../designs/workflow-v1.md) and [foundation](../designs/foundation-storage-cli.md) contracts were accepted in separate "setuju" replies. All four ordered implementation tasks are prepared with tests, [documentation](../../docs/foundation.md) and [self-review](../reviews/phase-01.md). Sequential unit/integration, coverage, unsandboxed race and bounded fuzz checks passed. `TestInitRefusesSymlinkAndConfigDirectory` and `TestReadSourcesRejectsSymlinks` skipped for Windows privileges, so no owned requirement is marked completed. Linux/CI verification and user phase acceptance remain open; phase 02 is not authorized.
 
 ## Goal, ownership and prerequisites
 

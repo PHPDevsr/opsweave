@@ -7,10 +7,18 @@ with Go. The product requirements and delivery roadmap are in [GOALS.md](GOALS.m
 
 ## Development status
 
-The current foundation provides a CLI with help, version information, JSON
-version output, and shell completion. Workflow parsing, execution, storage,
-configuration, the server, and `opsweave init` are planned features. The YAML
-example in GOALS.md remains illustrative rather than a supported specification.
+The current foundation provides configuration/init, strict workflow validation,
+planning, a revision registry, single-node SQLite and workflow administration CLI,
+alongside help, version information, JSON output and shell completion. See the
+[foundation guide](docs/foundation.md) and [workflow parsing](docs/workflow-parsing.md).
+The production action catalog is empty: real workflow registration requires later
+action implementations. Workflow execution, the server and automatic triggers
+remain planned. The GOALS.md example remains illustrative.
+
+Phase 01 and both [workflow](harness/designs/workflow-v1.md) and
+[storage/configuration/CLI](harness/designs/foundation-storage-cli.md) contracts
+are approved. Phase acceptance depends on the documented verification evidence;
+later phases remain unapproved. See [PLANS.md](PLANS.md) for current status.
 
 ## Requirements
 
@@ -67,7 +75,9 @@ Successful commands return exit code `0`. Invalid commands, flags, extra
 positional arguments, cancellation, and output failures return `1`. Normal output
 goes to stdout; failures produce a single diagnostic on stderr when writable.
 No configuration file, environment settings, database, or background service is
-required by these commands. The development version is `dev`; a release version
+required by the help/version/completion commands above. Administration commands
+and their configuration are documented in the [foundation guide](docs/foundation.md).
+The development version is `dev`; a release version
 injection mechanism is not implemented yet.
 
 ### Shell completion
@@ -103,11 +113,19 @@ OpsWeave starts as a modular monolith:
 - `cmd/opsweave`: process entrypoint, interrupt context, and exit status.
 - `internal/cli`: command definitions, input validation, and injected output
   streams; each invocation constructs an independent command tree.
+- `internal/workflow`: bounded YAML/schema parsing, condition syntax, dependency
+  and reference validation, normalized defaults and phase capability checks.
+- `internal/yamlutil`: shared bounded YAML loading with safe diagnostics.
+- `internal/config`: strict YAML/environment settings and exclusive init.
+- `internal/registry`: catalog/schema preflight, batch input loading, normalization
+  and SQL-independent repository contracts.
+- `internal/storage/sqlite`: migrations, immutable revisions, atomic batch writes
+  and workflow lifecycle persistence.
 
-Future domain, workflow parsing, engine, scheduler, trigger, action, worker,
-storage, secrets, API, and observability components will have explicit boundaries.
+Future engine, scheduler, trigger, action, worker,
+secrets, API, and observability components will have explicit boundaries.
 Domain logic must remain independent of HTTP handlers and storage implementations.
-SQLite is planned for single-node operation; PostgreSQL and distributed workers
+SQLite supports single-node operation; PostgreSQL and distributed workers
 come later. Redis and RabbitMQ are not required infrastructure.
 
 ## Development and CI
@@ -116,10 +134,10 @@ See [CONTRIBUTING.md](CONTRIBUTING.md) for local checks and contribution rules.
 
 The workflows run the checks relevant to changed files:
 
-| Workflow   | Push and pull request triggers                                                   | Checks                                                                                 |
-| ---------- | -------------------------------------------------------------------------------- | -------------------------------------------------------------------------------------- |
-| `CI`       | Go files, `go.mod`, `go.sum`, files under `testdata`, or the Go CI workflow      | Go format, build, vet, tests, module consistency, CLI smoke tests, and race detection. |
-| `Markdown` | Any `.md` file, formatter configuration, npm manifests, or the Markdown workflow | Markdown formatting with the locked Prettier version.                                  |
+| Workflow   | Push and pull request triggers                                                              | Checks                                                                                 |
+| ---------- | ------------------------------------------------------------------------------------------- | -------------------------------------------------------------------------------------- |
+| `CI`       | Go files, `go.mod`, `go.sum`, files under `testdata` or `migrations`, or the Go CI workflow | Go format, build, vet, tests, module consistency, CLI smoke tests, and race detection. |
+| `Markdown` | Any `.md` file, formatter configuration, npm manifests, or the Markdown workflow            | Markdown formatting with the locked Prettier version.                                  |
 
 Both workflows also support manual dispatch. Build, vet, and unit tests run on
 Linux and Windows with Go 1.27.3 and the latest stable Go release. Race detection

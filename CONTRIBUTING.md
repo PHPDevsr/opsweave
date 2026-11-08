@@ -46,6 +46,13 @@ text/JSON version output, all four shell completion generators, and an unknown
 command. Verify the unknown command returns `1` and prints one diagnostic to stderr.
 CI repeats these CLI smoke tests on both supported operating systems.
 
+Foundation tests use isolated SQLite files and injected validation-only catalogs.
+Production has no built-in actions in Phase 01; do not wire test catalogs into
+production to make registration succeed. See the [foundation guide](docs/foundation.md)
+for configuration, capability limits, immutable revisions and stopped-process
+backup/restore. Run bounded YAML/expression/configuration fuzzing when changing
+these parsers; catalog and credential rejection tests must remain intact.
+
 Validate changes to GitHub Actions workflows with
 [actionlint](https://github.com/rhysd/actionlint):
 
@@ -89,7 +96,7 @@ complete.
 
 The `CI` workflow contains format, cross-platform test, module consistency, and
 Linux race jobs. Its push and pull request path filters cover `**/*.go`, `go.mod`,
-`go.sum`, `**/testdata/**`, and `.github/workflows/ci.yml`. Documentation-only
+`go.sum`, `**/testdata/**`, `**/migrations/**`, and `.github/workflows/ci.yml`. Documentation-only
 changes do not trigger these Go checks.
 
 The separate `Markdown` workflow checks all `.md` files with Prettier. It triggers

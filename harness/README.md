@@ -4,7 +4,7 @@ This harness is a documentation workflow. Start with [PLANS.md](../PLANS.md), [G
 
 ## Authorization and reviews
 
-Current state: `AWAITING_INITIAL_REVIEW`. Authorization to generate this harness does not approve product implementation. Phase 00 artifacts are ready for review; phases 01–10 are `NOT_APPROVED`.
+Current state: `PHASE_01_AWAITING_LINUX_VERIFICATION`. The user accepted phase 00/phase 01 authorization, the [workflow contract](designs/workflow-v1.md), then all five [foundation decisions](designs/foundation-storage-cli.md), including the action-name correction. Implementation, docs and [self-review](reviews/phase-01.md) are prepared. Local checks and unsandboxed race testing passed. Two symlink security tests require Linux evidence after skipping for Windows privilege limitations; phase 01 remains incomplete. The user has now authorized commit/push and a PR targeting `main`; publication and Linux verification follow without starting phase 02. Phases 02–10 remain `NOT_APPROVED`.
 
 Track reviews independently from GOALS requirement status. Record explicit user approval with date, authorized phase/scope and conversation reference or a faithful summary in the build log. Update the master/phase review state together. An approval of one phase never silently approves the next.
 

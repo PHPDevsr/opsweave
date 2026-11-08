@@ -1,6 +1,6 @@
 # Phase 00 — Assessment and harness
 
-Milestone: Planning only. Requirement status: `PLANNED`. Review state: READY_FOR_REVIEW.
+Milestone: Planning only. Requirement status: `PLANNED` for recurring policy obligations. Review state: ACCEPTED (2026-11-08, Asia/Jakarta; user reply "Ya, ACCEPT"). Planning artifact acceptance does not complete recurring requirements or close the baseline race-test limitation.
 
 ## Goal, ownership and prerequisites
 

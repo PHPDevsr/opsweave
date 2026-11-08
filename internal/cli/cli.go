@@ -7,6 +7,8 @@ import (
 	"fmt"
 	"io"
 
+	"github.com/PHPDevsr/opsweave/internal/registry"
+
 	urfave "github.com/urfave/cli/v3"
 )
 
@@ -26,6 +28,10 @@ func Run(ctx context.Context, args []string, stdout, stderr io.Writer) int {
 }
 
 func execute(ctx context.Context, args []string, stdout, stderr io.Writer) error {
+	return executeWithCatalog(ctx, args, stdout, stderr, registry.Catalog{})
+}
+
+func executeWithCatalog(ctx context.Context, args []string, stdout, stderr io.Writer, catalog registry.Catalog) error {
 	if err := ctx.Err(); err != nil {
 		return err
 	}
@@ -37,6 +43,7 @@ func execute(ctx context.Context, args []string, stdout, stderr io.Writer) error
 		ErrWriter:             stderr,
 		EnableShellCompletion: true,
 		OnUsageError:          usageError,
+		Flags:                 []urfave.Flag{&urfave.StringFlag{Name: "config", Usage: "Configuration file for administration commands"}},
 		// The caller owns diagnostics and process termination, including errors
 		// returned by the library's built-in commands.
 		ExitErrHandler: func(context.Context, *urfave.Command, error) {},
@@ -80,6 +87,7 @@ func execute(ctx context.Context, args []string, stdout, stderr io.Writer) error
 			}
 		},
 	}
+	cmd.Commands = append(cmd.Commands, foundationCommands(output, stderr, catalog)...)
 	if err := cmd.Run(ctx, args); err != nil {
 		return err
 	}

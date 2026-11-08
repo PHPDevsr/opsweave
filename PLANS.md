@@ -2,9 +2,13 @@
 
 Assessment date: 2026-11-08 (Asia/Jakarta). Baseline commit: `59c5b3f02a155f5979698bfde53c944063222be5`.
 
-Harness state: `AWAITING_INITIAL_REVIEW`. The user approved creation of these planning artifacts; product implementation and phase 01 remain unapproved. This is a documentation-only orchestrator, not an executable autonomous runner.
+Harness state: `PHASE_01_AWAITING_LINUX_VERIFICATION`. On 2026-11-08 (Asia/Jakarta), the user accepted phase 00 and authorized phase 01 ("Ya, ACCEPT"), then accepted the [workflow contract](harness/designs/workflow-v1.md) and the five [foundation contract](harness/designs/foundation-storage-cli.md) decisions (separate "setuju" replies). Phase 01 implementation, documentation and [self-review](harness/reviews/phase-01.md) are prepared. Local unit/integration, race, fuzz and dependency checks passed; two symlink security tests skipped for Windows privilege limitations and require supported Linux/CI evidence before completion. Phases 02–10 remain unapproved. This is a documentation workflow, not an executable autonomous runner.
 
 ## Repository assessment
+
+This section records the original baseline assessment. Current implementation and
+acceptance evidence are in the [foundation guide](docs/foundation.md) and
+[phase 01 self-review](harness/reviews/phase-01.md).
 
 Read [GOALS.md](GOALS.md), [AGENTS.md](AGENTS.md), README, contribution instructions, all source/tests, manifests, formatter configuration, and GitHub workflow/Dependabot configuration. No prior PLANS or harness files existed. The assessed worktree was clean and had no release tags.
 
@@ -48,6 +52,6 @@ Important dependencies apply before exposure: phase 01 reviews the full DSL cont
 
 ## Review and next action
 
-Review the generated ledger, phase ownership, acceptance criteria and operating instructions. Phase 00 artifacts are prepared; review acceptance is pending. No phase 01 implementation is authorized by this initialization. After approval, proceed only within the approved phase and present evidence for review before advancing.
+Both phase 01 contracts are accepted and implemented. Read the [foundation guide](docs/foundation.md), [self-review](harness/reviews/phase-01.md) and build-log evidence. The earlier race-toolchain gate is resolved by a verified portable compiler and passing unsandboxed race run. Obtain Linux evidence for the two skipped symlink tests, then complete phase acceptance before phase 02. The user has authorized committing and publishing this worktree on `codex/phase-01-foundation` with a PR targeting `main`; Linux CI and phase review remain pending. Phase 02 remains unapproved.
 
 See [harness operating instructions](harness/README.md) for resumption, status rules and log requirements. No runtime dependency, executable runner, background process, scheduled automation or public SDK is added here.
