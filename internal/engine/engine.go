@@ -17,6 +17,10 @@ import (
 	"github.com/PHPDevsr/opsweave/internal/workflow"
 )
 
+// Allow the durable cancellation writes to finish under the same default
+// shutdown budget as dispatcher executions, independent of the action deadline.
+const cancellationPersistenceTimeout = 30 * time.Second
+
 // Engine composes a trusted action runtime with workflow and execution repositories.
 // Run owns no background goroutines; callers own the lifetime of injected resources.
 type Engine struct {
@@ -87,13 +91,13 @@ func (e Engine) Run(ctx context.Context, name string) (execution.Snapshot, error
 		writeCtx := execCtx
 		if execCtx.Err() != nil {
 			if cleanupCtx == nil {
-				cleanupCtx, cleanupCancel = context.WithTimeout(context.WithoutCancel(ctx), 5*time.Second)
+				cleanupCtx, cleanupCancel = context.WithTimeout(context.WithoutCancel(ctx), cancellationPersistenceTimeout)
 			}
 			writeCtx = cleanupCtx
 		}
 		next, err := e.Executions.Change(writeCtx, execution.Mutation{ID: snap.ID, Owner: owner, Version: snap.Version, Step: step, To: to, Reason: reason, Output: output})
 		if err != nil && execCtx.Err() != nil && (errors.Is(err, context.Canceled) || errors.Is(err, context.DeadlineExceeded)) && cleanupCtx == nil {
-			cleanupCtx, cleanupCancel = context.WithTimeout(context.WithoutCancel(ctx), 5*time.Second)
+			cleanupCtx, cleanupCancel = context.WithTimeout(context.WithoutCancel(ctx), cancellationPersistenceTimeout)
 			next, err = e.Executions.Change(cleanupCtx, execution.Mutation{ID: snap.ID, Owner: owner, Version: snap.Version, Step: step, To: to, Reason: reason, Output: output})
 		}
 		if err != nil {

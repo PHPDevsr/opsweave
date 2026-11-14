@@ -320,3 +320,14 @@ Illustrative local median observations (three samples, ns/op): Parse/Steps1 23,1
 - Focused SQLite rollback, replay, lifecycle, fencing, startup retry, and destination-limit tests passed. The local sandbox blocked the real loopback shutdown test. The same test passed with loopback access. The full local race suite passed with loopback access and two package workers, including CLI startup and joined listener shutdown.
 - Route fuzzing passed with 129,883 executions. Webhook authentication benchmark passed with three samples. CI asserts 18 benchmark families. Static analysis, build, module verification, benchmark workflow lint, Markdown and ledger checks passed.
 - The next approval covers retention and local readiness. The [proposal](designs/retention-readiness.md) describes deletion boundaries and a local status interface.
+
+## 2026-11-14 (Asia/Jakarta) — macOS deadline persistence
+
+- The push CI run 43545654478 failed on macOS with Go 1.27.3 at
+  `TestCancellationAndDeadlinePersistence/deadline`. The pull request CI run
+  43545660092 passed on the same commit. The push test log showed the first
+  action's outcome had not persisted and hid the underlying repository error.
+- Increased the legacy runner's detached cancellation persistence budget from
+  five to 30 seconds. The action still stops at its deadline. The engine reports
+  a persistence failure if terminal state cannot be committed. Added a regression
+  for the independent write budget and improved diagnostics for the deadline test.

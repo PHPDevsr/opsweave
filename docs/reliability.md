@@ -44,6 +44,9 @@ payloads and arbitrary action error strings are not persisted.
 
 The execution budget starts at running; the step budget starts before first input
 resolution and includes all attempts/backoff. Earlier caller deadlines propagate.
+The legacy synchronous runner allows up to 30 seconds after cancellation to
+persist the terminal outcome. Actions still observe the original deadline.
+
 Absolute deadlines are stored, not reset between attempts. Exhaustion fails the
 step; a step timeout fails the execution, while an execution deadline produces
 timed_out. Failure/cancellation handlers do not erase the original outcome.
