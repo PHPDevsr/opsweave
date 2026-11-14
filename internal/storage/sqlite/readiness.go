@@ -26,13 +26,26 @@ const (
 	ServerStopping    ServerState = "stopping"
 )
 
+// ServerStatus contains local lifecycle and capacity information from one snapshot.
+type ServerStatus struct {
+	State ServerState       `json:"state"`
+	Pool  *WorkerPoolStatus `json:"pool,omitempty"`
+}
+
+// WorkerPoolStatus counts durable managed work for the current server.
+type WorkerPoolStatus struct {
+	Capacity   int `json:"capacity"`
+	Busy       int `json:"busy"`
+	QueueDepth int `json:"queueDepth"`
+}
+
 // PublishServerState updates the server lifecycle for the current fence only.
-func (s *Store) PublishServerState(ctx context.Context, f execution.Fence, state ServerState) error {
-	if f.Generation < 1 || !execution.ValidID(f.Owner) || (state != ServerReady && state != ServerStopping) {
+func (s *Store) PublishServerState(ctx context.Context, f execution.Fence, state ServerState, workers int) error {
+	if f.Generation < 1 || !execution.ValidID(f.Owner) || (state != ServerReady && state != ServerStopping) || workers < 1 || workers > 64 {
 		return execution.ErrInvalid
 	}
-	result, err := s.db.ExecContext(ctx, `UPDATE dispatcher SET server_state=?
- WHERE singleton=1 AND generation=? AND owner=?`, state, f.Generation, f.Owner)
+	result, err := s.db.ExecContext(ctx, `UPDATE dispatcher SET server_state=?,worker_capacity=?
+ WHERE singleton=1 AND generation=? AND owner=?`, state, workers, f.Generation, f.Owner)
 	if err != nil {
 		return fmt.Errorf("publish dispatcher lifecycle: %w", err)
 	}
@@ -46,31 +59,46 @@ func (s *Store) PublishServerState(ctx context.Context, f execution.Fence, state
 	return nil
 }
 
-// ReadServerState checks the exact migration ledger and reads the server state
+// ReadServerStatus checks the exact migration ledger and reads the server status
 // from one read-only snapshot. The caller verifies native lock ownership.
-func ReadServerState(ctx context.Context, path string) (state ServerState, err error) {
+func ReadServerStatus(ctx context.Context, path string) (status ServerStatus, err error) {
+	status.State = ServerUnavailable
 	db, err := openReadOnly(path)
 	if err != nil {
-		return ServerUnavailable, err
+		return status, err
 	}
 	defer func() { err = errors.Join(err, db.Close()) }()
 	tx, err := db.BeginTx(ctx, &sql.TxOptions{ReadOnly: true})
 	if err != nil {
-		return ServerUnavailable, err
+		return status, err
 	}
 	defer rollback(tx, &err)
 	if err := checkSchema(ctx, tx); err != nil {
-		return ServerUnavailable, err
+		return status, err
 	}
 	var owner string
 	var generation int64
-	if err := tx.QueryRowContext(ctx, "SELECT generation,owner,server_state FROM dispatcher WHERE singleton=1").Scan(&generation, &owner, &state); err != nil {
-		return ServerUnavailable, err
+	var state ServerState
+	var pool WorkerPoolStatus
+	if err := tx.QueryRowContext(ctx, "SELECT generation,owner,server_state,worker_capacity FROM dispatcher WHERE singleton=1").Scan(&generation, &owner, &state, &pool.Capacity); err != nil {
+		return status, err
 	}
-	if generation < 1 || !execution.ValidID(owner) || (state != ServerReady && state != ServerStopping) {
-		state = ServerUnavailable
+	if generation > 0 && execution.ValidID(owner) && (state == ServerReady || state == ServerStopping) {
+		if pool.Capacity < 1 {
+			return status, execution.ErrConflict
+		}
+		if err := tx.QueryRowContext(ctx, `SELECT
+ (SELECT count(*) FROM execution_attempts a JOIN execution_queue q ON q.execution_id=a.execution_id
+  WHERE a.state='running' AND q.generation=?),
+ (SELECT count(*) FROM executions e JOIN execution_queue q ON q.execution_id=e.id WHERE e.state='queued')`, generation).Scan(&pool.Busy, &pool.QueueDepth); err != nil {
+			return status, err
+		}
+		if pool.Busy > pool.Capacity {
+			return status, execution.ErrConflict
+		}
+		status = ServerStatus{State: state, Pool: &pool}
 	}
-	return state, tx.Commit()
+	return status, tx.Commit()
 }
 
 func openReadOnly(path string) (*sql.DB, error) {

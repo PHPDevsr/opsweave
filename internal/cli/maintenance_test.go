@@ -42,7 +42,11 @@ func TestServerStatusRequiresServerLocksAndLiveSchema(t *testing.T) {
 	assertStatus := func(want sqlite.ServerState) {
 		t.Helper()
 		out, err := runCatalog(t, testCatalog(), cfg, "server", "status", "--json")
-		if strings.TrimSpace(out) != `{"state":"`+string(want)+`"}` || (err == nil) != (want == sqlite.ServerReady) {
+		wantJSON := `{"state":"` + string(want) + `"`
+		if want != sqlite.ServerUnavailable {
+			wantJSON += `,"pool":{"capacity":3,"busy":0,"queueDepth":0}`
+		}
+		if strings.TrimSpace(out) != wantJSON+`}` || (err == nil) != (want == sqlite.ServerReady) {
 			t.Fatalf("want %s, got %s (%v)", want, out, err)
 		}
 	}
@@ -86,19 +90,19 @@ func TestServerStatusRequiresServerLocksAndLiveSchema(t *testing.T) {
 	assertStatus(sqlite.ServerUnavailable)
 	stale := f
 	stale.Generation++
-	if err = s.PublishServerState(t.Context(), stale, sqlite.ServerReady); !errors.Is(err, execution.ErrConflict) {
+	if err = s.PublishServerState(t.Context(), stale, sqlite.ServerReady, 3); !errors.Is(err, execution.ErrConflict) {
 		t.Fatal(err)
 	}
-	if err = s.PublishServerState(t.Context(), f, sqlite.ServerReady); err != nil {
+	if err = s.PublishServerState(t.Context(), f, sqlite.ServerReady, 3); err != nil {
 		t.Fatal(err)
 	}
 	assertStatus(sqlite.ServerReady)
 	ctx, cancel := context.WithCancel(t.Context())
 	cancel()
-	if got, err := localServerState(ctx, path); got != sqlite.ServerUnavailable || !errors.Is(err, context.Canceled) {
+	if got, err := localServerStatus(ctx, path); got != (sqlite.ServerStatus{State: sqlite.ServerUnavailable}) || !errors.Is(err, context.Canceled) {
 		t.Fatal(got, err)
 	}
-	if err = s.PublishServerState(t.Context(), f, sqlite.ServerStopping); err != nil {
+	if err = s.PublishServerState(t.Context(), f, sqlite.ServerStopping, 3); err != nil {
 		t.Fatal(err)
 	}
 	assertStatus(sqlite.ServerStopping)

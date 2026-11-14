@@ -87,7 +87,7 @@ func runServer(ctx context.Context, out io.Writer, port int, secret []byte, disp
 	ready := func() error {
 		probe, cancel := context.WithTimeout(ctx, 5*time.Second)
 		defer cancel()
-		return store.PublishServerState(probe, dispatch.Fence, sqlite.ServerReady)
+		return store.PublishServerState(probe, dispatch.Fence, sqlite.ServerReady, dispatch.Capacity.Workers)
 	}
 	if len(secret) == 0 {
 		if err := ready(); err != nil {

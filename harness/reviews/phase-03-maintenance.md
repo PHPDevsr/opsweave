@@ -10,8 +10,14 @@ The approved work adds opt-in SQLite execution history pruning and local dispatc
 
 The prune transaction checks receipt expiry and replay references while holding the same SQLite write lock used by admission. The temporary deletion authorization is committed empty and a failure rolls back the whole batch. Workflow revisions retain their immutable guards. Retaining a replay's parent until the child record disappears preserves the database foreign key and lets the retained replay resolve its lineage. A scheduled occurrence key retains its workflow revision, trigger, and time. It carries no output or execution ID. Migration 007 preserves prior migration checksums. Upgrade and rollback use a backup with the matching binary.
 
-Readiness opens SQLite in read-only mode and validates the migration ledger. Two OS locks distinguish a server from standalone work, and the database fence protects lifecycle writes. Status exposes one local state and keeps diagnostics free of owner identifiers, secrets, and raw storage errors. The webhook handler stays on its existing signed ingress route.
+Readiness opens SQLite in read-only mode and validates the migration ledger. Two OS locks distinguish a server from standalone work, and the database fence protects lifecycle writes. Status exposes local state and aggregate counts while keeping diagnostics free of owner identifiers, secrets, and raw storage errors. The webhook handler stays on its existing signed ingress route.
 
 `TestReadinessRejectsIncompatibleMigrationChecksum` checks that a live database with a changed migration checksum is unavailable and that a released generation cannot publish readiness.
 
-The current phase still requires remote verification and phase acceptance. CodeQL upload requires repository Advanced Security configuration. Worker status monitoring (`G-5.11-010`) requires a decision about operator-visible worker details beyond the accepted local server state. See the [build log](../build-log.md) for verification results.
+## Worker pool monitoring
+
+The user approved local capacity, busy worker and queue depth reporting. Migration 008 publishes server capacity with lifecycle under the same fence. Start and release clear former capacity. The status read uses one SQLite snapshot and indexed counts of durable attempts and queued work, with no additional writes in the dispatch loop. The busy count represents durably reserved slots until the outcome is recorded. This leaves retry backoff out of the count and keeps an unresolved attempt visible for the current generation.
+
+`TestDispatcherCLIServerQueueBusyAndShutdown` verifies the counts with a blocked action, a second admission and a draining server. `TestDispatcherManagedBackoffRecoveryPreservesBudget` verifies that backoff releases the counted slot. `TestWorkerStatusMigrationPreservesQueueAndResetsCapacityOnNewOwner` verifies upgrade, preserved queue and publication fencing. `TestServerStatusRequiresServerLocksAndLiveSchema` checks the user-facing JSON schema and lifecycle exits. Together these cover `G-5.11-010` within the single-node phase.
+
+The phase still requires acceptance. CodeQL upload requires repository Advanced Security configuration. See the [build log](../build-log.md) for verification results.

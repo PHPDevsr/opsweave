@@ -167,7 +167,7 @@ func serverCommand(out, diagnostics io.Writer, runtime *action.Runtime) *urfave.
 			dispatch.Stopping = func() error {
 				cleanup, cancel := context.WithTimeout(context.WithoutCancel(ctx), 5*time.Second)
 				defer cancel()
-				return store.PublishServerState(cleanup, fence, sqlite.ServerStopping)
+				return store.PublishServerState(cleanup, fence, sqlite.ServerStopping, cfg.Execution.Workers)
 			}
 			err = runServer(ctx, out, cmd.Int("webhook-port"), secret, dispatch, store)
 			if err == context.Canceled && ctx.Err() != nil {

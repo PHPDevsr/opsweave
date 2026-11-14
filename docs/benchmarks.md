@@ -89,7 +89,7 @@ include migration 004 and must not be treated as identical migration workloads.
 The `Benchmarks` workflow runs on relevant pull requests, matching pushes to
 `main`, and manual dispatch. A Linux job uses the declared Go version, one logical
 CPU setting (`-cpu=1`), three samples and 200 ms target measurement windows. It
-verifies all nineteen benchmark families, including both execution prune cases. Benchmark errors or missing
+verifies all twenty benchmark families, including both execution prune cases and the worker status probe. Benchmark errors or missing
 families fail the job; shell pipe failures cannot be hidden by `tee`.
 
 Each run uploads `benchmark-results.txt` plus `benchmark-environment.txt` with
@@ -117,3 +117,5 @@ The second benchmark updates one bounded fixture row. It excludes action work.
 JSON validation and receipt serialization with an in-memory admission stub.
 
 `BenchmarkExecutionPrune/Apply100` measures deletion of 100 terminal executions and their transition rows in one transaction. `/Preview1000` measures eligibility reporting over 1000 terminal executions. Fixture population is excluded from both measurements.
+
+`BenchmarkServerWorkerStatus` measures opening SQLite read-only, checking migration compatibility and reading the pool snapshot with 16 queued executions. Native lock probing is outside this storage benchmark.

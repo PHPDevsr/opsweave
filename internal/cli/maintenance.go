@@ -53,7 +53,7 @@ func pruneCommand(out, diagnostics io.Writer) *urfave.Command {
 }
 
 func serverStatusCommand(out, diagnostics io.Writer) *urfave.Command {
-	return &urfave.Command{Name: "status", Usage: "Check local dispatcher readiness", OnUsageError: usageError, ArgValidator: noArguments,
+	return &urfave.Command{Name: "status", Usage: "Check local dispatcher readiness and worker pool", OnUsageError: usageError, ArgValidator: noArguments,
 		Flags: []urfave.Flag{jsonFlag()}, Action: func(ctx context.Context, cmd *urfave.Command) error {
 			cfg, err := loadConfig(ctx, cmd, diagnostics)
 			if err != nil {
@@ -61,13 +61,14 @@ func serverStatusCommand(out, diagnostics io.Writer) *urfave.Command {
 			}
 			ctx, cancel := context.WithTimeout(ctx, 2*time.Second)
 			defer cancel()
-			state, checkErr := localServerState(ctx, cfg.StoragePath)
+			status, checkErr := localServerStatus(ctx, cfg.StoragePath)
 			if cmd.Bool("json") {
-				err = json.NewEncoder(out).Encode(struct {
-					State sqlite.ServerState `json:"state"`
-				}{state})
+				err = json.NewEncoder(out).Encode(status)
 			} else {
-				_, err = fmt.Fprintln(out, state)
+				_, err = fmt.Fprintln(out, status.State)
+				if err == nil && status.Pool != nil {
+					_, err = fmt.Fprintf(out, "workers=%d busy=%d queue_depth=%d\n", status.Pool.Capacity, status.Pool.Busy, status.Pool.QueueDepth)
+				}
 			}
 			if err != nil {
 				return err
@@ -78,31 +79,32 @@ func serverStatusCommand(out, diagnostics io.Writer) *urfave.Command {
 				}
 				return errors.New("server status check failed; check database compatibility and dispatcher lock access")
 			}
-			if state != sqlite.ServerReady {
-				return fmt.Errorf("dispatcher server is %s", state)
+			if status.State != sqlite.ServerReady {
+				return fmt.Errorf("dispatcher server is %s", status.State)
 			}
 			return nil
 		}}
 }
 
-func localServerState(ctx context.Context, path string) (sqlite.ServerState, error) {
+func localServerStatus(ctx context.Context, path string) (sqlite.ServerStatus, error) {
+	unavailable := sqlite.ServerStatus{State: sqlite.ServerUnavailable}
 	if err := ctx.Err(); err != nil {
-		return sqlite.ServerUnavailable, err
+		return unavailable, err
 	}
 	canonical, held, err := dispatchlock.ProbeServer(path)
 	if err != nil || !held {
-		return sqlite.ServerUnavailable, err
+		return unavailable, err
 	}
-	state, err := sqlite.ReadServerState(ctx, canonical)
+	status, err := sqlite.ReadServerStatus(ctx, canonical)
 	if err != nil {
-		return sqlite.ServerUnavailable, err
+		return unavailable, err
 	}
 	_, held, err = dispatchlock.ProbeServer(canonical)
 	if err != nil || !held {
-		return sqlite.ServerUnavailable, err
+		return unavailable, err
 	}
 	if err = ctx.Err(); err != nil {
-		return sqlite.ServerUnavailable, err
+		return unavailable, err
 	}
-	return state, nil
+	return status, nil
 }

@@ -84,8 +84,8 @@ func TestDispatcherCLIServerQueueBusyAndShutdown(t *testing.T) {
 	case <-ctx.Done():
 		t.Fatal(ctx.Err())
 	}
-	if state, err := localServerState(ctx, path); err != nil || state != sqlite.ServerReady {
-		t.Fatal(state, err)
+	if status, err := localServerStatus(ctx, path); err != nil || status.State != sqlite.ServerReady || status.Pool == nil || *status.Pool != (sqlite.WorkerPoolStatus{Capacity: 4, Busy: 1}) {
+		t.Fatal(status, status.Pool, err)
 	}
 	if _, err = invoke("run", "--json", "example"); !errors.Is(err, execution.ErrBusy) {
 		t.Fatal(err)
@@ -94,6 +94,9 @@ func TestDispatcherCLIServerQueueBusyAndShutdown(t *testing.T) {
 	if err != nil || next.State != execution.Queued || next.ID == queued.ID {
 		t.Fatal(next, err)
 	}
+	if status, err := localServerStatus(ctx, path); err != nil || status.Pool == nil || status.Pool.QueueDepth != 1 {
+		t.Fatal(status, status.Pool, err)
+	}
 	stop()
 	select {
 	case <-cancelling:
@@ -101,11 +104,14 @@ func TestDispatcherCLIServerQueueBusyAndShutdown(t *testing.T) {
 		t.Fatal(ctx.Err())
 	}
 	for {
-		state, err := localServerState(ctx, path)
+		status, err := localServerStatus(ctx, path)
 		if err != nil {
 			t.Fatal(err)
 		}
-		if state == sqlite.ServerStopping {
+		if status.State == sqlite.ServerStopping {
+			if status.Pool == nil || *status.Pool != (sqlite.WorkerPoolStatus{Capacity: 4, Busy: 1, QueueDepth: 1}) {
+				t.Fatal(status, status.Pool)
+			}
 			break
 		}
 		select {
@@ -123,8 +129,8 @@ func TestDispatcherCLIServerQueueBusyAndShutdown(t *testing.T) {
 	case <-ctx.Done():
 		t.Fatal(ctx.Err())
 	}
-	if state, err := localServerState(ctx, path); err != nil || state != sqlite.ServerUnavailable {
-		t.Fatal(state, err)
+	if status, err := localServerStatus(ctx, path); err != nil || status != (sqlite.ServerStatus{State: sqlite.ServerUnavailable}) {
+		t.Fatal(status, err)
 	}
 	s, err := sqlite.Open(ctx, path)
 	if err != nil {

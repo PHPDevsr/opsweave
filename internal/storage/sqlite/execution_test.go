@@ -240,7 +240,7 @@ func TestUpgradeFoundationPreservesRevisions(t *testing.T) {
 		t.Fatal(snap, err)
 	}
 	var count int
-	if err := upgraded.db.QueryRowContext(t.Context(), "SELECT count(*) FROM schema_migrations").Scan(&count); err != nil || count != 7 {
+	if err := upgraded.db.QueryRowContext(t.Context(), "SELECT count(*) FROM schema_migrations").Scan(&count); err != nil || count != 8 {
 		t.Fatal(count, err)
 	}
 }

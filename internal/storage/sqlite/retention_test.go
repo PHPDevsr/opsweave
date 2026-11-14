@@ -13,6 +13,7 @@ import (
 
 func removeMigrationSeven(t *testing.T, s *Store) {
 	t.Helper()
+	removeMigrationEight(t, s)
 	_, err := s.db.ExecContext(t.Context(), `ALTER TABLE dispatcher DROP COLUMN server_state;
 DROP TABLE pruned_schedule_occurrences;
 DROP INDEX execution_policies_parent;
@@ -31,6 +32,15 @@ DELETE FROM schema_migrations WHERE version=7;`)
 		}
 	}
 	if _, err := s.db.ExecContext(t.Context(), "DROP TABLE execution_prune_targets"); err != nil {
+		t.Fatal(err)
+	}
+}
+
+func removeMigrationEight(t *testing.T, s *Store) {
+	t.Helper()
+	if _, err := s.db.ExecContext(t.Context(), `ALTER TABLE dispatcher DROP COLUMN worker_capacity;
+DROP INDEX execution_attempts_running; DROP INDEX executions_queued;
+DELETE FROM schema_migrations WHERE version=8;`); err != nil {
 		t.Fatal(err)
 	}
 }

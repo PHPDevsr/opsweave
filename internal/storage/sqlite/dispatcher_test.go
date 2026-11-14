@@ -163,7 +163,7 @@ func TestDispatcherRevisionAndGlobalCapacity(t *testing.T) {
 }
 
 func TestDispatcherManagedBackoffRecoveryPreservesBudget(t *testing.T) {
-	s, r, _ := reliableStoreFixture(t)
+	s, r, path := reliableStoreFixture(t)
 	cap := execution.DefaultCapacity()
 	q, err := s.Enqueue(t.Context(), r, execution.QueueAdmission{Capacity: cap})
 	if err != nil {
@@ -171,6 +171,9 @@ func TestDispatcherManagedBackoffRecoveryPreservesBudget(t *testing.T) {
 	}
 	f, err := s.BeginDispatcher(t.Context(), testOwner, false)
 	if err != nil {
+		t.Fatal(err)
+	}
+	if err = s.PublishServerState(t.Context(), f, ServerReady, cap.Workers); err != nil {
 		t.Fatal(err)
 	}
 	snap, err := s.ClaimExecution(t.Context(), f, q.Snapshot.ID, r, cap)
@@ -183,6 +186,9 @@ func TestDispatcherManagedBackoffRecoveryPreservesBudget(t *testing.T) {
 		if err != nil {
 			t.Fatal(err)
 		}
+	}
+	if status, err := ReadServerStatus(t.Context(), path); err != nil || status.Pool == nil || *status.Pool != (WorkerPoolStatus{Capacity: cap.Workers}) {
+		t.Fatal(status, status.Pool, err)
 	}
 	next, err := s.BeginDispatcher(t.Context(), strings.Repeat("c", 32), false)
 	if err != nil {

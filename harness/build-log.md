@@ -342,3 +342,11 @@ Illustrative local median observations (three samples, ns/op): Parse/Steps1 23,1
 - `go vet ./...`, `go mod verify`, `go build ./...`, `actionlint .github/workflows/benchmarks.yml`, Bun Markdown, ledger reconciliation, and `git diff --check` passed. The Go build emitted the existing module stat-cache permissions warning and exited zero. No dependency changes.
 - Ran `go test -run '^$' -bench '^BenchmarkExecutionPrune$' -benchmem -benchtime=200ms -count=3 -cpu=1 ./internal/storage/sqlite`. Both cases passed in all three samples. Preview was 3.08–3.16 ms per 1000 executions, and apply was 14.8–35.9 ms per 100 executions on local Windows. Benchmark CI checks both cases.
 - Phase verification and acceptance remain open. The accepted status command reports overall dispatcher readiness. The worker status requirement needs a separate contract for any per-worker or pool information. CodeQL upload still requires repository Advanced Security configuration.
+
+## 2026-11-14 (Asia/Jakarta) — Worker pool status
+
+- The user replied `setuju` to local worker capacity, busy workers and queue depth. Work started from `53ca869` on draft PR #5.
+- Added migration 008 and exposed pool counts in the existing CLI status. Lifecycle and capacity use the same fence. A read-only snapshot counts managed queued work and running attempts of the current generation. Status retains its lifecycle exit codes and exposes aggregate counts only.
+- The full standard Go suite, `go vet ./...`, `go mod verify` and `go build ./...` passed. Build emitted the existing local module stat-cache permissions warning and exited zero. Tests cover active and queued work, draining shutdown, retry backoff, old schema upgrade and stale publication.
+- `BenchmarkServerWorkerStatus` passed three 200 ms samples at 1.40–1.46 ms per read on local Windows. Benchmark CI checks its output. `actionlint`, Bun Markdown and the source diff checks passed. See the [maintenance guide](../docs/maintenance.md) and [implementation review](reviews/phase-03-maintenance.md).
+- Phase 03 implementation is available for verification and acceptance. The release milestone and CodeQL upload configuration remain open. Later phases require user authorization.
