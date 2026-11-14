@@ -94,6 +94,7 @@ func executionCommands(out, diagnostics io.Writer, runtime *action.Runtime) []*u
 			})
 		}})
 	}
+	group.Commands = append(group.Commands, pruneCommand(out, diagnostics))
 	return []*urfave.Command{run, group}
 }
 

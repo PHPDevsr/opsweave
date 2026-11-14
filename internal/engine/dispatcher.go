@@ -26,6 +26,7 @@ type Dispatcher struct {
 	Logger     *slog.Logger
 	Scheduler  *scheduler.Service
 	Startup    func(context.Context) (bool, error)
+	Stopping   func() error
 	Now        func() time.Time
 }
 
@@ -189,6 +190,16 @@ func (d Dispatcher) Run(ctx context.Context, only string) (final execution.Snaps
 			<-joined
 		}
 	}()
+	stopping := d.Stopping
+	markStopping := func() {
+		if stopping != nil {
+			if err := stopping(); err != nil {
+				resultErr = errors.Join(resultErr, err)
+			}
+			stopping = nil
+		}
+	}
+	defer markStopping()
 	tick := time.NewTicker(25 * time.Millisecond)
 	defer tick.Stop()
 	var operationCtx context.Context
@@ -290,6 +301,10 @@ func (d Dispatcher) Run(ctx context.Context, only string) (final execution.Snaps
 		if shutdown == nil && ctx.Err() != nil {
 			shutdown, stop = dispatchContext(ctx, d.Capacity.ShutdownTimeout)
 			logger.InfoContext(shutdown, "dispatcher stopping")
+			for _, call := range active {
+				call.cancel()
+			}
+			markStopping()
 			if only != "" {
 				own, err := d.Engine.Executions.Execution(shutdown, only)
 				if err != nil {
@@ -304,10 +319,6 @@ func (d Dispatcher) Run(ctx context.Context, only string) (final execution.Snaps
 						return final, safeRepositoryError(err)
 					}
 				}
-			}
-
-			for _, call := range active {
-				call.cancel()
 			}
 		}
 		if shutdown != nil && shutdown.Err() != nil {

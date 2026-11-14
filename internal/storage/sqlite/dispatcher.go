@@ -83,7 +83,7 @@ func (s *Store) BeginDispatcher(ctx context.Context, owner string, adopt bool) (
 		return f, execution.ErrUnmanaged
 	}
 	f.Owner = owner
-	if err = tx.QueryRowContext(ctx, "UPDATE dispatcher SET generation=generation+1,owner=? WHERE singleton=1 AND generation<9223372036854775807 RETURNING generation", owner).Scan(&f.Generation); err != nil {
+	if err = tx.QueryRowContext(ctx, "UPDATE dispatcher SET generation=generation+1,owner=?,server_state='unavailable' WHERE singleton=1 AND generation<9223372036854775807 RETURNING generation", owner).Scan(&f.Generation); err != nil {
 		return f, err
 	}
 	if _, err = tx.ExecContext(ctx, "INSERT INTO dispatcher_audit VALUES(?,?,?)", f.Generation, adopt, time.Now().UTC().Format(time.RFC3339Nano)); err != nil {
@@ -103,7 +103,7 @@ func (s *Store) EndDispatcher(ctx context.Context, f execution.Fence) (err error
 	if err = checkFence(ctx, tx, f, ""); err != nil {
 		return err
 	}
-	if _, err = tx.ExecContext(ctx, "UPDATE dispatcher SET owner='' WHERE singleton=1"); err != nil {
+	if _, err = tx.ExecContext(ctx, "UPDATE dispatcher SET owner='',server_state='unavailable' WHERE singleton=1"); err != nil {
 		return err
 	}
 	return tx.Commit()

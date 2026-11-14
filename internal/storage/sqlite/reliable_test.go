@@ -292,6 +292,7 @@ func TestReliableEventCapacityAndLegacyUpgrade(t *testing.T) {
 
 func versionTwoFixture(t *testing.T, s *Store) {
 	t.Helper()
+	removeMigrationSeven(t, s)
 	tx, err := s.db.BeginTx(t.Context(), nil)
 	if err != nil {
 		t.Fatal(err)

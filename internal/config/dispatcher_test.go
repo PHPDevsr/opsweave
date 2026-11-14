@@ -32,3 +32,28 @@ func TestExecutionConfiguration(t *testing.T) {
 		}
 	}
 }
+
+func TestRetentionAgeConfiguration(t *testing.T) {
+	dir := t.TempDir()
+	path := filepath.Join(dir, "opsweave.yaml")
+	if c, err := Load(t.Context(), "", dir, nil); err != nil || c.RetentionAge != 0 {
+		t.Fatal(c, err)
+	}
+	if err := os.WriteFile(path, []byte("execution: {retention_age: 720h}"), 0600); err != nil {
+		t.Fatal(err)
+	}
+	if c, err := Load(t.Context(), path, dir, nil); err != nil || c.RetentionAge != 720*time.Hour {
+		t.Fatal(c, err)
+	}
+	if c, err := Load(t.Context(), path, dir, []string{"OPSWEAVE_EXECUTION_RETENTION_AGE=24h"}); err != nil || c.RetentionAge != 24*time.Hour {
+		t.Fatal(c, err)
+	}
+	for _, input := range []string{"0s", "-1h", "24", "null", "private-marker"} {
+		if err := os.WriteFile(path, []byte("execution: {retention_age: "+input+"}"), 0600); err != nil {
+			t.Fatal(err)
+		}
+		if _, err := Load(t.Context(), path, dir, nil); err == nil || strings.Contains(err.Error(), "private-marker") {
+			t.Fatal(input, err)
+		}
+	}
+}

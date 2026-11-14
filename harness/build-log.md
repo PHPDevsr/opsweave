@@ -331,3 +331,14 @@ Illustrative local median observations (three samples, ns/op): Parse/Steps1 23,1
   five to 30 seconds. The action still stops at its deadline. The engine reports
   a persistence failure if terminal state cannot be committed. Added a regression
   for the independent write budget and improved diagnostics for the deadline test.
+
+## 2026-11-14 (Asia/Jakarta) — Retention and local readiness
+
+- The user replied `ACCEPT` to the retention and local readiness contract. Work started from `9c177d2` on draft PR #5 with a clean worktree.
+- Added opt-in age-based pruning, an explicitly read-only preview, and an apply transaction for up to 100 terminal executions. Prune protects unexpired receipts, replay parents and workflow revisions. Cron occurrence identities continue to prevent duplicate admissions after removing the execution and its history. Migration 007 adds these storage boundaries and fenced server lifecycle state.
+- Added a local `server status` check for native ownership and the SQLite migration ledger. Startup readiness follows recovery and optional webhook bind. Shutdown publishes `stopping` before joining invocations. Readiness distinguishes standalone work and stale ownership. The [maintenance review](reviews/phase-03-maintenance.md) records security and compatibility evidence.
+- The full standard suite passed with native Windows locking and loopback access. The initial full race run exposed probe contention at a 200 ms SQLite busy timeout. Increased it to one second within the two-second probe budget. Six targeted race repetitions then passed. Focused prune and incompatible-schema tests passed after adding exact age boundaries, reopen and checksum coverage.
+- `go test -count=1 -p 2 ./...` and `go test -race -count=1 -p 2 ./...` exited zero. The final regular-file checks and checksum regression also passed targeted race verification in the CLI, lock, and SQLite packages.
+- `go vet ./...`, `go mod verify`, `go build ./...`, `actionlint .github/workflows/benchmarks.yml`, Bun Markdown, ledger reconciliation, and `git diff --check` passed. The Go build emitted the existing module stat-cache permissions warning and exited zero. No dependency changes.
+- Ran `go test -run '^$' -bench '^BenchmarkExecutionPrune$' -benchmem -benchtime=200ms -count=3 -cpu=1 ./internal/storage/sqlite`. Both cases passed in all three samples. Preview was 3.08–3.16 ms per 1000 executions, and apply was 14.8–35.9 ms per 100 executions on local Windows. Benchmark CI checks both cases.
+- Phase verification and acceptance remain open. The accepted status command reports overall dispatcher readiness. The worker status requirement needs a separate contract for any per-worker or pool information. CodeQL upload still requires repository Advanced Security configuration.

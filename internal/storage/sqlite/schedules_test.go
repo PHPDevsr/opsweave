@@ -430,6 +430,7 @@ func TestSchedulerDefersUnavailableActionsAndReturnsInfrastructureErrors(t *test
 
 func TestMigrationFiveRollbackPreservesOldHistory(t *testing.T) {
 	s, r, _ := reliableStoreFixture(t)
+	removeMigrationSeven(t, s)
 	admission, err := s.CreateReliable(t.Context(), r, execution.AdmissionOptions{Owner: testOwner})
 	if err != nil {
 		t.Fatal(err)

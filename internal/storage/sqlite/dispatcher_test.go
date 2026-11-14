@@ -379,6 +379,7 @@ func TestMigrationFourPreservesHistoryAndRollsBackIndex(t *testing.T) {
 			if err = s.db.QueryRowContext(t.Context(), "SELECT body FROM executions WHERE id=?", snap.ID).Scan(&before); err != nil {
 				t.Fatal(err)
 			}
+			removeMigrationSeven(t, s)
 			for _, statement := range []string{"DROP TABLE event_history", "DROP TABLE event_dedup", "DROP TABLE event_executions", "DROP TABLE startup_scan", "DROP TABLE event_routes", "DROP TABLE schedule_events", "DROP TABLE scheduled_executions", "DROP TABLE schedules", "ALTER TABLE workflows DROP COLUMN automatic_generation", "DROP TABLE dispatcher_audit", "DROP TABLE execution_queue", "DROP TABLE dispatcher", "DELETE FROM schema_migrations WHERE version>=4", "DROP INDEX executions_active_workflow", "CREATE UNIQUE INDEX executions_active_workflow ON executions(workflow_name) WHERE state IN ('pending','queued','running')"} {
 				if _, err = s.db.ExecContext(t.Context(), statement); err != nil {
 					t.Fatal(err)

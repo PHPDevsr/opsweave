@@ -37,11 +37,17 @@ func TestDispatcherCLIServerQueueBusyAndShutdown(t *testing.T) {
 	ctx, cancel := context.WithTimeout(t.Context(), 20*time.Second)
 	defer cancel()
 	started := make(chan struct{}, 1)
+	cancelling := make(chan struct{}, 1)
+	release := make(chan struct{})
+	var releaseOnce sync.Once
+	defer releaseOnce.Do(func() { close(release) })
 	var calls atomic.Int32
 	runtime, err := action.New([]action.Registration{{Descriptor: testCatalog()["test.echo"], Run: func(ctx context.Context, in map[string]any) (map[string]any, error) {
 		calls.Add(1)
 		started <- struct{}{}
 		<-ctx.Done()
+		cancelling <- struct{}{}
+		<-release
 		return nil, ctx.Err()
 	}}}, nil)
 	if err != nil {
@@ -78,6 +84,9 @@ func TestDispatcherCLIServerQueueBusyAndShutdown(t *testing.T) {
 	case <-ctx.Done():
 		t.Fatal(ctx.Err())
 	}
+	if state, err := localServerState(ctx, path); err != nil || state != sqlite.ServerReady {
+		t.Fatal(state, err)
+	}
 	if _, err = invoke("run", "--json", "example"); !errors.Is(err, execution.ErrBusy) {
 		t.Fatal(err)
 	}
@@ -87,12 +96,35 @@ func TestDispatcherCLIServerQueueBusyAndShutdown(t *testing.T) {
 	}
 	stop()
 	select {
+	case <-cancelling:
+	case <-ctx.Done():
+		t.Fatal(ctx.Err())
+	}
+	for {
+		state, err := localServerState(ctx, path)
+		if err != nil {
+			t.Fatal(err)
+		}
+		if state == sqlite.ServerStopping {
+			break
+		}
+		select {
+		case <-time.After(10 * time.Millisecond):
+		case <-ctx.Done():
+			t.Fatal(ctx.Err())
+		}
+	}
+	releaseOnce.Do(func() { close(release) })
+	select {
 	case err = <-done:
 		if err != nil {
 			t.Fatal(err)
 		}
 	case <-ctx.Done():
 		t.Fatal(ctx.Err())
+	}
+	if state, err := localServerState(ctx, path); err != nil || state != sqlite.ServerUnavailable {
+		t.Fatal(state, err)
 	}
 	s, err := sqlite.Open(ctx, path)
 	if err != nil {

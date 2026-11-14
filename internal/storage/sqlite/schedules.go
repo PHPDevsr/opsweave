@@ -212,6 +212,14 @@ func deliverSchedule(ctx context.Context, tx *sql.Tx, f execution.Fence, entry s
 	if !errors.Is(err, sql.ErrNoRows) {
 		return scheduler.Result{}, err
 	}
+	var pruned bool
+	if err := tx.QueryRowContext(ctx, `SELECT EXISTS(SELECT 1 FROM pruned_schedule_occurrences
+		WHERE workflow_name=? AND revision_id=? AND trigger_id=? AND scheduled_at=?)`, entry.Workflow, entry.Revision, entry.Trigger.ID, due.Format(time.RFC3339Nano)).Scan(&pruned); err != nil {
+		return scheduler.Result{}, err
+	}
+	if pruned {
+		return scheduler.Result{Code: "deduplicated"}, nil
+	}
 	if preflightFailure != "" {
 		return scheduler.Result{Code: preflightFailure}, nil
 	}

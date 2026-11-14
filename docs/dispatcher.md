@@ -1,5 +1,7 @@
 # Single-node dispatcher in development
 
+The [maintenance guide](maintenance.md) covers `server status`, dispatcher readiness and SQLite history pruning.
+
 The accepted [dispatcher contract](../harness/designs/single-node-dispatcher.md)
 extends the [serial reliability core](reliability.md) with a bounded action pool,
 durable queue, workflow concurrency, parallel DAG steps and conservative recovery.

@@ -99,7 +99,7 @@ func managedResultError(state execution.State) error {
 }
 
 func serverCommand(out, diagnostics io.Writer, runtime *action.Runtime) *urfave.Command {
-	return &urfave.Command{Name: "server", Usage: "Run the bounded single-node dispatcher", OnUsageError: usageError, ArgValidator: noArguments, Flags: []urfave.Flag{&urfave.IntFlag{Name: "webhook-port", Usage: "Enable authenticated IPv4 loopback webhooks on this port"}, &urfave.BoolFlag{Name: "adopt-unmanaged", Usage: "Adopt old active executions after stopping every old executor"}}, Action: func(ctx context.Context, cmd *urfave.Command) (err error) {
+	return &urfave.Command{Name: "server", Usage: "Run the bounded single-node dispatcher", OnUsageError: usageError, ArgValidator: noArguments, Commands: []*urfave.Command{serverStatusCommand(out, diagnostics)}, Flags: []urfave.Flag{&urfave.IntFlag{Name: "webhook-port", Usage: "Enable authenticated IPv4 loopback webhooks on this port"}, &urfave.BoolFlag{Name: "adopt-unmanaged", Usage: "Adopt old active executions after stopping every old executor"}}, Action: func(ctx context.Context, cmd *urfave.Command) (err error) {
 		var secret []byte
 		if cmd.IsSet("webhook-port") {
 			if cmd.Int("webhook-port") < 1 || cmd.Int("webhook-port") > 65535 {
@@ -158,9 +158,19 @@ func serverCommand(out, diagnostics io.Writer, runtime *action.Runtime) *urfave.
 			if err = store.BeginStartup(ctx, fence); err != nil {
 				return executionDiagnostic(err)
 			}
+			serverLock, err := lock.Serve()
+			if err != nil {
+				return executionDiagnostic(err)
+			}
+			defer func() { err = errors.Join(err, serverLock.Close()) }()
 			dispatch := engine.Dispatcher{Engine: e, Repository: store, Fence: fence, Capacity: cfg.Execution, Logger: logger, Scheduler: schedules, Startup: func(ctx context.Context) (bool, error) { return store.AdvanceStartup(ctx, fence, cfg.Execution) }}
+			dispatch.Stopping = func() error {
+				cleanup, cancel := context.WithTimeout(context.WithoutCancel(ctx), 5*time.Second)
+				defer cancel()
+				return store.PublishServerState(cleanup, fence, sqlite.ServerStopping)
+			}
 			err = runServer(ctx, out, cmd.Int("webhook-port"), secret, dispatch, store)
-			if errors.Is(err, context.Canceled) && ctx.Err() != nil {
+			if err == context.Canceled && ctx.Err() != nil {
 				return nil
 			}
 			return executionDiagnostic(err)

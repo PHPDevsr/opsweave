@@ -84,7 +84,15 @@ func eventCommand(out, diagnostics io.Writer) *urfave.Command {
 }
 
 func runServer(ctx context.Context, out io.Writer, port int, secret []byte, dispatch engine.Dispatcher, store *sqlite.Store) error {
+	ready := func() error {
+		probe, cancel := context.WithTimeout(ctx, 5*time.Second)
+		defer cancel()
+		return store.PublishServerState(probe, dispatch.Fence, sqlite.ServerReady)
+	}
 	if len(secret) == 0 {
+		if err := ready(); err != nil {
+			return err
+		}
 		if _, err := io.WriteString(out, "dispatcher ready\n"); err != nil {
 			return err
 		}
@@ -100,6 +108,9 @@ func runServer(ctx context.Context, out io.Writer, port int, secret []byte, disp
 	listener, err := net.Listen("tcp4", net.JoinHostPort("127.0.0.1", strconv.Itoa(port)))
 	if err != nil {
 		return fmt.Errorf("bind webhook loopback listener: %w", err)
+	}
+	if err := ready(); err != nil {
+		return errors.Join(err, listener.Close())
 	}
 	return runWebhookServer(ctx, out, listener, handler, dispatch.Run)
 }
@@ -164,7 +175,7 @@ func runWebhookServer(ctx context.Context, out io.Writer, listener net.Listener,
 	if !workerDone {
 		workerErr = <-finished
 	}
-	if errors.Is(workerErr, context.Canceled) && child.Err() != nil {
+	if workerErr == context.Canceled && child.Err() != nil {
 		workerErr = nil
 	}
 	return errors.Join(workerErr, serveErr, shutdownErr)

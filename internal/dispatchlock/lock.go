@@ -40,7 +40,11 @@ func Acquire(path string) (*Lock, error) {
 	if err = errors.Join(checkErr, db.Close()); err != nil {
 		return nil, err
 	}
-	side := canonical + ".dispatcher.lock"
+	return acquireSidecar(canonical, ".dispatcher.lock")
+}
+
+func acquireSidecar(canonical, suffix string) (*Lock, error) {
+	side := canonical + suffix
 	f, err := os.OpenFile(side, os.O_CREATE|os.O_RDWR, 0600)
 	if err != nil {
 		return nil, err
@@ -57,6 +61,76 @@ func Acquire(path string) (*Lock, error) {
 		return nil, errors.Join(err, f.Close())
 	}
 	return &Lock{file: f, path: canonical}, nil
+}
+
+// Serve marks this dispatcher as a server for the remainder of its lifetime.
+// The caller closes the returned lock before releasing dispatcher ownership.
+func (l *Lock) Serve() (*Lock, error) {
+	return acquireSidecar(l.path, ".dispatcher.server.lock")
+}
+
+// ProbeServer returns the canonical path and whether both native locks are held.
+// It never creates files, waits for ownership, or rewrites sidecar permissions.
+func ProbeServer(path string) (string, bool, error) {
+	if !config.ValidStoragePath(path) {
+		return "", false, execution.ErrInvalid
+	}
+	info, err := os.Lstat(path)
+	if errors.Is(err, os.ErrNotExist) {
+		return "", false, nil
+	}
+	if err != nil {
+		return "", false, err
+	}
+	if !info.Mode().IsRegular() {
+		return "", false, execution.ErrInvalid
+	}
+	f, err := os.Open(path)
+	if err != nil {
+		return "", false, err
+	}
+	canonical, err := canonicalFile(f, path)
+	if err = errors.Join(err, f.Close()); err != nil {
+		return "", false, err
+	}
+	for _, suffix := range []string{".dispatcher.server.lock", ".dispatcher.lock"} {
+		held, err := sidecarHeld(canonical + suffix)
+		if err != nil || !held {
+			return canonical, false, err
+		}
+	}
+	return canonical, true, nil
+}
+
+func sidecarHeld(path string) (bool, error) {
+	info, err := os.Lstat(path)
+	if errors.Is(err, os.ErrNotExist) {
+		return false, nil
+	}
+	if err != nil {
+		return false, err
+	}
+	if !info.Mode().IsRegular() {
+		return false, execution.ErrInvalid
+	}
+	f, err := os.OpenFile(path, os.O_RDWR, 0)
+	if errors.Is(err, os.ErrNotExist) {
+		return false, nil
+	}
+	if err != nil {
+		return false, err
+	}
+	if _, err = canonicalFile(f, path); err != nil {
+		return false, errors.Join(err, f.Close())
+	}
+	switch err = tryLock(f); {
+	case errors.Is(err, execution.ErrBusy):
+		return true, f.Close()
+	case err != nil:
+		return false, errors.Join(err, f.Close())
+	default:
+		return false, errors.Join(unlock(f), f.Close())
+	}
 }
 
 // Path returns the canonical database name protected by this lock.

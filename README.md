@@ -17,6 +17,8 @@ are implemented with test-only action injection; production execution still need
 those future integrations. The [single-node dispatcher server](docs/dispatcher.md) drains queued work and evaluates [persisted cron schedules](docs/scheduling.md). See [event triggers](docs/event-triggers.md) for startup, local internal events, and signed loopback webhooks.
 The GOALS.md example remains illustrative.
 
+Use the [SQLite maintenance guide](docs/maintenance.md) for opt-in history pruning and local dispatcher status.
+
 Phase 01 and both [workflow](harness/designs/workflow-v1.md) and
 [storage/configuration/CLI](harness/designs/foundation-storage-cli.md) contracts
 are approved. Phases 01 and 02 are accepted and merged. Phase 03 is authorized;

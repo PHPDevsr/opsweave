@@ -1,6 +1,6 @@
 # Phase 03 retention and readiness decision
 
-Status `AWAITING_CONTRACT_REVIEW` on 2026-11-14 (Asia/Jakarta).
+Status `ACCEPTED` by the user's `ACCEPT` reply on 2026-11-14 (Asia/Jakarta).
 
 ## Retention
 
@@ -20,6 +20,4 @@ status requires compatible schema and a currently held dispatcher lock. Keep
 the webhook surface restricted to its signed ingress route. Tests cover stale
 ownership, database failures, cancellation and concurrent events during cleanup.
 
-Review the retention defaults, deletion boundary and status semantics before
-implementation. These decisions affect existing audit history and operator
-automation.
+See the [maintenance guide](../../docs/maintenance.md) for the implemented CLI, deletion boundaries, and readiness exit codes.

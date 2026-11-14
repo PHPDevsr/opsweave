@@ -223,6 +223,7 @@ func TestExecutionReadAndRequestErrors(t *testing.T) {
 
 func TestUpgradeFoundationPreservesRevisions(t *testing.T) {
 	s, record, path := executionFixture(t)
+	removeMigrationSeven(t, s)
 	// Construct an actual version-1 database with existing workflow data, then reopen with all current migrations.
 	for _, sql := range []string{"DROP TABLE event_history", "DROP TABLE event_dedup", "DROP TABLE event_executions", "DROP TABLE startup_scan", "DROP TABLE event_routes", "DROP TABLE schedule_events", "DROP TABLE scheduled_executions", "DROP TABLE schedules", "ALTER TABLE workflows DROP COLUMN automatic_generation", "DROP TABLE dispatcher_audit", "DROP TABLE execution_queue", "DROP TABLE dispatcher", "DROP TABLE execution_admissions", "DROP TABLE execution_attempts", "DROP TABLE execution_policies", "DROP TABLE execution_events", "DROP TABLE execution_steps", "DROP TABLE executions", "DELETE FROM schema_migrations WHERE version>1"} {
 		if _, err := s.db.ExecContext(t.Context(), sql); err != nil {
@@ -239,7 +240,7 @@ func TestUpgradeFoundationPreservesRevisions(t *testing.T) {
 		t.Fatal(snap, err)
 	}
 	var count int
-	if err := upgraded.db.QueryRowContext(t.Context(), "SELECT count(*) FROM schema_migrations").Scan(&count); err != nil || count != 6 {
+	if err := upgraded.db.QueryRowContext(t.Context(), "SELECT count(*) FROM schema_migrations").Scan(&count); err != nil || count != 7 {
 		t.Fatal(count, err)
 	}
 }
@@ -282,6 +283,7 @@ func TestExecutionEventLimitRollsBackState(t *testing.T) {
 
 func TestExecutionMigrationFailurePreservesFoundation(t *testing.T) {
 	s, record, path := executionFixture(t)
+	removeMigrationSeven(t, s)
 	for _, statement := range []string{"DROP TABLE event_history", "DROP TABLE event_dedup", "DROP TABLE event_executions", "DROP TABLE startup_scan", "DROP TABLE event_routes", "DROP TABLE schedule_events", "DROP TABLE scheduled_executions", "DROP TABLE schedules", "ALTER TABLE workflows DROP COLUMN automatic_generation", "DROP TABLE dispatcher_audit", "DROP TABLE execution_queue", "DROP TABLE dispatcher", "DROP TABLE execution_admissions", "DROP TABLE execution_attempts", "DROP TABLE execution_policies", "DROP TABLE execution_events", "DROP TABLE execution_steps", "DROP TABLE executions", "DELETE FROM schema_migrations WHERE version>1", "CREATE TABLE executions(marker TEXT)", "INSERT INTO executions VALUES('preserved')"} {
 		if _, err := s.db.ExecContext(t.Context(), statement); err != nil {
 			t.Fatal(err)
