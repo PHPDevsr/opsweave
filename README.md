@@ -14,14 +14,19 @@ alongside help, version information, JSON output and shell completion. See the
 The production action catalog is empty: real workflow registration requires later
 action implementations. The [manual execution engine and history CLI](docs/execution.md)
 are implemented with test-only action injection; production execution still needs
-those future integrations. The server and automatic triggers remain planned.
+those future integrations. The [single-node dispatcher server](docs/dispatcher.md) drains queued work and evaluates [persisted cron schedules](docs/scheduling.md). See [event triggers](docs/event-triggers.md) for startup, local internal events, and signed loopback webhooks.
 The GOALS.md example remains illustrative.
+
+Use the [SQLite maintenance guide](docs/maintenance.md) for opt-in history pruning and local dispatcher status.
 
 Phase 01 and both [workflow](harness/designs/workflow-v1.md) and
 [storage/configuration/CLI](harness/designs/foundation-storage-cli.md) contracts
-are approved. Phase 01 is merged; Phase 02 and its [manual execution contract](harness/designs/manual-execution.md)
-are approved for implementation. Phase acceptance depends on verification and
-review; Phases 03–10 remain unapproved. See [PLANS.md](PLANS.md) for current status.
+are approved. Phases 01 and 02 are accepted and merged. Phase 03 is authorized;
+its first [reliable execution contract](harness/designs/reliable-execution.md) is
+accepted, and the [serial reliability core](docs/reliability.md) adds conditional
+DAG execution, retry/deadline policies, cancellation and exact-revision replay.
+The accepted [dispatcher](docs/dispatcher.md) adds bounded workers, parallel steps, durable queued claims and conservative recovery. Later phases remain unapproved
+except the scoped release packaging extension. See [PLANS.md](PLANS.md) for current status.
 
 ## Requirements
 

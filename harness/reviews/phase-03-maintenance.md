@@ -1,0 +1,23 @@
+# Phase 03 maintenance implementation review
+
+The approved work adds opt-in SQLite execution history pruning and local dispatcher readiness. The [maintenance guide](../../docs/maintenance.md) documents configuration, CLI, migration, and restore behavior.
+
+| Requirement                                            | Evidence                                                                                                                                                                                                                                                                                                                                    |
+| ------------------------------------------------------ | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `G-5.2-023`, `G-5.10-012`                              | `TestRetentionAgeConfiguration`, `TestCLIPruneRequiresOptInAndExplicitMode`, `TestPruneBatchAndEligibility`, `TestPruneAgeAndReceiptBoundary`, and `TestPruneLegacyMigrationAndAtomicRollback` cover configuration, a read-only preview, batch bounds, exact cutoffs, replay protection, old history, rollback, and deletion across reopen. |
+| `G-5.2-049`, `G-5.10-008`                              | `TestPruneConcurrentEventReplayProtectsReceipt` exercises two SQLite connections and receipt expiry. `TestScheduledAdmissionIdentityRestartAndHistory` and `TestPrunePreservesScheduledOccurrenceAcrossRestart` exercise persisted scheduling and duplicate prevention after history removal.                                               |
+| `G-5.10-013`, `G-5.16-007`, `G-5.16-008`, `G-5.16-009` | `TestServerStatusRequiresServerLocksAndLiveSchema` exercises local exit behavior, a missing schema, stale generation and shutdown state. `TestDispatcherCLIServerQueueBusyAndShutdown` checks lifecycle against a running and draining dispatcher.                                                                                          |
+
+The prune transaction checks receipt expiry and replay references while holding the same SQLite write lock used by admission. The temporary deletion authorization is committed empty and a failure rolls back the whole batch. Workflow revisions retain their immutable guards. Retaining a replay's parent until the child record disappears preserves the database foreign key and lets the retained replay resolve its lineage. A scheduled occurrence key retains its workflow revision, trigger, and time. It carries no output or execution ID. Migration 007 preserves prior migration checksums. Upgrade and rollback use a backup with the matching binary.
+
+Readiness opens SQLite in read-only mode and validates the migration ledger. Two OS locks distinguish a server from standalone work, and the database fence protects lifecycle writes. Status exposes local state and aggregate counts while keeping diagnostics free of owner identifiers, secrets, and raw storage errors. The webhook handler stays on its existing signed ingress route.
+
+`TestReadinessRejectsIncompatibleMigrationChecksum` checks that a live database with a changed migration checksum is unavailable and that a released generation cannot publish readiness.
+
+## Worker pool monitoring
+
+The user approved local capacity, busy worker and queue depth reporting. Migration 008 publishes server capacity with lifecycle under the same fence. Start and release clear former capacity. The status read uses one SQLite snapshot and indexed counts of durable attempts and queued work, with no additional writes in the dispatch loop. The busy count represents durably reserved slots until the outcome is recorded. This leaves retry backoff out of the count and keeps an unresolved attempt visible for the current generation.
+
+`TestDispatcherCLIServerQueueBusyAndShutdown` verifies the counts with a blocked action, a second admission and a draining server. `TestDispatcherManagedBackoffRecoveryPreservesBudget` verifies that backoff releases the counted slot. `TestWorkerStatusMigrationPreservesQueueAndResetsCapacityOnNewOwner` verifies upgrade, preserved queue and publication fencing. `TestServerStatusRequiresServerLocksAndLiveSchema` checks the user-facing JSON schema and lifecycle exits. Together these cover `G-5.11-010` within the single-node phase.
+
+The phase still requires acceptance. CodeQL upload requires repository Advanced Security configuration. See the [build log](../build-log.md) for verification results.

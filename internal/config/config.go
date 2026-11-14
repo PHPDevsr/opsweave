@@ -4,10 +4,13 @@ package config
 import (
 	"context"
 	"errors"
+	"github.com/PHPDevsr/opsweave/internal/execution"
 	"io"
 	"os"
 	"path/filepath"
+	"strconv"
 	"strings"
+	"time"
 
 	"github.com/PHPDevsr/opsweave/internal/yamlutil"
 	"go.yaml.in/yaml/v3"
@@ -18,8 +21,10 @@ const DefaultYAML = "storage:\n  path: ./data/opsweave.db\nlogging:\n  level: in
 
 // Config contains only validated settings; StoragePath is absolute.
 type Config struct {
-	StoragePath string
-	LogLevel    string
+	StoragePath  string
+	LogLevel     string
+	Execution    execution.Capacity
+	RetentionAge time.Duration
 }
 
 // ValidStoragePath rejects driver options/URIs while permitting local paths.
@@ -44,7 +49,7 @@ func Load(ctx context.Context, path, cwd string, environ []string) (Config, erro
 	if err != nil {
 		return Config{}, errors.New("resolve configuration directory failed")
 	}
-	c := Config{StoragePath: "./data/opsweave.db", LogLevel: "info"}
+	c := Config{StoragePath: "./data/opsweave.db", LogLevel: "info", Execution: execution.DefaultCapacity()}
 	explicit := path != ""
 	if !explicit {
 		path = "opsweave.yaml"
@@ -79,13 +84,26 @@ func Load(ctx context.Context, path, cwd string, environ []string) (Config, erro
 			continue
 		}
 		switch key {
+		case "OPSWEAVE_WEBHOOK_SECRET":
+		// The opt-in server reads the secret only when opening ingress.
 		case "OPSWEAVE_STORAGE_PATH":
 			c.StoragePath = value
 		case "OPSWEAVE_LOG_LEVEL":
 			c.LogLevel = value
+		case "OPSWEAVE_EXECUTION_RETENTION_AGE":
+			if err := setRetentionAge(&c, value); err != nil {
+				return Config{}, err
+			}
+		case "OPSWEAVE_EXECUTION_WORKERS", "OPSWEAVE_EXECUTION_ACTIVE_STEPS", "OPSWEAVE_EXECUTION_RUNNING_EXECUTIONS", "OPSWEAVE_EXECUTION_QUEUED_EXECUTIONS", "OPSWEAVE_EXECUTION_QUEUE_TIMEOUT", "OPSWEAVE_EXECUTION_SHUTDOWN_TIMEOUT":
+			if err := setExecution(&c.Execution, strings.ToLower(strings.TrimPrefix(key, "OPSWEAVE_EXECUTION_")), value); err != nil {
+				return Config{}, err
+			}
 		default:
 			return Config{}, errors.New("unknown OpsWeave environment setting")
 		}
+	}
+	if err := c.Execution.Validate(); err != nil {
+		return Config{}, errors.New("invalid execution configuration")
 	}
 	if !ValidStoragePath(c.StoragePath) {
 		return Config{}, errors.New("invalid storage path")
@@ -111,6 +129,8 @@ func decode(n *yaml.Node, c *Config) error {
 			field = "path"
 		case "logging":
 			field = "level"
+		case "execution":
+			field = "execution"
 		default:
 			return errors.New("unknown configuration field")
 		}
@@ -119,6 +139,29 @@ func decode(n *yaml.Node, c *Config) error {
 		}
 		for j := 0; j < len(group.Content); j += 2 {
 			v := group.Content[j+1]
+			if key == "execution" {
+				name := group.Content[j].Value
+				if name == "retention_age" {
+					if v.Kind != yaml.ScalarNode || v.Tag != "!!str" {
+						return errors.New("invalid execution retention age")
+					}
+					if err := setRetentionAge(c, v.Value); err != nil {
+						return err
+					}
+					continue
+				}
+				tag := "!!int"
+				if name == "queue_timeout" || name == "shutdown_timeout" {
+					tag = "!!str"
+				}
+				if v.Kind != yaml.ScalarNode || v.Tag != tag {
+					return errors.New("invalid execution configuration")
+				}
+				if err := setExecution(&c.Execution, name, v.Value); err != nil {
+					return err
+				}
+				continue
+			}
 			if group.Content[j].Value != field || v.Kind != yaml.ScalarNode || v.Tag != "!!str" {
 				return errors.New("invalid configuration field")
 			}
@@ -128,6 +171,47 @@ func decode(n *yaml.Node, c *Config) error {
 				c.LogLevel = v.Value
 			}
 		}
+	}
+	return nil
+}
+
+func setRetentionAge(c *Config, value string) error {
+	age, err := time.ParseDuration(value)
+	if err != nil || age <= 0 {
+		return errors.New("execution retention age must be a positive Go duration")
+	}
+	c.RetentionAge = age
+	return nil
+}
+
+func setExecution(c *execution.Capacity, key, value string) error {
+	if key == "queue_timeout" || key == "shutdown_timeout" {
+		duration, err := time.ParseDuration(value)
+		if err != nil {
+			return errors.New("invalid execution duration")
+		}
+		if key == "queue_timeout" {
+			c.QueueTimeout = duration
+		} else {
+			c.ShutdownTimeout = duration
+		}
+		return nil
+	}
+	n, err := strconv.Atoi(value)
+	if err != nil {
+		return errors.New("invalid execution capacity")
+	}
+	switch key {
+	case "workers":
+		c.Workers = n
+	case "active_steps":
+		c.ActiveSteps = n
+	case "running_executions":
+		c.RunningExecutions = n
+	case "queued_executions":
+		c.QueuedExecutions = n
+	default:
+		return errors.New("unknown execution configuration field")
 	}
 	return nil
 }

@@ -216,8 +216,8 @@ func parseSpec(n *yaml.Node) (Spec, error) {
 	if err != nil {
 		return s, err
 	}
-	if v := f["triggers"]; v != nil {
-		return s, invalid(v, "spec.triggers", "unsupported_capability")
+	if s.Triggers, err = parseTriggers(f["triggers"]); err != nil {
+		return s, err
 	}
 	if s.Timeout, err = duration(f["timeout"], "spec.timeout", time.Hour); err != nil {
 		return s, err

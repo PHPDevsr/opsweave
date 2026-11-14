@@ -25,7 +25,8 @@ const (
 	Skipped   State = "skipped"
 )
 
-// CanTransition rejects unknown states, self transitions and changes to terminal states.
+// CanTransition describes format-1 transitions. Format 2 uses guarded policy operations.
+// Both reject unknown/self transitions and changes to terminal states.
 func CanTransition(from, to State, step bool) bool {
 	switch from {
 	case Pending:
@@ -48,6 +49,9 @@ func Terminal(s State) bool {
 
 // Safe error categories distinguish durable storage failures from action outcomes.
 var (
+	ErrBusy        = errors.New("dispatcher is busy")
+	ErrQueueFull   = errors.New("execution queue is full")
+	ErrUnmanaged   = errors.New("unmanaged active executions require explicit adoption after stopping old executors")
 	ErrInvalid     = errors.New("invalid execution request or transition")
 	ErrConflict    = errors.New("execution ownership, revision or active-run conflict")
 	ErrNotFound    = errors.New("execution not found")
@@ -56,6 +60,8 @@ var (
 	ErrPermission  = errors.New("action permission denied")
 	ErrUnavailable = errors.New("action version unavailable")
 	ErrOutput      = errors.New("action output invalid or exceeds limit")
+	ErrReference   = errors.New("execution input reference unavailable")
+	ErrUncertain   = errors.New("execution has uncertain effects; explicit acknowledgement required")
 )
 
 // Failure hides infrastructure details while retaining the cause for internal inspection.
@@ -73,39 +79,62 @@ var idPattern = regexp.MustCompile(`^[0-9a-f]+$`)
 
 // Step is a redacted durable step snapshot.
 type Step struct {
-	ID            string          `json:"id"`
-	Action        string          `json:"action"`
-	ActionVersion string          `json:"actionVersion"`
-	State         State           `json:"state"`
-	Attempt       int             `json:"attempt"`
-	Reason        string          `json:"reason,omitempty"`
-	Output        json.RawMessage `json:"output,omitempty,omitzero"`
-	StartedAt     *time.Time      `json:"startedAt,omitempty"`
-	FinishedAt    *time.Time      `json:"finishedAt,omitempty"`
+	ID                string          `json:"id"`
+	Action            string          `json:"action"`
+	ActionVersion     string          `json:"actionVersion"`
+	State             State           `json:"state"`
+	Attempt           int             `json:"attempt"`
+	Reason            string          `json:"reason,omitempty"`
+	Output            json.RawMessage `json:"output,omitempty,omitzero"`
+	StartedAt         *time.Time      `json:"startedAt,omitempty"`
+	FinishedAt        *time.Time      `json:"finishedAt,omitempty"`
+	Policy            *StepPolicy     `json:"policy,omitempty"`
+	Deadline          *time.Time      `json:"deadline,omitempty"`
+	NextAttemptAt     *time.Time      `json:"nextAttemptAt,omitempty"`
+	CancelRequestedAt *time.Time      `json:"cancelRequestedAt,omitempty"`
+	Attempts          []Attempt       `json:"attempts,omitempty"`
+}
+
+// TriggerOrigin identifies an automatic admission, independently of action outputs.
+type TriggerOrigin struct {
+	Type        string    `json:"type"`
+	ID          string    `json:"id"`
+	ScheduledAt time.Time `json:"scheduledAt,omitzero"`
 }
 
 // Snapshot binds history to its original immutable workflow revision.
 type Snapshot struct {
-	ID         string          `json:"id"`
-	Workflow   string          `json:"workflow"`
-	Revision   string          `json:"revision"`
-	State      State           `json:"state"`
-	Version    int64           `json:"version"`
-	CreatedAt  time.Time       `json:"createdAt"`
-	UpdatedAt  time.Time       `json:"updatedAt"`
-	Steps      []Step          `json:"steps,omitempty"`
-	Definition json.RawMessage `json:"definition,omitempty,omitzero"`
+	Trigger               *TriggerOrigin  `json:"trigger,omitempty"`
+	ID                    string          `json:"id"`
+	Workflow              string          `json:"workflow"`
+	Revision              string          `json:"revision"`
+	State                 State           `json:"state"`
+	Version               int64           `json:"version"`
+	CreatedAt             time.Time       `json:"createdAt"`
+	UpdatedAt             time.Time       `json:"updatedAt"`
+	Steps                 []Step          `json:"steps,omitempty"`
+	Definition            json.RawMessage `json:"definition,omitempty,omitzero"`
+	UncertainEffects      bool            `json:"uncertainEffects,omitempty"`
+	Managed               bool            `json:"managed,omitempty"`
+	Parallelism           int             `json:"parallelism,omitempty"`
+	Format                int             `json:"format,omitempty,omitzero"`
+	Deadline              *time.Time      `json:"deadline,omitempty"`
+	Parent                string          `json:"parent,omitempty"`
+	AcknowledgedUncertain bool            `json:"acknowledgedUncertain,omitempty,omitzero"`
+	CancelRequestedAt     *time.Time      `json:"cancelRequestedAt,omitempty"`
 }
 
 // Event contains engine-owned vocabulary only, never action-supplied text.
 type Event struct {
-	Sequence  int       `json:"sequence"`
-	Time      time.Time `json:"time"`
-	Execution string    `json:"execution"`
-	Step      string    `json:"step,omitempty"`
-	Code      string    `json:"code"`
-	State     State     `json:"state"`
-	Reason    string    `json:"reason,omitempty"`
+	Sequence      int        `json:"sequence"`
+	Time          time.Time  `json:"time"`
+	Execution     string     `json:"execution"`
+	Step          string     `json:"step,omitempty"`
+	Code          string     `json:"code"`
+	State         State      `json:"state"`
+	Reason        string     `json:"reason,omitempty"`
+	Attempt       int        `json:"attempt,omitempty,omitzero"`
+	NextAttemptAt *time.Time `json:"nextAttemptAt,omitempty"`
 }
 
 // Mutation applies one validated step or execution transition with compare-and-swap ownership.
@@ -130,6 +159,9 @@ type Repository interface {
 // Advance validates aggregate invariants and updates an independently owned snapshot.
 // The adapter supplies a UTC time and persists the result atomically with its event.
 func Advance(s *Snapshot, m Mutation, now time.Time) error {
+	if s.Format != 0 && s.Format != 1 {
+		return ErrInvalid
+	}
 	if s.State != Running || s.Version != m.Version {
 		return ErrConflict
 	}

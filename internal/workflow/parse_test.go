@@ -108,7 +108,7 @@ func TestParseRejectsInvalidDefinitions(t *testing.T) {
 		{"label value size", strings.Replace(minimal, "name: sample", "name: sample\n  labels: {team: "+strings.Repeat("x", 257)+"}", 1), "resource_limit"},
 		{"spec missing", "apiVersion: opsweave.io/v1\nkind: Workflow\nmetadata: {name: sample}", "expected_mapping"},
 		{"unknown spec", strings.Replace(minimal, "spec:", "spec:\n  mystery: true", 1), "unknown_field"},
-		{"triggers", strings.Replace(minimal, "spec:", "spec:\n  triggers: []", 1), "unsupported_capability"},
+		{"triggers", strings.Replace(minimal, "spec:", "spec:\n  triggers: []", 1), "invalid_triggers"},
 		{"concurrency type", strings.Replace(minimal, "spec:", "spec:\n  concurrency: 1", 1), "expected_mapping"},
 		{"concurrency unknown", strings.Replace(minimal, "spec:", "spec:\n  concurrency: {other: 1}", 1), "unknown_field"},
 		{"concurrency range", strings.Replace(minimal, "spec:", "spec:\n  concurrency: {limit: 0}", 1), "invalid_integer"},

@@ -165,7 +165,7 @@ func TestCancellationAndDeadlinePersistence(t *testing.T) {
 				cause = context.DeadlineExceeded
 			}
 			if !errors.Is(err, cause) || snap.State != want || snap.Steps[1].State != execution.Cancelled {
-				t.Fatal(snap, err)
+				t.Fatalf("execution %s has state %s at version %d, want %s: %v (persistence cause: %v)", snap.ID, snap.State, snap.Version, want, err, errors.Unwrap(err))
 			}
 			persisted, err := s.Execution(t.Context(), snap.ID)
 			if err != nil || persisted.State != want {
@@ -173,6 +173,42 @@ func TestCancellationAndDeadlinePersistence(t *testing.T) {
 			}
 		})
 	}
+}
+
+func TestCancellationPersistenceHasIndependentBudget(t *testing.T) {
+	ctx, cancel := context.WithCancel(t.Context())
+	defer cancel()
+	var cancelledAt time.Time
+	e, s, _ := fixture(t, func(actionCtx context.Context, _ map[string]any) (map[string]any, error) {
+		cancelledAt = time.Now()
+		cancel()
+		return nil, actionCtx.Err()
+	})
+	checked := false
+	e.Executions = changeObserver{Repository: s, observe: func(writeCtx context.Context, m execution.Mutation) {
+		if m.Step != "first" || m.To != execution.Cancelled {
+			return
+		}
+		checked = true
+		deadline, ok := writeCtx.Deadline()
+		if writeCtx.Err() != nil || !ok || deadline.Before(cancelledAt.Add(30*time.Second)) || deadline.After(time.Now().Add(30*time.Second)) {
+			t.Errorf("expected a live, 30-second persistence budget after cancellation at %s, got deadline %s and error %v", cancelledAt, deadline, writeCtx.Err())
+		}
+	}}
+	snap, err := e.Run(ctx, "example")
+	if !checked || snap.State != execution.Cancelled || !errors.Is(err, context.Canceled) {
+		t.Fatalf("cleanup observed=%t, state=%s, error=%v", checked, snap.State, err)
+	}
+}
+
+type changeObserver struct {
+	execution.Repository
+	observe func(context.Context, execution.Mutation)
+}
+
+func (r changeObserver) Change(ctx context.Context, m execution.Mutation) (execution.Snapshot, error) {
+	r.observe(ctx, m)
+	return r.Repository.Change(ctx, m)
 }
 
 type failingRepository struct {

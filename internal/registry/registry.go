@@ -79,6 +79,20 @@ var (
 
 // Prepare validates a complete batch without any storage or external side effects.
 func Prepare(ctx context.Context, sources []Source, catalog Catalog) ([]Candidate, error) {
+	return prepare(ctx, sources, catalog, 0)
+}
+
+// PrepareReliable validates the reviewed serial reliability capability set.
+func PrepareReliable(ctx context.Context, sources []Source, catalog Catalog) ([]Candidate, error) {
+	return prepare(ctx, sources, catalog, 1)
+}
+
+// PrepareDispatcher validates bounded worker capabilities without authorizing an action invocation.
+func PrepareDispatcher(ctx context.Context, sources []Source, catalog Catalog) ([]Candidate, error) {
+	return prepare(ctx, sources, catalog, 2)
+}
+
+func prepare(ctx context.Context, sources []Source, catalog Catalog, capability int) ([]Candidate, error) {
 	if len(sources) == 0 || len(sources) > 256 {
 		return nil, errors.New("batch must contain 1 to 256 workflows")
 	}
@@ -102,14 +116,27 @@ func Prepare(ctx context.Context, sources []Source, catalog Catalog) ([]Candidat
 		if err != nil {
 			return nil, err
 		}
-		if err := d.Phase01(); err != nil {
-			return nil, err
+		capabilityErr := d.Phase01()
+		if capability > 0 {
+			capabilityErr = d.SerialReliability()
+			if capability == 2 {
+				capabilityErr = d.DispatcherCapabilities()
+			}
+		}
+		if capabilityErr != nil {
+			return nil, capabilityErr
 		}
 		normalized, err := Normalize(d)
 		if err != nil {
 			return nil, fmt.Errorf("normalize workflow: %w", err)
 		}
 		result = append(result, Candidate{Name: d.Metadata.Name, Source: d.Source(), Normalized: normalized, Bindings: bindings, Order: append([]string(nil), d.Order...), Capabilities: []string{}})
+		if capability > 0 {
+			result[len(result)-1].Capabilities = []string{"serial_reliability"}
+			if capability == 2 {
+				result[len(result)-1].Capabilities = []string{"dispatcher"}
+			}
+		}
 	}
 	return result, ctx.Err()
 }
@@ -120,7 +147,7 @@ func validateActions(d *workflow.Definition, catalog Catalog) (map[string]string
 	for _, step := range d.Spec.Steps {
 		descriptor, exists := catalog[step.Uses]
 		if !exists {
-			return nil, errors.New("action unavailable: Phase 01 production catalog contains no built-in actions")
+			return nil, errors.New("action unavailable: production catalog contains no built-in actions")
 		}
 		if descriptor.ID != step.Uses || descriptor.APIVersion != d.APIVersion || descriptor.Version == "" || !schemaValid(descriptor.Inputs, 0) || descriptor.Inputs.Type != "object" {
 			return nil, errors.New("invalid or incompatible action descriptor")
@@ -287,7 +314,11 @@ func Normalize(d *workflow.Definition) ([]byte, error) {
 		needs := append([]string{}, s.Needs...)
 		steps = append(steps, map[string]any{"id": s.ID, "uses": s.Uses, "with": normalizeInput(s.Inputs), "needs": needs, "if": s.Condition, "timeout": s.Timeout.String(), "retry": map[string]any{"attempts": s.Retry.Attempts, "backoff": s.Retry.Backoff.String(), "maxBackoff": s.Retry.MaxBackoff.String()}})
 	}
-	return json.Marshal(map[string]any{"apiVersion": d.APIVersion, "kind": d.Kind, "metadata": map[string]any{"name": d.Metadata.Name, "description": d.Metadata.Description, "labels": d.Metadata.Labels}, "spec": map[string]any{"steps": steps, "timeout": d.Spec.Timeout.String(), "concurrency": map[string]int{"limit": d.Spec.Concurrency}, "parallelism": d.Spec.Parallelism}})
+	spec := map[string]any{"steps": steps, "timeout": d.Spec.Timeout.String(), "concurrency": map[string]int{"limit": d.Spec.Concurrency}, "parallelism": d.Spec.Parallelism}
+	if len(d.Spec.Triggers) > 0 {
+		spec["triggers"] = d.Spec.Triggers
+	}
+	return json.Marshal(map[string]any{"apiVersion": d.APIVersion, "kind": d.Kind, "metadata": map[string]any{"name": d.Metadata.Name, "description": d.Metadata.Description, "labels": d.Metadata.Labels}, "spec": spec})
 }
 
 func normalizeInput(value any) any {

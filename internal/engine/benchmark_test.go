@@ -41,7 +41,7 @@ func BenchmarkManualExecution(b *testing.B) {
 			b.Error(err)
 		}
 	})
-	e := Engine{Workflows: store, Executions: store, Actions: runtime}
+	e := Engine{Workflows: store, Executions: store, Reliable: store, Actions: runtime}
 	count := 0
 	b.ReportAllocs()
 	b.ResetTimer()
@@ -56,11 +56,12 @@ func BenchmarkManualExecution(b *testing.B) {
 			}
 			setup()
 			e.Workflows, e.Executions = store, store
+			e.Reliable = store
 			count = 0
 			b.StartTimer()
 		}
 		snap, err := e.Run(ctx, "example")
-		if err != nil || snap.State != execution.Succeeded || len(snap.Steps) != 2 {
+		if err != nil || snap.State != execution.Succeeded || snap.Format != 2 || len(snap.Steps) != 2 {
 			b.Fatal(snap, err)
 		}
 		count++

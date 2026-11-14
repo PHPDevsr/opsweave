@@ -20,6 +20,35 @@ type conditionParser struct {
 	pos        int
 	tokens     int
 	references []string
+	value      bool
+	skip       int
+	lookup     func(string, string) (bool, error)
+	evalErr    error
+}
+
+// EvaluateCondition evaluates the reviewed grammar against terminal step outcomes.
+// The entire expression is validated even when evaluation short-circuits.
+func EvaluateCondition(source string, outcomes map[string]string) (bool, error) {
+	if _, err := ValidateCondition(source); err != nil {
+		return false, err
+	}
+	p := conditionParser{source: source, lookup: func(id, outcome string) (bool, error) {
+		state, ok := outcomes[id]
+		if !ok || (state != "succeeded" && state != "failed" && state != "skipped" && state != "cancelled" && state != "timed_out") {
+			return false, &ValidationError{Code: "condition_unavailable", Path: "if"}
+		}
+		if outcome == "success" {
+			outcome = "succeeded"
+		}
+		return state == outcome, nil
+	}}
+	if !p.expression(0) || p.space() != len(source) {
+		if p.evalErr != nil {
+			return false, p.evalErr
+		}
+		return false, &ValidationError{Code: "invalid_condition", Path: "if"}
+	}
+	return p.value, nil
 }
 
 func (p *conditionParser) space() int {
@@ -44,9 +73,18 @@ func (p *conditionParser) expression(depth int) bool {
 		return false
 	}
 	for p.take("||") {
-		if !p.and(depth) {
+		left := p.value
+		if left {
+			p.skip++
+		}
+		valid := p.and(depth)
+		if left {
+			p.skip--
+		}
+		if !valid {
 			return false
 		}
+		p.value = left || p.value
 	}
 	return true
 }
@@ -56,21 +94,37 @@ func (p *conditionParser) and(depth int) bool {
 		return false
 	}
 	for p.take("&&") {
-		if !p.unary(depth) {
+		left := p.value
+		if !left {
+			p.skip++
+		}
+		valid := p.unary(depth)
+		if !left {
+			p.skip--
+		}
+		if !valid {
 			return false
 		}
+		p.value = left && p.value
 	}
 	return true
 }
 
 func (p *conditionParser) unary(depth int) bool {
 	if p.take("!") {
-		return depth < 32 && p.unary(depth+1)
+		valid := depth < 32 && p.unary(depth+1)
+		p.value = !p.value
+		return valid
 	}
 	if p.take("(") {
 		return depth < 32 && p.expression(depth+1) && p.take(")")
 	}
-	if p.take("true") || p.take("false") {
+	if p.take("true") {
+		p.value = true
+		return true
+	}
+	if p.take("false") {
+		p.value = false
 		return true
 	}
 	if !p.take("steps.") {
@@ -87,6 +141,13 @@ func (p *conditionParser) unary(depth int) bool {
 	for _, state := range []string{"success", "failed", "skipped", "cancelled", "timed_out"} {
 		if p.take(state) {
 			p.references = append(p.references, id)
+			p.value = false
+			if p.lookup != nil && p.skip == 0 {
+				p.value, p.evalErr = p.lookup(id, state)
+				if p.evalErr != nil {
+					return false
+				}
+			}
 			return true
 		}
 	}

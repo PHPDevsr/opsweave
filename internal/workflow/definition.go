@@ -4,6 +4,7 @@ package workflow
 
 import (
 	"fmt"
+	"github.com/PHPDevsr/opsweave/internal/schedule"
 	"time"
 )
 
@@ -31,6 +32,7 @@ type Metadata struct {
 
 // Spec contains normalized defaults and dependency edges.
 type Spec struct {
+	Triggers    []schedule.Trigger
 	Steps       []Step
 	Timeout     time.Duration
 	Concurrency int
@@ -80,7 +82,7 @@ func (e *ValidationError) Error() string {
 // Phase01 checks definition-level capability availability, without action lookup.
 // Passing this check does not substitute for action catalog/schema validation.
 func (d *Definition) Phase01() error {
-	if d.Spec.Timeout != time.Hour || d.Spec.Concurrency != 1 || d.Spec.Parallelism != 1 {
+	if len(d.Spec.Triggers) > 0 || d.Spec.Timeout != time.Hour || d.Spec.Concurrency != 1 || d.Spec.Parallelism != 1 {
 		return &ValidationError{Code: "unsupported_capability", Path: "spec"}
 	}
 	for i, s := range d.Spec.Steps {
@@ -90,6 +92,50 @@ func (d *Definition) Phase01() error {
 		}
 	}
 	return nil
+}
+
+// SerialReliability permits reviewed execution policies while dispatcher capacity
+// and fenced recovery remain unavailable. Secrets still require Phase 05.
+func (d *Definition) SerialReliability() error {
+	if len(d.Spec.Triggers) > 0 || d.Spec.Concurrency != 1 || d.Spec.Parallelism != 1 {
+		return &ValidationError{Code: "unsupported_capability", Path: "spec"}
+	}
+	for i, step := range d.Spec.Steps {
+		if hasSecretReference(step.Inputs) {
+			return &ValidationError{Code: "unsupported_capability", Path: fmt.Sprintf("spec.steps[%d].with", i)}
+		}
+	}
+	return nil
+}
+
+// DispatcherCapabilities allows bounded reviewed concurrency and serial policies.
+func (d *Definition) DispatcherCapabilities() error {
+	for i, step := range d.Spec.Steps {
+		if hasSecretReference(step.Inputs) {
+			return &ValidationError{Code: "unsupported_capability", Path: fmt.Sprintf("spec.steps[%d].with", i)}
+		}
+	}
+	return nil
+}
+
+func hasSecretReference(value any) bool {
+	switch v := value.(type) {
+	case Reference:
+		return v.Kind != "output"
+	case map[string]any:
+		for _, child := range v {
+			if hasSecretReference(child) {
+				return true
+			}
+		}
+	case []any:
+		for _, child := range v {
+			if hasSecretReference(child) {
+				return true
+			}
+		}
+	}
+	return false
 }
 
 func hasReference(value any) bool {

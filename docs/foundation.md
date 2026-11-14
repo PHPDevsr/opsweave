@@ -26,6 +26,9 @@ symlink, creates a database or starts a server. The first storage administration
 command creates the database and applies migrations. Root help, `version` and
 shell completion do not load configuration or open storage.
 
+Current optional worker/queue settings and server operations are documented in
+the [dispatcher guide](dispatcher.md).
+
 ## Configuration
 
 ```yaml

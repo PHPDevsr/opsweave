@@ -132,6 +132,21 @@ func (r *Runtime) Invoke(ctx context.Context, id, version string, inputs map[str
 	return data, nil
 }
 
+// ValidateInputs checks resolved values before a durable invocation attempt starts.
+func (r *Runtime) ValidateInputs(ctx context.Context, id, version string, inputs map[string]any) error {
+	if err := ctx.Err(); err != nil {
+		return err
+	}
+	if err := r.Check(id, version); err != nil {
+		return err
+	}
+	budget := captureBudget{}
+	if _, ok := capture(inputs, r.entries[id+"\x00"+version].Descriptor.Inputs, 0, &budget, false); !ok {
+		return execution.ErrInvalid
+	}
+	return nil
+}
+
 type captureBudget struct{ nodes, bytes int }
 
 // capture validates even omitted sensitive descendants and copies only allowed values.
