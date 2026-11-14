@@ -13,13 +13,14 @@ import (
 // ErrInvalid never includes a supplied expression, timezone, or payload.
 var ErrInvalid = errors.New("invalid cron schedule or timezone")
 
-// Trigger is the reviewed cron-only workflow trigger contract.
+// Trigger is a workflow trigger definition.
 type Trigger struct {
 	ID        string `json:"id"`
 	Type      string `json:"type"`
-	Schedule  string `json:"schedule"`
-	Timezone  string `json:"timezone"`
-	MissedRun string `json:"missed_run"`
+	Schedule  string `json:"schedule,omitempty"`
+	Timezone  string `json:"timezone,omitempty"`
+	MissedRun string `json:"missed_run,omitempty"`
+	Event     string `json:"event,omitempty"`
 }
 
 // ZoneLoader allows deterministic calendar/availability tests. Nil uses embedded-capable Go lookup.

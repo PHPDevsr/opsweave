@@ -311,3 +311,12 @@ Illustrative local median observations (three samples, ns/op): Parse/Steps1 23,1
 - Cron fuzzing passed with 330,569 executions in four seconds. `go vet ./...`, `go mod verify`, `go build ./...`, and benchmark `actionlint` passed. The local build emitted the existing Go module stat-cache access-denied warning and exited zero.
 - The ledger preserves all 561 requirement IDs and fields. It marks 15 cron rows implemented and records partial cron evidence for the broader trigger requirements. CodeQL and Phase 03 acceptance remain open. The [event trigger and webhook proposal](designs/event-triggers.md) specifies the next review decision before implementing external ingress.
 - Local benchmark run passed across six packages with 30 cases and 90 samples. The CI workflow asserts 17 benchmark families. Go formatting, Bun Markdown, changed links and diff checks passed.
+
+## 2026-11-14 (Asia/Jakarta) — Automatic event ingress
+
+- The user accepted the startup, internal, and signed loopback webhook contract. Work began at `9344922` in draft PR #5.
+- Migration 006 adds enabled route reconciliation, immutable event origins and history, seven-day hashed deduplication, and a persisted startup cursor. Admission shares the existing queue transaction. Internal fan-out uses a savepoint for atomic rollback. Claim rechecks automatic enablement. The server validates opt-in webhook settings before acquiring ownership and joins handlers and workers on shutdown.
+- Operational choices include `server --webhook-port`, the `OPSWEAVE_WEBHOOK_SECRET` environment variable, a 250 ms startup scan interval, and local `event history` with a 1000-row maximum. See [operations](../docs/event-triggers.md) and the [self-review](reviews/phase-03-event-triggers.md).
+- Focused SQLite rollback, replay, lifecycle, fencing, startup retry, and destination-limit tests passed. The local sandbox blocked the real loopback shutdown test. The same test passed with loopback access. The full local race suite passed with loopback access and two package workers, including CLI startup and joined listener shutdown.
+- Route fuzzing passed with 129,883 executions. Webhook authentication benchmark passed with three samples. CI asserts 18 benchmark families. Static analysis, build, module verification, benchmark workflow lint, Markdown and ledger checks passed.
+- The next approval covers retention and local readiness. The [proposal](designs/retention-readiness.md) describes deletion boundaries and a local status interface.

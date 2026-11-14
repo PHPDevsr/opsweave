@@ -151,7 +151,15 @@ func writeExecution(out io.Writer, asJSON bool, value any) error {
 			return err
 		}
 		if v.Trigger != nil {
-			if _, err := fmt.Fprintf(out, "Trigger: %s %s at %s\n", v.Trigger.Type, v.Trigger.ID, v.Trigger.ScheduledAt.Format(time.RFC3339)); err != nil {
+			if _, err := fmt.Fprintf(out, "Trigger: %s %s", v.Trigger.Type, v.Trigger.ID); err != nil {
+				return err
+			}
+			if !v.Trigger.ScheduledAt.IsZero() {
+				if _, err := fmt.Fprintf(out, " at %s", v.Trigger.ScheduledAt.Format(time.RFC3339)); err != nil {
+					return err
+				}
+			}
+			if _, err := fmt.Fprintln(out); err != nil {
 				return err
 			}
 		}

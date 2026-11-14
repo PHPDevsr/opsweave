@@ -7,6 +7,7 @@ import (
 	"errors"
 	"io"
 	"log/slog"
+	"os"
 	"time"
 
 	"github.com/PHPDevsr/opsweave/internal/action"
@@ -98,7 +99,17 @@ func managedResultError(state execution.State) error {
 }
 
 func serverCommand(out, diagnostics io.Writer, runtime *action.Runtime) *urfave.Command {
-	return &urfave.Command{Name: "server", Usage: "Run the bounded single-node queue dispatcher (no network listener)", OnUsageError: usageError, ArgValidator: noArguments, Flags: []urfave.Flag{&urfave.BoolFlag{Name: "adopt-unmanaged", Usage: "Adopt old active executions after stopping every old executor"}}, Action: func(ctx context.Context, cmd *urfave.Command) (err error) {
+	return &urfave.Command{Name: "server", Usage: "Run the bounded single-node dispatcher", OnUsageError: usageError, ArgValidator: noArguments, Flags: []urfave.Flag{&urfave.IntFlag{Name: "webhook-port", Usage: "Enable authenticated IPv4 loopback webhooks on this port"}, &urfave.BoolFlag{Name: "adopt-unmanaged", Usage: "Adopt old active executions after stopping every old executor"}}, Action: func(ctx context.Context, cmd *urfave.Command) (err error) {
+		var secret []byte
+		if cmd.IsSet("webhook-port") {
+			if cmd.Int("webhook-port") < 1 || cmd.Int("webhook-port") > 65535 {
+				return errors.New("webhook port must be between 1 and 65535")
+			}
+			secret = []byte(os.Getenv("OPSWEAVE_WEBHOOK_SECRET"))
+			if len(secret) < 32 || len(secret) > 1024 {
+				return errors.New("OPSWEAVE_WEBHOOK_SECRET must contain 32 to 1024 bytes")
+			}
+		}
 		cfg, err := loadConfig(ctx, cmd, diagnostics)
 		if err != nil {
 			return err
@@ -131,9 +142,7 @@ func serverCommand(out, diagnostics io.Writer, runtime *action.Runtime) *urfave.
 			if err = store.RecoverDispatcher(ctx, fence); err != nil {
 				return executionDiagnostic(err)
 			}
-			if _, err = io.WriteString(out, "dispatcher ready\n"); err != nil {
-				return err
-			}
+
 			level := slog.LevelInfo
 			switch cfg.LogLevel {
 			case "debug":
@@ -146,7 +155,11 @@ func serverCommand(out, diagnostics io.Writer, runtime *action.Runtime) *urfave.
 			logger := slog.New(slog.NewJSONHandler(&outputWriter{writer: diagnostics}, &slog.HandlerOptions{Level: level}))
 			e := engine.Engine{Workflows: store, Executions: store, Reliable: store, Actions: runtime}
 			schedules := &scheduler.Service{Repository: store, Preflight: e.ValidateScheduled}
-			_, err = (engine.Dispatcher{Engine: e, Repository: store, Fence: fence, Capacity: cfg.Execution, Logger: logger, Scheduler: schedules}).Run(ctx, "")
+			if err = store.BeginStartup(ctx, fence); err != nil {
+				return executionDiagnostic(err)
+			}
+			dispatch := engine.Dispatcher{Engine: e, Repository: store, Fence: fence, Capacity: cfg.Execution, Logger: logger, Scheduler: schedules, Startup: func(ctx context.Context) (bool, error) { return store.AdvanceStartup(ctx, fence, cfg.Execution) }}
+			err = runServer(ctx, out, cmd.Int("webhook-port"), secret, dispatch, store)
 			if errors.Is(err, context.Canceled) && ctx.Err() != nil {
 				return nil
 			}

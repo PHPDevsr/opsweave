@@ -434,7 +434,7 @@ func TestMigrationFiveRollbackPreservesOldHistory(t *testing.T) {
 	if err != nil {
 		t.Fatal(err)
 	}
-	for _, statement := range []string{"DROP TABLE schedule_events", "DROP TABLE scheduled_executions", "DROP TABLE schedules", "ALTER TABLE workflows DROP COLUMN automatic_generation", "DELETE FROM schema_migrations WHERE version=5", "CREATE TABLE schedules(marker TEXT)", "INSERT INTO schedules VALUES('preserved')"} {
+	for _, statement := range []string{"DROP TABLE event_history", "DROP TABLE event_dedup", "DROP TABLE event_executions", "DROP TABLE startup_scan", "DROP TABLE event_routes", "DROP TABLE schedule_events", "DROP TABLE scheduled_executions", "DROP TABLE schedules", "ALTER TABLE workflows DROP COLUMN automatic_generation", "DELETE FROM schema_migrations WHERE version>=5", "CREATE TABLE schedules(marker TEXT)", "INSERT INTO schedules VALUES('preserved')"} {
 		if _, err := s.db.ExecContext(t.Context(), statement); err != nil {
 			t.Fatal(err)
 		}

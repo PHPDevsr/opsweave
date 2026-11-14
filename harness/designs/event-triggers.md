@@ -1,6 +1,6 @@
 # Phase 03 event trigger and webhook decisions
 
-Status `AWAITING_CONTRACT_REVIEW` on 2026-11-14 (Asia/Jakarta).
+Status `ACCEPTED_FOR_IMPLEMENTATION` on 2026-11-14 (Asia/Jakarta).
 
 ## Workflow and admission
 

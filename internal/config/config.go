@@ -83,6 +83,8 @@ func Load(ctx context.Context, path, cwd string, environ []string) (Config, erro
 			continue
 		}
 		switch key {
+		case "OPSWEAVE_WEBHOOK_SECRET":
+		// The opt-in server reads the secret only when opening ingress.
 		case "OPSWEAVE_STORAGE_PATH":
 			c.StoragePath = value
 		case "OPSWEAVE_LOG_LEVEL":

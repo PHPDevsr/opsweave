@@ -2,6 +2,8 @@ package workflow
 
 import (
 	"fmt"
+
+	"github.com/PHPDevsr/opsweave/internal/event"
 	"github.com/PHPDevsr/opsweave/internal/schedule"
 	"go.yaml.in/yaml/v3"
 )
@@ -17,11 +19,11 @@ func parseTriggers(n *yaml.Node) ([]schedule.Trigger, error) {
 	seen := map[string]bool{}
 	for i, node := range n.Content {
 		path := fmt.Sprintf("spec.triggers[%d]", i)
-		f, err := fields(node, path, "id", "type", "schedule", "timezone", "missed_run")
+		f, err := fields(node, path, "id", "type", "schedule", "timezone", "missed_run", "event")
 		if err != nil {
 			return nil, err
 		}
-		trigger := schedule.Trigger{MissedRun: "skip"}
+		trigger := schedule.Trigger{}
 		if trigger.ID, err = idValue(f["id"], path+".id"); err != nil {
 			return nil, err
 		}
@@ -32,7 +34,27 @@ func parseTriggers(n *yaml.Node) ([]schedule.Trigger, error) {
 		if trigger.Type, err = textValue(f["type"], path+".type"); err != nil {
 			return nil, err
 		}
-		if trigger.Type != "cron" {
+		switch trigger.Type {
+		case "startup", "webhook", "internal":
+			if f["schedule"] != nil || f["timezone"] != nil || f["missed_run"] != nil {
+				return nil, invalid(node, path, "invalid_trigger_fields")
+			}
+			if trigger.Type == "internal" {
+				trigger.Event, err = textValue(f["event"], path+".event")
+				if err != nil || !event.ValidName(trigger.Event) {
+					return nil, invalid(node, path+".event", "invalid_event_name")
+				}
+			} else if f["event"] != nil {
+				return nil, invalid(node, path, "invalid_trigger_fields")
+			}
+			result = append(result, trigger)
+			continue
+		case "cron":
+			if f["event"] != nil {
+				return nil, invalid(node, path, "invalid_trigger_fields")
+			}
+			trigger.MissedRun = "skip"
+		default:
 			return nil, invalid(f["type"], path+".type", "unsupported_capability")
 		}
 		if trigger.Schedule, err = textValue(f["schedule"], path+".schedule"); err != nil {

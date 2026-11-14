@@ -25,6 +25,7 @@ type Dispatcher struct {
 	Capacity   execution.Capacity
 	Logger     *slog.Logger
 	Scheduler  *scheduler.Service
+	Startup    func(context.Context) (bool, error)
 	Now        func() time.Time
 }
 
@@ -156,7 +157,8 @@ func (d Dispatcher) Run(ctx context.Context, only string) (final execution.Snaps
 	}
 	active := map[string]invocation{}
 	var shutdown context.Context
-	var nextScheduleScan time.Time
+	var nextScheduleScan, nextStartupScan time.Time
+	startupDone := d.Startup == nil
 	var stop context.CancelFunc
 	defer func() {
 		poolCancel()
@@ -311,6 +313,20 @@ func (d Dispatcher) Run(ctx context.Context, only string) (final execution.Snaps
 		if shutdown != nil && shutdown.Err() != nil {
 			return final, context.DeadlineExceeded
 		}
+		if shutdown == nil && ctx.Err() == nil && only == "" && !startupDone && !time.Now().Before(nextStartupScan) {
+			scanCtx, cancelScan := context.WithTimeout(ctx, 5*time.Second)
+			done, err := d.Startup(scanCtx)
+			cancelScan()
+			if ctx.Err() != nil && errors.Is(err, ctx.Err()) {
+				continue
+			}
+			if err != nil {
+				return final, safeRepositoryError(err)
+			}
+			startupDone = done
+			nextStartupScan = time.Now().Add(250 * time.Millisecond)
+		}
+
 		if shutdown == nil && ctx.Err() == nil && only == "" && d.Scheduler != nil {
 			now := time.Now().UTC()
 			if d.Now != nil {

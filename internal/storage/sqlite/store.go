@@ -256,6 +256,9 @@ func applyOne(ctx context.Context, tx *sql.Tx, c registry.Candidate, triggers []
 	if err := reconcileSchedules(ctx, tx, c.Name, revision, triggers, now); err != nil {
 		return registry.Record{}, err
 	}
+	if err := reconcileEventRoutes(ctx, tx, c.Name, revision, triggers); err != nil {
+		return registry.Record{}, err
+	}
 	return get(ctx, tx, c.Name, revision)
 }
 

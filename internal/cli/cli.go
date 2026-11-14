@@ -95,7 +95,7 @@ func executeWithRuntime(ctx context.Context, args []string, stdout, stderr io.Wr
 	}
 	cmd.Commands = append(cmd.Commands, foundationCommands(output, stderr, catalog)...)
 	cmd.Commands = append(cmd.Commands, executionCommands(output, stderr, runtime)...)
-	cmd.Commands = append(cmd.Commands, serverCommand(output, stderr, runtime))
+	cmd.Commands = append(cmd.Commands, serverCommand(output, stderr, runtime), eventCommand(output, stderr))
 	if err := cmd.Run(ctx, args); err != nil {
 		return err
 	}

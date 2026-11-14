@@ -99,7 +99,7 @@ type Step struct {
 type TriggerOrigin struct {
 	Type        string    `json:"type"`
 	ID          string    `json:"id"`
-	ScheduledAt time.Time `json:"scheduledAt"`
+	ScheduledAt time.Time `json:"scheduledAt,omitzero"`
 }
 
 // Snapshot binds history to its original immutable workflow revision.

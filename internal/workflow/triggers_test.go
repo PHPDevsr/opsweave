@@ -16,7 +16,8 @@ func TestCronTriggerValidationAndCapabilityGates(t *testing.T) {
 		t.Fatal("legacy capability gate changed")
 	}
 	for _, replacement := range []string{
-		"  triggers: []", "  triggers: {}", "  triggers: [{id: daily, type: webhook}]",
+		"  triggers: [{id: hook, type: webhook, event: build}]", "  triggers: [{id: boot, type: startup, timezone: UTC}]", "  triggers: [{id: bus, type: internal}]",
+		"  triggers: []", "  triggers: {}", "  triggers: [{id: daily, type: unsupported}]",
 		"  triggers: [{id: daily, type: cron, schedule: '* * * * *'}]",
 		"  triggers: [{id: daily, type: cron, schedule: 1, timezone: UTC}]",
 		"  triggers: [{id: daily, type: cron, schedule: '* * * * *', timezone: true}]",

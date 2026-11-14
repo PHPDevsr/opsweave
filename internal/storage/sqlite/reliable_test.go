@@ -297,7 +297,7 @@ func versionTwoFixture(t *testing.T, s *Store) {
 		t.Fatal(err)
 	}
 	statements := []string{
-		"DROP TABLE schedule_events", "DROP TABLE scheduled_executions", "DROP TABLE schedules", "ALTER TABLE workflows DROP COLUMN automatic_generation", "DROP TABLE dispatcher_audit", "DROP TABLE execution_queue", "DROP TABLE dispatcher", "DROP TABLE execution_admissions", "DROP TABLE execution_attempts", "DROP TABLE execution_policies",
+		"DROP TABLE event_history", "DROP TABLE event_dedup", "DROP TABLE event_executions", "DROP TABLE startup_scan", "DROP TABLE event_routes", "DROP TABLE schedule_events", "DROP TABLE scheduled_executions", "DROP TABLE schedules", "ALTER TABLE workflows DROP COLUMN automatic_generation", "DROP TABLE dispatcher_audit", "DROP TABLE execution_queue", "DROP TABLE dispatcher", "DROP TABLE execution_admissions", "DROP TABLE execution_attempts", "DROP TABLE execution_policies",
 		"DROP TRIGGER execution_events_no_update", "DROP TRIGGER execution_events_no_delete",
 		"ALTER TABLE execution_events RENAME TO fixture_events",
 		`CREATE TABLE execution_events(execution_id TEXT NOT NULL REFERENCES executions(id),sequence INTEGER NOT NULL CHECK(sequence>0 AND sequence<=1024),body TEXT NOT NULL,PRIMARY KEY(execution_id,sequence))`,

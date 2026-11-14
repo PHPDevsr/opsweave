@@ -11,7 +11,7 @@ dependency change is included in this measurement baseline.
 From the repository root, with the Go version declared in `go.mod`:
 
 ```sh
-go test -run '^$' -bench '^Benchmark' -benchmem -benchtime=200ms -count=3 -cpu=1 ./internal/schedule ./internal/workflow ./internal/registry ./internal/storage/sqlite ./internal/execution ./internal/engine
+go test -run '^$' -bench '^Benchmark' -benchmem -benchtime=200ms -count=3 -cpu=1 ./internal/webhook ./internal/schedule ./internal/workflow ./internal/registry ./internal/storage/sqlite ./internal/execution ./internal/engine
 ```
 
 Use `-benchtime=1x -count=1` for a one-iteration correctness smoke run, or
@@ -89,7 +89,7 @@ include migration 004 and must not be treated as identical migration workloads.
 The `Benchmarks` workflow runs on relevant pull requests, matching pushes to
 `main`, and manual dispatch. A Linux job uses the declared Go version, one logical
 CPU setting (`-cpu=1`), three samples and 200 ms target measurement windows. It
-verifies that all seventeen benchmark families appeared. Benchmark errors or missing
+verifies that all eighteen benchmark families appeared. Benchmark errors or missing
 families fail the job; shell pipe failures cannot be hidden by `tee`.
 
 Each run uploads `benchmark-results.txt` plus `benchmark-environment.txt` with
@@ -112,3 +112,6 @@ CodeQL repository configuration gate remains unchanged.
 schedule. `BenchmarkScheduleDueScan` measures one SQLite cursor read, calendar
 calculation, and durable cursor commit for a schedule with no matching minute.
 The second benchmark updates one bounded fixture row. It excludes action work.
+
+`BenchmarkWebhookAuthentication` measures request construction, HMAC verification,
+JSON validation and receipt serialization with an in-memory admission stub.

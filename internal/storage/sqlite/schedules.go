@@ -20,6 +20,9 @@ func reconcileSchedules(ctx context.Context, tx *sql.Tx, name, revision string, 
 		return err
 	}
 	for _, trigger := range triggers {
+		if trigger.Type != "cron" {
+			continue
+		}
 		if _, err := tx.ExecContext(ctx, "INSERT INTO schedules VALUES(?,?,?,?,?,?,?,?,NULL,?,0,'')", name, trigger.ID, revision, trigger.Schedule, trigger.Timezone, trigger.MissedRun, now.Format(time.RFC3339Nano), now.Truncate(time.Minute).Unix(), now.Truncate(time.Minute).Add(time.Minute).Unix()); err != nil {
 			return err
 		}
@@ -317,6 +320,17 @@ func (s *Store) ScheduleEvents(ctx context.Context, name string, limit int) (his
 // readScheduleOrigin verifies persisted receipt metadata against its immutable admission identity.
 func readScheduleOrigin(ctx context.Context, q executionQuerier, snap *execution.Snapshot) error {
 	if snap.Trigger == nil {
+		return nil
+	}
+	if snap.Trigger.Type != "cron" {
+		var kind, id string
+		err := q.QueryRowContext(ctx, "SELECT source_type,trigger_id FROM event_executions WHERE execution_id=? AND workflow_name=? AND revision_id=?", snap.ID, snap.Workflow, snap.Revision).Scan(&kind, &id)
+		if err != nil {
+			return err
+		}
+		if kind != snap.Trigger.Type || id != snap.Trigger.ID || !snap.Trigger.ScheduledAt.IsZero() {
+			return execution.ErrInvalid
+		}
 		return nil
 	}
 	var id, at string
