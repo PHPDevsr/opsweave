@@ -144,7 +144,7 @@ func newReliable(ctx context.Context, id string, record registry.Record, now tim
 		return Snapshot{}, ErrInvalid
 	}
 	deadline := now.Add(definition.Spec.Timeout)
-	if parent, ok := ctx.Deadline(); ok && parent.Before(deadline) {
+	if parent, ok := ctx.Deadline(); !managed && ok && parent.Before(deadline) {
 		deadline = parent
 	}
 	if !deadline.After(now) {

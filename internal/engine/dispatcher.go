@@ -13,6 +13,7 @@ import (
 
 	"github.com/PHPDevsr/opsweave/internal/execution"
 	"github.com/PHPDevsr/opsweave/internal/registry"
+	"github.com/PHPDevsr/opsweave/internal/scheduler"
 	"github.com/PHPDevsr/opsweave/internal/workflow"
 )
 
@@ -23,6 +24,20 @@ type Dispatcher struct {
 	Fence      execution.Fence
 	Capacity   execution.Capacity
 	Logger     *slog.Logger
+	Scheduler  *scheduler.Service
+	Now        func() time.Time
+}
+
+// ValidateScheduled verifies the exact current action-catalog bindings without invocation.
+func (e Engine) ValidateScheduled(ctx context.Context, expected registry.Record) error {
+	current, _, err := e.preflightDispatcher(ctx, expected.Name, expected.Revision)
+	if err != nil {
+		return err
+	}
+	if current.Revision != expected.Revision || !bytes.Equal(current.Source, expected.Source) || !bytes.Equal(current.Definition, expected.Definition) || !bytes.Equal(current.Bindings, expected.Bindings) {
+		return execution.ErrConflict
+	}
+	return nil
 }
 
 func (e Engine) preflightDispatcher(ctx context.Context, name, revision string) (registry.Record, *workflow.Definition, error) {
@@ -141,6 +156,7 @@ func (d Dispatcher) Run(ctx context.Context, only string) (final execution.Snaps
 	}
 	active := map[string]invocation{}
 	var shutdown context.Context
+	var nextScheduleScan time.Time
 	var stop context.CancelFunc
 	defer func() {
 		poolCancel()
@@ -294,6 +310,30 @@ func (d Dispatcher) Run(ctx context.Context, only string) (final execution.Snaps
 		}
 		if shutdown != nil && shutdown.Err() != nil {
 			return final, context.DeadlineExceeded
+		}
+		if shutdown == nil && ctx.Err() == nil && only == "" && d.Scheduler != nil {
+			now := time.Now().UTC()
+			if d.Now != nil {
+				now = d.Now().UTC()
+			}
+			if !now.Before(nextScheduleScan) {
+				scanCtx, cancelScan := context.WithTimeout(ctx, 5*time.Second)
+				report, err := d.Scheduler.Tick(scanCtx, d.Fence, d.Capacity, now)
+				cancelScan()
+				if ctx.Err() != nil && errors.Is(err, ctx.Err()) {
+					continue
+				}
+				if err != nil {
+					return final, safeRepositoryError(err)
+				}
+				nextScheduleScan = now.Add(time.Second)
+				if report.Deferred > 0 {
+					logger.WarnContext(writeCtx(), "scheduled admissions deferred", "count", report.Deferred)
+				}
+				if report.Admitted > 0 {
+					logger.DebugContext(writeCtx(), "scheduled admissions committed", "count", report.Admitted)
+				}
+			}
 		}
 		// Drain completed invocations before making any new dispatch decision.
 		for drain := true; drain; {

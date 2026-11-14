@@ -6,6 +6,7 @@ import (
 	"errors"
 	"fmt"
 	"io"
+	"time"
 
 	"github.com/PHPDevsr/opsweave/internal/action"
 	"github.com/PHPDevsr/opsweave/internal/engine"
@@ -148,6 +149,11 @@ func writeExecution(out io.Writer, asJSON bool, value any) error {
 	case execution.Snapshot:
 		if _, err := fmt.Fprintf(out, "Execution: %s\nWorkflow: %s\nRevision: %s\nState: %s\n", v.ID, v.Workflow, v.Revision, v.State); err != nil {
 			return err
+		}
+		if v.Trigger != nil {
+			if _, err := fmt.Fprintf(out, "Trigger: %s %s at %s\n", v.Trigger.Type, v.Trigger.ID, v.Trigger.ScheduledAt.Format(time.RFC3339)); err != nil {
+				return err
+			}
 		}
 		for _, step := range v.Steps {
 			if _, err := fmt.Fprintf(out, "  %s %s %s %s\n", step.ID, step.State, step.Reason, step.Output); err != nil {

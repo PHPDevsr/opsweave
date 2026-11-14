@@ -202,7 +202,7 @@ func (s *Store) QueuedExecutions(ctx context.Context, only string) ([]execution.
 	if only != "" && !execution.ValidID(only) {
 		return nil, execution.ErrInvalid
 	}
-	rows, err := s.db.QueryContext(ctx, "SELECT e.id,e.body FROM executions e JOIN execution_queue q ON q.execution_id=e.id JOIN workflows w ON w.name=e.workflow_name WHERE e.state='queued' AND (?='' OR e.id=?) AND (json_extract(e.body,'$.cancelRequestedAt') IS NOT NULL OR julianday(q.expires_at)<=julianday(?) OR w.archived=1 OR (julianday(q.available_at)<=julianday(?) AND (SELECT count(*) FROM executions a WHERE a.workflow_name=e.workflow_name AND a.state='running')<min(q.concurrency,COALESCE((SELECT min(aq.concurrency) FROM execution_queue aq JOIN executions a ON a.id=aq.execution_id WHERE a.workflow_name=e.workflow_name AND a.state='running'),q.concurrency)))) ORDER BY q.available_at,e.created_at,e.id LIMIT 1", only, only, time.Now().UTC().Format(time.RFC3339Nano), time.Now().UTC().Format(time.RFC3339Nano))
+	rows, err := s.db.QueryContext(ctx, "SELECT e.id,e.body FROM executions e JOIN execution_queue q ON q.execution_id=e.id JOIN workflows w ON w.name=e.workflow_name LEFT JOIN scheduled_executions origin ON origin.execution_id=e.id WHERE e.state='queued' AND (?='' OR e.id=?) AND (json_extract(e.body,'$.cancelRequestedAt') IS NOT NULL OR julianday(q.expires_at)<=julianday(?) OR w.archived=1 OR (origin.execution_id IS NOT NULL AND (w.enabled=0 OR origin.automatic_generation<>w.automatic_generation)) OR (julianday(q.available_at)<=julianday(?) AND (SELECT count(*) FROM executions a WHERE a.workflow_name=e.workflow_name AND a.state='running')<min(q.concurrency,COALESCE((SELECT min(aq.concurrency) FROM execution_queue aq JOIN executions a ON a.id=aq.execution_id WHERE a.workflow_name=e.workflow_name AND a.state='running'),q.concurrency)))) ORDER BY q.available_at,e.created_at,e.id LIMIT 1", only, only, time.Now().UTC().Format(time.RFC3339Nano), time.Now().UTC().Format(time.RFC3339Nano))
 	if err != nil {
 		return nil, err
 	}
@@ -277,6 +277,20 @@ func (s *Store) ClaimExecution(ctx context.Context, f execution.Fence, id string
 	if current.Archived {
 		reason = "workflow_archived"
 	}
+	{
+		var original sql.NullInt64
+		var currentGeneration int64
+		if err = tx.QueryRowContext(ctx, "SELECT origin.automatic_generation,w.automatic_generation FROM executions e JOIN workflows w ON w.name=e.workflow_name LEFT JOIN scheduled_executions origin ON origin.execution_id=e.id WHERE e.id=?", snap.ID).Scan(&original, &currentGeneration); err != nil {
+			return snap, err
+		}
+		if original.Valid != (snap.Trigger != nil) {
+			return snap, execution.ErrInvalid
+		}
+		if original.Valid && !current.Archived && (!current.Enabled || original.Int64 != currentGeneration) {
+			reason = "workflow_disabled"
+		}
+	}
+
 	if reason != "" {
 		if err = finishQueued(ctx, tx, &snap, reason, now); err != nil {
 			return snap, err

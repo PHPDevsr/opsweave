@@ -14,7 +14,7 @@ alongside help, version information, JSON output and shell completion. See the
 The production action catalog is empty: real workflow registration requires later
 action implementations. The [manual execution engine and history CLI](docs/execution.md)
 are implemented with test-only action injection; production execution still needs
-those future integrations. The [single-node dispatcher server](docs/dispatcher.md) drains explicitly queued work; automatic triggers remain planned.
+those future integrations. The [single-node dispatcher server](docs/dispatcher.md) drains queued work and evaluates [persisted cron schedules](docs/scheduling.md).
 The GOALS.md example remains illustrative.
 
 Phase 01 and both [workflow](harness/designs/workflow-v1.md) and

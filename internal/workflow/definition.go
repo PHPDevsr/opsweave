@@ -4,6 +4,7 @@ package workflow
 
 import (
 	"fmt"
+	"github.com/PHPDevsr/opsweave/internal/schedule"
 	"time"
 )
 
@@ -31,6 +32,7 @@ type Metadata struct {
 
 // Spec contains normalized defaults and dependency edges.
 type Spec struct {
+	Triggers    []schedule.Trigger
 	Steps       []Step
 	Timeout     time.Duration
 	Concurrency int
@@ -80,7 +82,7 @@ func (e *ValidationError) Error() string {
 // Phase01 checks definition-level capability availability, without action lookup.
 // Passing this check does not substitute for action catalog/schema validation.
 func (d *Definition) Phase01() error {
-	if d.Spec.Timeout != time.Hour || d.Spec.Concurrency != 1 || d.Spec.Parallelism != 1 {
+	if len(d.Spec.Triggers) > 0 || d.Spec.Timeout != time.Hour || d.Spec.Concurrency != 1 || d.Spec.Parallelism != 1 {
 		return &ValidationError{Code: "unsupported_capability", Path: "spec"}
 	}
 	for i, s := range d.Spec.Steps {
@@ -95,7 +97,7 @@ func (d *Definition) Phase01() error {
 // SerialReliability permits reviewed execution policies while dispatcher capacity
 // and fenced recovery remain unavailable. Secrets still require Phase 05.
 func (d *Definition) SerialReliability() error {
-	if d.Spec.Concurrency != 1 || d.Spec.Parallelism != 1 {
+	if len(d.Spec.Triggers) > 0 || d.Spec.Concurrency != 1 || d.Spec.Parallelism != 1 {
 		return &ValidationError{Code: "unsupported_capability", Path: "spec"}
 	}
 	for i, step := range d.Spec.Steps {

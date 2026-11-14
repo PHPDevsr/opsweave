@@ -263,6 +263,9 @@ func readExecution(ctx context.Context, q executionQuerier, id string) (executio
 		return execution.Snapshot{}, err
 	}
 	if result.Format == 2 {
+		if err := readScheduleOrigin(ctx, q, &result); err != nil {
+			return execution.Snapshot{}, err
+		}
 		if err := readReliable(ctx, q, &result); err != nil {
 			return execution.Snapshot{}, err
 		}

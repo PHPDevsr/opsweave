@@ -95,8 +95,16 @@ type Step struct {
 	Attempts          []Attempt       `json:"attempts,omitempty"`
 }
 
+// TriggerOrigin identifies an automatic admission, independently of action outputs.
+type TriggerOrigin struct {
+	Type        string    `json:"type"`
+	ID          string    `json:"id"`
+	ScheduledAt time.Time `json:"scheduledAt"`
+}
+
 // Snapshot binds history to its original immutable workflow revision.
 type Snapshot struct {
+	Trigger               *TriggerOrigin  `json:"trigger,omitempty"`
 	ID                    string          `json:"id"`
 	Workflow              string          `json:"workflow"`
 	Revision              string          `json:"revision"`

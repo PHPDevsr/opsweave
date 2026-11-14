@@ -1,6 +1,6 @@
 # Phase 03 persisted cron scheduler proposal
 
-Status: `AWAITING_CONTRACT_REVIEW`, 2026-11-08 (Asia/Jakarta). The user has approved
+Status: `ACCEPTED_FOR_IMPLEMENTATION`. The user accepted all three decisions with "ACCEPT" and confirmed continuation on 2026-11-14 (Asia/Jakarta). The user has approved
 Phase 03, the reliability core and the dispatcher. This next contract concerns
 schedule syntax and missed-run semantics; it does not re-request those approvals.
 

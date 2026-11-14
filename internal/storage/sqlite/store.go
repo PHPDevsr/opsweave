@@ -17,6 +17,7 @@ import (
 
 	"github.com/PHPDevsr/opsweave/internal/config"
 	"github.com/PHPDevsr/opsweave/internal/registry"
+	"github.com/PHPDevsr/opsweave/internal/schedule"
 	"github.com/PHPDevsr/opsweave/internal/workflow"
 	"modernc.org/sqlite"
 )
@@ -166,8 +167,9 @@ func (s *Store) Apply(ctx context.Context, candidates []registry.Candidate) (res
 		return nil, errors.New("invalid registry batch")
 	}
 	seen := make(map[string]bool)
+	triggers := make([][]schedule.Trigger, len(candidates))
 	total := 0
-	for _, c := range candidates {
+	for i, c := range candidates {
 		total += len(c.Source)
 		if total > 16<<20 {
 			return nil, errors.New("registry batch exceeds source limit")
@@ -197,14 +199,15 @@ func (s *Store) Apply(ctx context.Context, candidates []registry.Candidate) (res
 			}
 		}
 		seen[c.Name] = true
+		triggers[i] = d.Spec.Triggers
 	}
 	tx, err := s.db.BeginTx(ctx, nil)
 	if err != nil {
 		return nil, fmt.Errorf("begin apply: %w", err)
 	}
 	defer rollback(tx, &err)
-	for _, c := range candidates {
-		r, err := applyOne(ctx, tx, c)
+	for i, c := range candidates {
+		r, err := applyOne(ctx, tx, c, triggers[i])
 		if err != nil {
 			return nil, err
 		}
@@ -216,7 +219,7 @@ func (s *Store) Apply(ctx context.Context, candidates []registry.Candidate) (res
 	return result, nil
 }
 
-func applyOne(ctx context.Context, tx *sql.Tx, c registry.Candidate) (registry.Record, error) {
+func applyOne(ctx context.Context, tx *sql.Tx, c registry.Candidate, triggers []schedule.Trigger) (registry.Record, error) {
 	now := time.Now().UTC()
 	stamp := now.Format(time.RFC3339Nano)
 	_, err := tx.ExecContext(ctx, "INSERT INTO workflows(name,enabled,archived,created_at,updated_at) VALUES(?,1,0,?,?) ON CONFLICT(name) DO NOTHING", c.Name, stamp, stamp)
@@ -249,6 +252,9 @@ func applyOne(ctx context.Context, tx *sql.Tx, c registry.Candidate) (registry.R
 	}
 	if _, err := tx.ExecContext(ctx, "UPDATE workflows SET current_revision=?,updated_at=? WHERE name=?", revision, stamp, c.Name); err != nil {
 		return registry.Record{}, fmt.Errorf("publish revision: %w", err)
+	}
+	if err := reconcileSchedules(ctx, tx, c.Name, revision, triggers, now); err != nil {
+		return registry.Record{}, err
 	}
 	return get(ctx, tx, c.Name, revision)
 }
@@ -355,8 +361,18 @@ func (s *Store) lifecycle(ctx context.Context, name string, enabled, archive boo
 	if r.Archived {
 		return result, registry.ErrArchived
 	}
-	if _, err := tx.ExecContext(ctx, "UPDATE workflows SET enabled=?,archived=?,updated_at=? WHERE name=?", enabled, archive, time.Now().UTC().Format(time.RFC3339Nano), name); err != nil {
+	generationChange := 0
+	if r.Enabled != enabled || archive {
+		generationChange = 1
+	}
+	now := time.Now().UTC()
+	if _, err := tx.ExecContext(ctx, "UPDATE workflows SET enabled=?,archived=?,updated_at=?,automatic_generation=automatic_generation+? WHERE name=?", enabled, archive, now.Format(time.RFC3339Nano), generationChange, name); err != nil {
 		return result, fmt.Errorf("update workflow lifecycle: %w", err)
+	}
+	if generationChange == 1 {
+		if _, err = tx.ExecContext(ctx, "UPDATE schedules SET cursor_at=?,checked_minute=?,pending_at=NULL,retry_at=?,version=version+1,last_failure='' WHERE workflow_name=?", now.Format(time.RFC3339Nano), now.Truncate(time.Minute).Unix(), now.Truncate(time.Minute).Add(time.Minute).Unix(), name); err != nil {
+			return result, err
+		}
 	}
 	result, err = get(ctx, tx, name, "")
 	if err != nil {

@@ -164,6 +164,7 @@ func foundationCommands(out, diagnostics io.Writer, catalog registry.Catalog) []
 			},
 		})
 	}
+	group.Commands = append(group.Commands, scheduleCommands(out, diagnostics)...)
 	commands = append(commands, group)
 	return commands
 }

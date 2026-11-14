@@ -35,7 +35,7 @@ func reliableStoreFixture(t *testing.T) (*Store, registry.Record, string) {
 	if err != nil {
 		t.Fatal(err)
 	}
-	record, err := applyOne(t.Context(), tx, registry.Candidate{Name: "reliable", Source: source, Normalized: normalized, Bindings: map[string]string{"test.echo": "1"}})
+	record, err := applyOne(t.Context(), tx, registry.Candidate{Name: "reliable", Source: source, Normalized: normalized, Bindings: map[string]string{"test.echo": "1"}}, nil)
 	if err != nil {
 		t.Fatal(errors.Join(err, tx.Rollback()))
 	}
@@ -245,7 +245,7 @@ func TestReliableWholeReplayPinsOldRevision(t *testing.T) {
 	if err != nil {
 		t.Fatal(err)
 	}
-	replacement, err := applyOne(t.Context(), tx, registry.Candidate{Name: record.Name, Source: record.Source, Normalized: record.Definition, Bindings: map[string]string{"test.echo": "1"}})
+	replacement, err := applyOne(t.Context(), tx, registry.Candidate{Name: record.Name, Source: record.Source, Normalized: record.Definition, Bindings: map[string]string{"test.echo": "1"}}, nil)
 	if err != nil {
 		t.Fatal(errors.Join(err, tx.Rollback()))
 	}
@@ -297,7 +297,7 @@ func versionTwoFixture(t *testing.T, s *Store) {
 		t.Fatal(err)
 	}
 	statements := []string{
-		"DROP TABLE dispatcher_audit", "DROP TABLE execution_queue", "DROP TABLE dispatcher", "DROP TABLE execution_admissions", "DROP TABLE execution_attempts", "DROP TABLE execution_policies",
+		"DROP TABLE schedule_events", "DROP TABLE scheduled_executions", "DROP TABLE schedules", "ALTER TABLE workflows DROP COLUMN automatic_generation", "DROP TABLE dispatcher_audit", "DROP TABLE execution_queue", "DROP TABLE dispatcher", "DROP TABLE execution_admissions", "DROP TABLE execution_attempts", "DROP TABLE execution_policies",
 		"DROP TRIGGER execution_events_no_update", "DROP TRIGGER execution_events_no_delete",
 		"ALTER TABLE execution_events RENAME TO fixture_events",
 		`CREATE TABLE execution_events(execution_id TEXT NOT NULL REFERENCES executions(id),sequence INTEGER NOT NULL CHECK(sequence>0 AND sequence<=1024),body TEXT NOT NULL,PRIMARY KEY(execution_id,sequence))`,

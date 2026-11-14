@@ -314,7 +314,11 @@ func Normalize(d *workflow.Definition) ([]byte, error) {
 		needs := append([]string{}, s.Needs...)
 		steps = append(steps, map[string]any{"id": s.ID, "uses": s.Uses, "with": normalizeInput(s.Inputs), "needs": needs, "if": s.Condition, "timeout": s.Timeout.String(), "retry": map[string]any{"attempts": s.Retry.Attempts, "backoff": s.Retry.Backoff.String(), "maxBackoff": s.Retry.MaxBackoff.String()}})
 	}
-	return json.Marshal(map[string]any{"apiVersion": d.APIVersion, "kind": d.Kind, "metadata": map[string]any{"name": d.Metadata.Name, "description": d.Metadata.Description, "labels": d.Metadata.Labels}, "spec": map[string]any{"steps": steps, "timeout": d.Spec.Timeout.String(), "concurrency": map[string]int{"limit": d.Spec.Concurrency}, "parallelism": d.Spec.Parallelism}})
+	spec := map[string]any{"steps": steps, "timeout": d.Spec.Timeout.String(), "concurrency": map[string]int{"limit": d.Spec.Concurrency}, "parallelism": d.Spec.Parallelism}
+	if len(d.Spec.Triggers) > 0 {
+		spec["triggers"] = d.Spec.Triggers
+	}
+	return json.Marshal(map[string]any{"apiVersion": d.APIVersion, "kind": d.Kind, "metadata": map[string]any{"name": d.Metadata.Name, "description": d.Metadata.Description, "labels": d.Metadata.Labels}, "spec": spec})
 }
 
 func normalizeInput(value any) any {

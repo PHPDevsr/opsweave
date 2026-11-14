@@ -4,7 +4,7 @@ The accepted [dispatcher contract](../harness/designs/single-node-dispatcher.md)
 extends the [serial reliability core](reliability.md) with a bounded action pool,
 durable queue, workflow concurrency, parallel DAG steps and conservative recovery.
 The production action catalog is still empty; handlers used in tests are not
-installable actions. Scheduler, triggers and network listeners remain unavailable.
+installable actions. The server also evaluates persisted cron triggers. See [scheduled workflows](scheduling.md).
 
 ## Commands and configuration
 
@@ -25,8 +25,7 @@ running work and requires a server to perform recovery. It does not drain an old
 unrelated queue. Caller cancellation also cancels its own unclaimed admission.
 
 `server` drains eligible queue work and prints `dispatcher ready` after ownership
-and recovery succeed. It opens no network listener and supplies no management API,
-cron, webhook or health endpoint. Stop it with the process interrupt context.
+and recovery succeed. The same dispatcher owns the cron scheduler and its queued work. Stop it with the process interrupt context.
 
 Optional strict configuration:
 

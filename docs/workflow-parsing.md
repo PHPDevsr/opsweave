@@ -15,7 +15,7 @@ BOM and document markers for future lossless export.
 
 The [serial reliability core](reliability.md) now executes reviewed conditions,
 output references and retry/deadline policies with an injected compatible catalog.
-The [dispatcher](dispatcher.md) activates bounded parallelism/concurrency; trigger definitions and secrets remain gated.
+The [dispatcher](dispatcher.md) activates bounded parallelism/concurrency; see the [cron trigger syntax](scheduling.md) for scheduled workflows.
 
 The following example is structurally valid for parser development. `test.echo`
 is a fictional identifier, not a shipped action or supported integration:

@@ -14,6 +14,7 @@ import (
 	"github.com/PHPDevsr/opsweave/internal/dispatchlock"
 	"github.com/PHPDevsr/opsweave/internal/engine"
 	"github.com/PHPDevsr/opsweave/internal/execution"
+	"github.com/PHPDevsr/opsweave/internal/scheduler"
 	"github.com/PHPDevsr/opsweave/internal/storage/sqlite"
 	urfave "github.com/urfave/cli/v3"
 )
@@ -143,7 +144,9 @@ func serverCommand(out, diagnostics io.Writer, runtime *action.Runtime) *urfave.
 				level = slog.LevelError
 			}
 			logger := slog.New(slog.NewJSONHandler(&outputWriter{writer: diagnostics}, &slog.HandlerOptions{Level: level}))
-			_, err = (engine.Dispatcher{Engine: engine.Engine{Workflows: store, Executions: store, Reliable: store, Actions: runtime}, Repository: store, Fence: fence, Capacity: cfg.Execution, Logger: logger}).Run(ctx, "")
+			e := engine.Engine{Workflows: store, Executions: store, Reliable: store, Actions: runtime}
+			schedules := &scheduler.Service{Repository: store, Preflight: e.ValidateScheduled}
+			_, err = (engine.Dispatcher{Engine: e, Repository: store, Fence: fence, Capacity: cfg.Execution, Logger: logger, Scheduler: schedules}).Run(ctx, "")
 			if errors.Is(err, context.Canceled) && ctx.Err() != nil {
 				return nil
 			}

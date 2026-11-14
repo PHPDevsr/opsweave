@@ -22,6 +22,21 @@ func (s *Store) CreateReliable(ctx context.Context, expected registry.Record, op
 }
 
 func (s *Store) admitReliable(ctx context.Context, expected registry.Record, options execution.AdmissionOptions, queue *execution.Capacity) (result execution.AdmissionResult, err error) {
+	tx, err := s.db.BeginTx(ctx, nil)
+	if err != nil {
+		return result, err
+	}
+	defer rollback(tx, &err)
+	result, err = admitInTransaction(ctx, tx, expected, options, queue, time.Now().UTC())
+	if err != nil {
+		return result, err
+	}
+	err = tx.Commit()
+	return result, err
+}
+
+// admitInTransaction is shared by manual and atomic scheduler admission. It never commits.
+func admitInTransaction(ctx context.Context, tx *sql.Tx, expected registry.Record, options execution.AdmissionOptions, queue *execution.Capacity, now time.Time) (result execution.AdmissionResult, err error) {
 	if !execution.ValidID(options.Owner) || !execution.ValidID(expected.Revision) || (options.Parent != "" && !execution.ValidID(options.Parent)) {
 		return result, execution.ErrInvalid
 	}
@@ -29,11 +44,6 @@ func (s *Store) admitReliable(ctx context.Context, expected registry.Record, opt
 	if err != nil {
 		return result, err
 	}
-	tx, err := s.db.BeginTx(ctx, nil)
-	if err != nil {
-		return result, err
-	}
-	defer rollback(tx, &err)
 	if queue == nil {
 		var generation int64
 		if err = tx.QueryRowContext(ctx, "SELECT generation FROM dispatcher WHERE singleton=1").Scan(&generation); err != nil {
@@ -76,7 +86,6 @@ func (s *Store) admitReliable(ctx context.Context, expected registry.Record, opt
 			return result, execution.ErrUncertain
 		}
 	}
-	now := time.Now().UTC()
 	scope := actual.Name + ":run"
 	if options.Parent != "" {
 		scope = actual.Name + ":retry:" + options.Parent
@@ -95,9 +104,6 @@ func (s *Store) admitReliable(ctx context.Context, expected registry.Record, opt
 				}
 				snap, err := readExecution(ctx, tx, id)
 				if err != nil {
-					return result, err
-				}
-				if err := tx.Commit(); err != nil {
 					return result, err
 				}
 				return execution.AdmissionResult{Snapshot: snap}, nil
@@ -189,9 +195,6 @@ func (s *Store) admitReliable(ctx context.Context, expected registry.Record, opt
 		}
 	}
 	result = execution.AdmissionResult{Snapshot: snap, Created: true}
-	if err := tx.Commit(); err != nil {
-		return result, err
-	}
 	return result, nil
 }
 
