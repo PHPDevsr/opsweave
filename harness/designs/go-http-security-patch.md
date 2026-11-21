@@ -1,6 +1,11 @@
 # Go HTTP security patch decision
 
-Status `PROPOSED`, 2026-11-22 (Asia/Jakarta).
+Status `ACCEPTED_AND_MERGED`, 2026-11-22 (Asia/Jakarta).
+
+The user requested a separate patch branch, then confirmed PR #9 was merged.
+HTTP was rebased onto origin/main `0033480`. The patch also adds govulncheck@latest
+CI and PR-only feature-branch checks, as subsequently requested by the user.
+The proposal and original scan evidence below describe the pre-patch decision.
 
 ## Finding and proposed change
 
@@ -32,7 +37,7 @@ patch. Reference [Go release history](https://go.dev/doc/devel/release#go1.27.4)
 
 ## Review gate
 
-[PLANS.md](../../PLANS.md) states: "Retain Go 1.27.3 unless a separately justified
-change is approved." Accept the changes above to authorize the patch-version
-increase. Until then keep the HTTP requirement rows `IMPLEMENTED`, with the
-security gate open, and do not mark the feature complete.
+At proposal time, [PLANS.md](../../PLANS.md) stated: "Retain Go 1.27.3 unless a separately justified
+change is approved." The user authorized this patch-version increase on a separate branch. That
+change is now merged; retain HTTP rows `IMPLEMENTED` until the rebased combination
+passes its own required verification.

@@ -2,7 +2,7 @@
 
 Assessment date: 2026-11-08 (Asia/Jakarta). Baseline commit: `59c5b3f02a155f5979698bfde53c944063222be5`.
 
-Harness state: `PHASE_04_SECURITY_DECISION_REQUIRED`. On 2026-11-08 (Asia/Jakarta), the user confirmed merging [PR #4](https://github.com/PHPDevsr/opsweave/pull/4), requested fetch/rebase and explicitly authorized Phase 03. Fetch/rebase completed without conflicts at `e7d7177fe4eb028c91a8dae98322bfbb7ca2daf3`; the new branch is `codex/phase-03-reliable-orchestration`. Phase 02 is accepted by the user. The first Phase 03 work unit is the [reliable execution proposal](harness/designs/reliable-execution.md), accepted by user reply "ACCEPT"; its serial policy implementation has passed local verification and self-review; the dispatcher contract was accepted by the subsequent user reply "ACCEPT" and its implementation has passed local verification and self-review. The user approved the cron contract and requested continuation. The scheduler is implemented and locally verified. Prior CI, benchmarks, native Bun Markdown and six-target release preview passed on `7aa93ed`; CodeQL upload remains blocked by repository Advanced Security configuration. User acceptance does not turn that check into a pass or complete requirements. Phases 04–10 remain unapproved except the narrow early release packaging extension. This harness is a documentation workflow, not an executable autonomous runner.
+Harness state: `PHASE_04_HTTP_VERIFICATION_REQUIRED`. On 2026-11-08 (Asia/Jakarta), the user confirmed merging [PR #4](https://github.com/PHPDevsr/opsweave/pull/4), requested fetch/rebase and explicitly authorized Phase 03. Fetch/rebase completed without conflicts at `e7d7177fe4eb028c91a8dae98322bfbb7ca2daf3`; the new branch is `codex/phase-03-reliable-orchestration`. Phase 02 is accepted by the user. The first Phase 03 work unit is the [reliable execution proposal](harness/designs/reliable-execution.md), accepted by user reply "ACCEPT"; its serial policy implementation has passed local verification and self-review; the dispatcher contract was accepted by the subsequent user reply "ACCEPT" and its implementation has passed local verification and self-review. The user approved the cron contract and requested continuation. The scheduler is implemented and locally verified. Prior CI, benchmarks, native Bun Markdown and six-target release preview passed on `7aa93ed`; CodeQL upload remains blocked by repository Advanced Security configuration. User acceptance does not turn that check into a pass or complete requirements. Phases 04–10 remain unapproved except the narrow early release packaging extension. This harness is a documentation workflow, not an executable autonomous runner.
 
 The user additionally authorized multi-OS release CI before Phase 03 on
 2026-11-08 (Asia/Jakarta). This is a narrow early packaging extension from Phase
@@ -77,6 +77,10 @@ release packaging extension.
 
 The user accepted the HTTP contract. Both actions and their local tests, race
 verification, benchmark and documentation are implemented. See the [review](harness/reviews/phase-04-http.md).
-The new [toolchain security decision](harness/designs/go-http-security-patch.md)
-blocks completion after govulncheck reported GO-2026-6859. Retain current toolchain
-until this explicitly required decision is resolved. No later phase is authorized.
+The [toolchain security decision](harness/designs/go-http-security-patch.md)
+was accepted and merged separately in PR #9. The user confirmed that merge on
+2026-11-22 and authorized the HTTP rebase. Branch HTTP now includes Go 1.27.4,
+latest-scanner CI and feature-branch PR-only checks from origin/main `0033480`.
+Combined HTTP verification is in progress. The next
+[shell contract](harness/designs/shell-action.md) remains proposed and requires review.
+No later phase is authorized.

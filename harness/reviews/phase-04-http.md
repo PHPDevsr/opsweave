@@ -37,3 +37,15 @@ Verification results and limitations are recorded in the append-only
 for configuration, CLI example, semantics, security bounds and troubleshooting.
 Remote CI must be observed before claiming its quality gates passed. This review
 does not complete later Phase 04 actions or authorize Phase 05.
+
+## Rebased verification on Go 1.27.4
+
+The user confirmed the separate security patch was merged. HTTP was rebased onto
+origin/main `0033480`; the only conflict was append-only log history, preserved
+from both branches. Application source/tests are unchanged from `4bf30d6`.
+Full ordinary/race suites, vet, build, module verification and govulncheck@latest
+passed on the combined source. HTTP coverage is 95.3%; engine 82.6%, execution
+86.2%, workflow 94.3%. Bounded fuzzing passed 71,138 executions. Fresh PR checks
+are still required before completing the four HTTP/SSRF ledger rows. See the
+build log for exact benchmark values and command outcomes. Shell has no runtime
+implementation and awaits its separate reviewed contract.

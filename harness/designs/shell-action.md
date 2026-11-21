@@ -8,8 +8,12 @@ Runtime implementation requires review of the process/security boundary.
 Implement `shell.exec` version `1` through the existing runtime. Default disabled.
 Require `actions.shell.enabled` and a nonempty list of named command profiles.
 Each profile defines an absolute executable path, absolute working directory and
-fixed argument prefix. Reject duplicate names and invalid paths. No PATH search,
+fixed argument prefix. Limit profiles to 128. Reject duplicate names and invalid paths. No PATH search,
 shell string expansion, environment interpolation or workflow-selected executable.
+The YAML fields are `actions.shell.commands` (a list), with each entry containing
+`name`, `executable`, `working_directory` and optional `args` (fixed prefix).
+Only trusted administrators may control profile configuration, executable files
+and working directories. Profiles grant the service OS account's existing rights.
 
 Workflow inputs are required `command` (profile name) and optional `args` (array
 of strings). Execute directly using `exec.CommandContext`. Maximum 64 combined
@@ -36,12 +40,16 @@ and report failure, without silent truncation. Never retain unbounded buffers.
 Outputs and input arguments are ordinary persisted workflow data and must contain
 no secrets. No internal retries; operator workflow retries can repeat side effects.
 
-Use the earlier engine deadline or a 30-second action ceiling. Require controlled
-termination and reaping of the owned process tree, including child processes and
-inherited output handles, using platform-specific process controls where needed.
-Bound post-cancellation waits and report inability to finish cleanup. Do not claim
-OS resource isolation or exactly-once effects. Native implementation must support
-Linux, macOS and Windows and preserve dispatcher shutdown ownership.
+Use the earlier engine deadline or a 30-second action ceiling. On Unix, place the
+command and cooperating children in an owned process group; on Windows, establish
+an owned non-breakaway job before the configured executable starts. Terminate the
+owned group/job on cancellation, deadline or overflow; close inherited capture
+handles and reap the direct child. Bound post-cancellation waits to two seconds
+and report cleanup failure. Unix profiles must not daemonize or move descendants
+out of their group. This is a trusted-command contract, with no OS sandbox or
+promise to contain arbitrary hostile binaries. Do not claim exactly-once effects.
+Native implementation must support Linux, macOS and Windows and preserve
+dispatcher shutdown ownership.
 
 ## Verification and documentation
 

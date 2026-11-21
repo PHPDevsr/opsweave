@@ -1,6 +1,6 @@
 # Phase 04 — Built-in actions
 
-Milestone: v0.3.x. Requirement status: `PLANNED`. Review state: APPROVED_FOR_PHASE_04; HTTP contract ACCEPTED; HTTP implementation locally verified; toolchain security decision OPEN.
+Milestone: v0.3.x. Requirement status: `IN_PROGRESS`. Review state: APPROVED_FOR_PHASE_04; HTTP contract ACCEPTED; HTTP implementation locally verified; toolchain patch MERGED; combined verification IN_PROGRESS.
 
 Authorization: the user confirmed Phase 03 was merged and requested continuation
 on 2026-11-22 (Asia/Jakarta). Phase approval is separate from action contract

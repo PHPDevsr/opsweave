@@ -543,3 +543,34 @@ Illustrative local median observations (three samples, ns/op): Parse/Steps1 23,1
   and evidence. Corrected a Windows text-encoding/newline issue in README during
   validation and restored unaffected text from the baseline before reapplying the
   scoped edit. No product assertions or security controls were relaxed.
+
+## 2026-11-22 (Asia/Jakarta) — Rebase HTTP after the security merge
+
+- The user confirmed PR #9 was merged. Fetch updated origin/main from `eed2b62`
+  to `0033480`. Rebased `codex/phase-04-built-in-actions`; the only conflict was
+  the append-only build log. Preserved the complete main log and appended all
+  original HTTP-only entries. No application conflict or source edit occurred.
+  The replayed HTTP implementation commit is `d3ede94`.
+- The branch now inherits Go 1.27.4, govulncheck@latest, and main-only push checks
+  while feature branches use PR checks. The independent security patch remains
+  in main; no security-branch changes were copied back into the HTTP feature diff.
+- Updated current harness state to combined HTTP verification. Earlier open
+  security-decision statements are superseded by the explicit merge evidence.
+  Shell remains a proposed contract, not an implemented or accepted action.
+- Next: complete required Go/race/security checks on the combined source, update
+  PR #8 with a lease-protected rebase push, observe its single set of PR checks,
+  and close only requirements whose acceptance evidence actually passes.
+
+- Combined-source verification with Go 1.27.4 exited 0: full ordinary suite with
+  `.cache/http-rebased-coverage.out`, full race suite with CGO/Clang, vet, module
+  verification, build and the exact govulncheck@latest command. Scanner reported
+  "No vulnerabilities found." Coverage: HTTP 95.3%, engine 82.6%, execution
+  86.2%, workflow 94.3%. No application failure or build warning was emitted.
+- HTTP policy benchmark passed three 200 ms samples: 1111-1231 ns/op, 267 B/op,
+  6 allocs/op on local Windows. Four-second URL/policy fuzzing passed 71,138
+  executions. No optimization was introduced. Go formatting, all-workflow
+  actionlint, pinned Bun Markdown and diff whitespace checks passed.
+- Rebase review confirmed application source, tests, go.sum and command code are
+  byte-identical to the original accepted HTTP commit `4bf30d6`; only main's
+  toolchain/CI/docs and resolved harness history differ. The rewritten commit
+  retains a GPG signature. HTTP rows remain IMPLEMENTED pending fresh PR evidence.
