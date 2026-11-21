@@ -35,7 +35,7 @@ not need a Go toolchain. The [release workflow](docs/releases.md) produces
 Linux, Windows and macOS archives for amd64/arm64 after an intentional version tag.
 No release tag is created merely by merging that workflow.
 
-- Go **1.27.3 or newer**.
+- Go **1.27.4 or newer**.
 - Git to clone the repository.
 - Network access to the Go module proxy and checksum database for initial
   dependency downloads.
@@ -158,7 +158,7 @@ The workflows run the checks relevant to changed files:
 | `Markdown`   | Any `.md` file, formatter configuration, `.bun-version`, or the Markdown workflow           | Native `bun fmt --check` with the pinned Bun version.                                  |
 
 All three workflows above support manual dispatch. Build, vet, and unit tests run on
-Linux and Windows with Go 1.27.3 and the latest stable Go release. Race detection
+Linux and Windows with Go 1.27.4 and the latest stable Go release. Race detection
 runs on Linux with CGO enabled. External GitHub Actions use full commit SHA pins
 with release-tag comments. Dependabot checks Actions and Go Modules weekly. Bun version updates are reviewed
 through `.bun-version`.

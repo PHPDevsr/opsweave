@@ -7,7 +7,7 @@ merely because code exists.
 
 ## Toolchain and dependencies
 
-Use Go 1.27.3 or newer, as declared in `go.mod`. CI tests the minimum supported Go
+Use Go 1.27.4 or newer, as declared in `go.mod`. CI tests the minimum supported Go
 version and the latest stable version on Linux and Windows. Keep `go.mod` and
 `go.sum` consistent, prefer the standard library, and justify new dependencies.
 Use `go mod tidy` after dependency changes; do not hand-edit checksums or disable

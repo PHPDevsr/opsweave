@@ -11,7 +11,7 @@ implementations belong to later approved phases.
 
 ## Installation and quick start
 
-Use Go 1.27.3, then build from the repository root:
+Use Go 1.27.4, then build from the repository root:
 
 ```sh
 go mod download
@@ -184,3 +184,13 @@ convert. Future release documentation must continue to build from exact tags.
   may prevent ThreadSanitizer address-space reservation even with a compiler;
   use a supported test process or passing CI evidence, never label that error a
   successful race test.
+
+## Go 1.27.4 security rebuild
+
+The minimum build toolchain is Go 1.27.4 to include the standard-library fix for
+[GO-2026-6859](https://pkg.go.dev/vuln/GO-2026-6859) in net/http. Existing binaries
+must be rebuilt or replaced to receive the fix. This patch changes no workflow
+syntax, runtime configuration or database schema. Stop active executors before
+replacing their binary. No data conversion is required. Historical verification
+with Go 1.27.3 describes that original source/toolchain and is not a clean security
+scan for the updated build. See the [Go release notes](https://go.dev/doc/devel/release#go1.27.4).

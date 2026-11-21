@@ -350,3 +350,45 @@ Illustrative local median observations (three samples, ns/op): Parse/Steps1 23,1
 - The full standard Go suite, `go vet ./...`, `go mod verify` and `go build ./...` passed. Build emitted the existing local module stat-cache permissions warning and exited zero. Tests cover active and queued work, draining shutdown, retry backoff, old schema upgrade and stale publication.
 - `BenchmarkServerWorkerStatus` passed three 200 ms samples at 1.40–1.46 ms per read on local Windows. Benchmark CI checks its output. `actionlint`, Bun Markdown and the source diff checks passed. See the [maintenance guide](../docs/maintenance.md) and [implementation review](reviews/phase-03-maintenance.md).
 - Phase 03 implementation is available for verification and acceptance. The release milestone and CodeQL upload configuration remain open. Later phases require user authorization.
+
+## 2026-11-22 (Asia/Jakarta) — Isolated Go HTTP security patch
+
+- While implementing the user-accepted HTTP contract on Phase 04, govulncheck
+  reported GO-2026-6859 in Go 1.27.3 net/http, fixed in Go 1.27.4. Verified the
+  official vulnerability report and Go release history. Broad reachable symbol
+  matches are scan evidence, not a demonstrated exploit in OpsWeave handlers.
+- The user instructed keeping the HTTP branch and making this change on a new
+  branch, then rebasing HTTP onto origin/main after the patch is merged. This
+  authorizes the patch-level toolchain increase and a separate review. Fetch
+  confirmed origin/main at `eed2b62`. Created `codex/go-1.27.4-security-patch` from
+  origin/main in an isolated ignored worktree. HTTP commit `4bf30d6` remains on
+  `codex/phase-04-built-in-actions`, draft PR #8, without cherry-picking it here.
+- Updated go.mod, the explicit minimum-version CI matrix, active installation and
+  contribution requirements, and the current plan toolchain policy to Go 1.27.4.
+  Added security rebuild/upgrade guidance. No application source, module dependency,
+  go.sum, schema migration, workflow contract or requirement status is changed.
+  Historical assessment and test evidence retain their original version labels.
+- Next: verify with Go 1.27.4, open a separate patch PR targeting main, and leave
+  merging to the user. Rebase the HTTP branch only after the patch is merged.
+
+- Local Go 1.27.4 verification: full `go test -count=1 ./...`, `go vet ./...`,
+  `go mod verify`, `go mod tidy -diff`, and `go build ./...` exited 0.
+  `govulncheck ./...` exited 0 with "No vulnerabilities found." Formatting,
+  Markdown and CI actionlint passed. Full race verification is recorded below
+  after completion, rather than inferred from the normal suite.
+- Self-review verified that only the toolchain directive and explicit CI minimum
+  changed executable build inputs; all application dependencies/go.sum, source,
+  migrations, requirement ledger IDs/statuses and historical evidence are unchanged.
+  Existing tests supply regression coverage; no implementation-mirroring test was
+  added for a version-string edit. The upstream patch is verified by the clean
+  vulnerability scan and repository suites.
+- Independent HTTP PR #8 checks on `4bf30d6` completed successfully: CI run
+  44937235807 (all six OS/toolchain jobs and race), benchmark 44937235815,
+  Markdown 44937235827, CodeQL 44937235682. These are evidence for that HTTP
+  source commit, not tests of the separate patch or the future rebased combination.
+
+- Full `go test -race -count=1 ./...` exited 0 on Go 1.27.4 with CGO and the
+  existing Clang toolchain. Link verification and exact seven-file scope check
+  passed. No source/test change followed these product checks. Next step is the
+  separately authorized security PR and its remote quality gates; no merge or
+  HTTP rebase occurs before the user merges the patch.
