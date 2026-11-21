@@ -463,3 +463,83 @@ Illustrative local median observations (three samples, ns/op): Parse/Steps1 23,1
 - All-workflow actionlint, pinned Bun Markdown and diff whitespace checks exited 0. Audited all six event blocks: five workflows allow pushes only to main;
   release allows only version-tag pushes; every PR trigger remains. No Go source
   changed and no repeated local product tests are claimed for event-only edits.
+
+## 2026-11-22 (Asia/Jakarta) — Phase 04 authorization and HTTP design
+
+- The user confirmed Phase 03 was merged and requested rebase to origin/main and
+  continuation. This accepts Phase 03 for progression and authorizes Phase 04.
+  Independent CodeQL configuration and prior release-preview billing limitations
+  remain historical open checks, not inferred passes.
+- The worktree was clean. Fetch updated origin/main to `eed2b62`. Rebase completed
+  without conflicts. Created `codex/phase-04-built-in-actions` at that baseline.
+  Inspected GOALS, AGENTS, plans, ledger ownership, action runtime/registry,
+  configuration, CLI composition and existing action/CLI tests. No release tags
+  exist. No product implementation or requirement completion is claimed.
+- Prepared the [HTTP action contract](designs/http-actions.md) as the first Phase
+  04 work unit. It specifies descriptor/output behavior, default-disabled network
+  permissions, SSRF controls, explicit private-origin access, bounds and acceptance
+  tests. Existing configuration and engine/storage behavior remain unchanged.
+- The harness requires: "If a required contract is unresolved, complete its design
+  task and seek the relevant decision before implementing it." Phase 04 task 1
+  likewise requires reviewing action contracts. Runtime implementation waits for
+  this concrete security/behavior decision, rather than repeating phase approval.
+- Next: accept or revise the HTTP contract, then implement both actions, tests,
+  benchmark CI coverage, documentation and code/security review. Remaining Phase
+  04 action contracts and Phase 05 remain unapproved.
+- Planning verification exited zero: pinned Bun 1.4.4 Markdown formatting/check,
+  `git diff --check`, changed-document local link validation and exact comparison
+  of all 561 ledger rows. The first formatter attempt could not locate Bun on
+  PATH; the pinned existing `.cache/bun-1.4.4` executable supplied the successful
+  run. Git emitted existing CRLF normalization warnings. No Go source changed,
+  so Go tests were not rerun for this design-only work unit. Self-review checked
+  scope, permission defaults, credential handling and preservation of all ledger
+  statuses. No commit, push, PR, tag or release was created in this work unit.
+
+## 2026-11-22 (Asia/Jakarta) — HTTP action implementation and security gate
+
+- The user replied `ACCEPT` to the HTTP contract. Implemented exact-version
+  `http.request` and `http.health_check`, strict opt-in configuration/environment
+  overrides, production preflight/run/replay/server composition, SSRF policy and
+  bounded HTTP I/O. No new dependencies, migrations or engine/state changes.
+- Added isolated policy/header/transport/security tests, production CLI history
+  and server startup/shutdown tests, bounded URL/policy fuzzing, and
+  `BenchmarkHTTPPolicy` asserted by benchmark CI. Updated English operational
+  documentation and removed obsolete empty-production-catalog statements.
+  [Self-review](reviews/phase-04-http.md) maps test names to the accepted contract.
+- `go test -count=1 '-coverprofile=.cache/http-phase04-full.out' ./...` exited 0.
+  Core coverage: HTTP 95.3%, engine 82.9%, execution 86.2%, workflow 94.3%.
+  `go test -race -count=1 ./...` exited 0 with CGO/Clang and loopback access.
+  The additional production server test subsequently passed focused normal and
+  race runs (`-run '^TestProductionHTTP' ./internal/cli`).
+- `go vet ./...`, `go mod verify`, `go build ./...`, and benchmark actionlint
+  exited 0. Build emitted the existing module stat-cache access-denied warning.
+  `gofmt -l .` initially reported ignored generated files in an abandoned build
+  directory dated 2026-11-14. Verified its resolved path stayed within
+  `.cache/go-tmp`, removed only that stale generated directory, and reran
+  `gofmt -l .` with no paths and exit 0. Tracked Go sources were already formatted.
+- Initial sandboxed loopback tests were blocked by Windows socket permissions;
+  the same suites passed with isolated loopback access. An initial unquoted
+  PowerShell coverage flag was split into an unintended package argument; the
+  corrected quoted full-suite command above passed. No assertion was weakened.
+- Fuzz command `go test -run '^$' -fuzz '^FuzzHTTPURLPolicy$' -fuzztime=4s
+-parallel=2 ./internal/httpaction` exited 0 with 55,279 executions.
+  Benchmark command `go test -run '^$' -bench '^BenchmarkHTTPPolicy$' -benchmem
+-benchtime=200ms -count=3 -cpu=1 ./internal/httpaction` exited 0: 1205–1305 ns/op,
+  267 B/op, 6 allocs/op on this Windows host. No optimization is claimed.
+- `govulncheck ./...` exited 1 with GO-2026-6859 in Go 1.27.3 net/http, fixed in
+  1.27.4. Verified the official Go vulnerability report/release history. No other
+  module vulnerability was reported. This is a real open gate; the broad symbol
+  matches are not proof of an exploit in OpsWeave. PLANS requires approval for
+  the toolchain change. Prepared the [concrete patch proposal](designs/go-http-security-patch.md).
+- Four HTTP/SSRF ledger rows are `IMPLEMENTED`, not `COMPLETED`. Phase 04 remains
+  active. The next [shell contract](designs/shell-action.md) is prepared for later
+  review, with no shell runtime implementation. Resolve the toolchain decision
+  and security scan before claiming the HTTP feature complete. Phase 05 is not
+  authorized. Remote CI evidence and final publication outcomes are recorded in
+  subsequent amendments rather than inferred from local checks.
+- Final planning/documentation checks passed: pinned Bun Markdown formatting/check,
+  changed-document local links, source diff whitespace and all 561 ledger IDs,
+  ownership/prerequisite/source fields. Only the four HTTP/SSRF rows changed status
+  and evidence. Corrected a Windows text-encoding/newline issue in README during
+  validation and restored unaffected text from the baseline before reapplying the
+  scoped edit. No product assertions or security controls were relaxed.

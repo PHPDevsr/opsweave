@@ -1,6 +1,10 @@
 # Phase 04 — Built-in actions
 
-Milestone: v0.3.x. Requirement status: `PLANNED`. Review state: NOT_APPROVED.
+Milestone: v0.3.x. Requirement status: `PLANNED`. Review state: APPROVED_FOR_PHASE_04; HTTP contract ACCEPTED; HTTP implementation locally verified; toolchain security decision OPEN.
+
+Authorization: the user confirmed Phase 03 was merged and requested continuation
+on 2026-11-22 (Asia/Jakarta). Phase approval is separate from action contract
+review. The first work unit is the [HTTP proposal](../designs/http-actions.md).
 
 ## Goal, ownership and prerequisites
 
@@ -42,3 +46,7 @@ Run `gofmt -l .`, `go vet ./...`, `go test -count=1 ./...`, `go test -race -coun
 - [ ] Security, compatibility and migration implications reviewed; source changes scoped.
 - [ ] Append commands, exit codes, evidence, limitations and next steps to [build log](../build-log.md).
 - [ ] Present results and obtain user acceptance before advancing. Do not treat code presence or this checklist as acceptance evidence.
+
+HTTP runtime/tests/docs are implemented. See the [review](../reviews/phase-04-http.md)
+and [security patch decision](../designs/go-http-security-patch.md). The next
+[shell contract](../designs/shell-action.md) is proposed without implementation.

@@ -3,11 +3,11 @@
 Phase 01 provides strict configuration, workflow parsing/preflight, an immutable
 revision registry, single-node SQLite storage and administration commands. It does
 not itself execute workflows; the [Phase 02 engine](execution.md) adds that internal
-boundary and execution history commands. Production currently ships an empty action catalog:
-`validate`, `plan` and `apply` reject action identifiers as unavailable. Tests inject
-validation-only fixture descriptors to verify the full registration lifecycle;
-fixture actions cannot be enabled from configuration or CLI flags. Real action
-implementations belong to later approved phases.
+boundary and execution history commands. Production supports opt-in
+[HTTP actions](http-actions.md). `validate`, `plan` and `apply` require enabled
+action registrations. Tests inject validation-only fixture descriptors to verify
+the registration lifecycle; fixture actions cannot be enabled from configuration
+or CLI flags.
 
 ## Installation and quick start
 
@@ -172,8 +172,8 @@ convert. Future release documentation must continue to build from exact tags.
 
 ## Troubleshooting
 
-- An unavailable-action error is expected with the empty Phase 01 production
-  catalog. Do not bypass it by registering test stubs in production.
+- An unavailable-action error indicates an action is disabled or its exact version
+  is unavailable. Configure [HTTP actions](http-actions.md) when needed.
 - A database error can indicate permissions, a directory/file collision, an
   incompatible schema or contention exceeding the busy timeout. Verify the local
   path and matching binary, stop conflicting processes, and use a backup for

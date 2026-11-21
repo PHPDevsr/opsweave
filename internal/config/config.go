@@ -12,6 +12,7 @@ import (
 	"strings"
 	"time"
 
+	"github.com/PHPDevsr/opsweave/internal/httpaction"
 	"github.com/PHPDevsr/opsweave/internal/yamlutil"
 	"go.yaml.in/yaml/v3"
 )
@@ -25,6 +26,7 @@ type Config struct {
 	LogLevel     string
 	Execution    execution.Capacity
 	RetentionAge time.Duration
+	HTTP         httpaction.Config
 }
 
 // ValidStoragePath rejects driver options/URIs while permitting local paths.
@@ -84,6 +86,21 @@ func Load(ctx context.Context, path, cwd string, environ []string) (Config, erro
 			continue
 		}
 		switch key {
+		case "OPSWEAVE_HTTP_ENABLED":
+			if value != "true" && value != "false" {
+				return Config{}, errors.New("invalid HTTP enabled setting")
+			}
+			c.HTTP.Enabled = value == "true"
+		case "OPSWEAVE_HTTP_ALLOWED_ORIGINS", "OPSWEAVE_HTTP_ALLOWED_PRIVATE_CIDRS":
+			var values []string
+			if value != "" {
+				values = strings.Split(value, ",")
+			}
+			if key == "OPSWEAVE_HTTP_ALLOWED_ORIGINS" {
+				c.HTTP.AllowedOrigins = values
+			} else {
+				c.HTTP.AllowedPrivateCIDRs = values
+			}
 		case "OPSWEAVE_WEBHOOK_SECRET":
 		// The opt-in server reads the secret only when opening ingress.
 		case "OPSWEAVE_STORAGE_PATH":
@@ -101,6 +118,9 @@ func Load(ctx context.Context, path, cwd string, environ []string) (Config, erro
 		default:
 			return Config{}, errors.New("unknown OpsWeave environment setting")
 		}
+	}
+	if err := c.HTTP.Validate(); err != nil {
+		return Config{}, err
 	}
 	if err := c.Execution.Validate(); err != nil {
 		return Config{}, errors.New("invalid execution configuration")
@@ -125,6 +145,11 @@ func decode(n *yaml.Node, c *Config) error {
 		key, group := n.Content[i].Value, n.Content[i+1]
 		var field string
 		switch key {
+		case "actions":
+			if err := decodeActions(group, &c.HTTP); err != nil {
+				return err
+			}
+			continue
 		case "storage":
 			field = "path"
 		case "logging":
@@ -229,6 +254,42 @@ func Init(ctx context.Context, path string) error {
 	closeErr := file.Close()
 	if writeErr != nil || closeErr != nil {
 		return errors.New("write configuration failed; inspect the incomplete file")
+	}
+	return nil
+}
+
+func decodeActions(n *yaml.Node, c *httpaction.Config) error {
+	if n.Kind != yaml.MappingNode || len(n.Content) != 2 || n.Content[0].Value != "http" || n.Content[1].Kind != yaml.MappingNode {
+		return errors.New("invalid actions configuration")
+	}
+	n = n.Content[1]
+	for i := 0; i < len(n.Content); i += 2 {
+		key, v := n.Content[i].Value, n.Content[i+1]
+		switch key {
+		case "enabled":
+			if v.Kind != yaml.ScalarNode || v.Tag != "!!bool" || (v.Value != "true" && v.Value != "false") {
+				return errors.New("invalid HTTP enabled setting")
+			}
+			c.Enabled = v.Value == "true"
+		case "allowed_origins", "allowed_private_cidrs":
+			if v.Kind != yaml.SequenceNode || len(v.Content) > 128 {
+				return errors.New("invalid HTTP policy list")
+			}
+			values := []string{}
+			for _, item := range v.Content {
+				if item.Kind != yaml.ScalarNode || item.Tag != "!!str" {
+					return errors.New("invalid HTTP policy entry")
+				}
+				values = append(values, item.Value)
+			}
+			if key == "allowed_origins" {
+				c.AllowedOrigins = values
+			} else {
+				c.AllowedPrivateCIDRs = values
+			}
+		default:
+			return errors.New("unknown HTTP configuration setting")
+		}
 	}
 	return nil
 }

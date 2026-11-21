@@ -11,7 +11,7 @@ dependency change is included in this measurement baseline.
 From the repository root, with the Go version declared in `go.mod`:
 
 ```sh
-go test -run '^$' -bench '^Benchmark' -benchmem -benchtime=200ms -count=3 -cpu=1 ./internal/webhook ./internal/schedule ./internal/workflow ./internal/registry ./internal/storage/sqlite ./internal/execution ./internal/engine
+go test -run '^$' -bench '^Benchmark' -benchmem -benchtime=200ms -count=3 -cpu=1 ./internal/httpaction ./internal/webhook ./internal/schedule ./internal/workflow ./internal/registry ./internal/storage/sqlite ./internal/execution ./internal/engine
 ```
 
 Use `-benchtime=1x -count=1` for a one-iteration correctness smoke run, or
@@ -119,3 +119,6 @@ JSON validation and receipt serialization with an in-memory admission stub.
 `BenchmarkExecutionPrune/Apply100` measures deletion of 100 terminal executions and their transition rows in one transaction. `/Preview1000` measures eligibility reporting over 1000 terminal executions. Fixture population is excluded from both measurements.
 
 `BenchmarkServerWorkerStatus` measures opening SQLite read-only, checking migration compatibility and reading the pool snapshot with 16 queued executions. Native lock probing is outside this storage benchmark.
+
+`BenchmarkHTTPPolicy` measures URL normalization, origin matching and public-IP
+policy validation without network I/O. It does not measure endpoint latency.

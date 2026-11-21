@@ -4,7 +4,7 @@ This harness is a documentation workflow. Start with [PLANS.md](../PLANS.md), [G
 
 ## Authorization and reviews
 
-Current state: `PHASE_03_VERIFICATION_REQUIRED`. The user merged PR #4 and explicitly requested Phase 03 on 2026-11-08 (Asia/Jakarta), accepting Phase 02. Fetch/rebase reached `e7d7177`; the new branch is `codex/phase-03-reliable-orchestration`. The user accepted the first [reliable execution contract](designs/reliable-execution.md) with "ACCEPT". Its serial implementation has passed local verification and self-review; the user subsequently accepted the [dispatcher ownership contract](designs/single-node-dispatcher.md), whose implementation has passed local verification and self-review. The user approved the [cron scheduler contract](designs/cron-scheduler.md). See its [implementation review](reviews/phase-03-scheduler.md). The user accepted the [event trigger and webhook contract](designs/event-triggers.md). See the [event implementation review](reviews/phase-03-event-triggers.md) and the accepted [retention and readiness contract](designs/retention-readiness.md). Its implementation is described in the [maintenance review](reviews/phase-03-maintenance.md). Previous CI/benchmark/Markdown/release-preview evidence is in the [Phase 02 review](reviews/phase-02.md) and merged PR. CodeQL upload still requires repository Advanced Security configuration; no pass or requirement completion is inferred. Phases 04–10 remain `NOT_APPROVED`, except the existing narrowly authorized release packaging extension.
+Current state: `PHASE_04_SECURITY_DECISION_REQUIRED`. The user merged PR #4 and explicitly requested Phase 03 on 2026-11-08 (Asia/Jakarta), accepting Phase 02. Fetch/rebase reached `e7d7177`; the new branch is `codex/phase-03-reliable-orchestration`. The user accepted the first [reliable execution contract](designs/reliable-execution.md) with "ACCEPT". Its serial implementation has passed local verification and self-review; the user subsequently accepted the [dispatcher ownership contract](designs/single-node-dispatcher.md), whose implementation has passed local verification and self-review. The user approved the [cron scheduler contract](designs/cron-scheduler.md). See its [implementation review](reviews/phase-03-scheduler.md). The user accepted the [event trigger and webhook contract](designs/event-triggers.md). See the [event implementation review](reviews/phase-03-event-triggers.md) and the accepted [retention and readiness contract](designs/retention-readiness.md). Its implementation is described in the [maintenance review](reviews/phase-03-maintenance.md). Previous CI/benchmark/Markdown/release-preview evidence is in the [Phase 02 review](reviews/phase-02.md) and merged PR. CodeQL upload still requires repository Advanced Security configuration; no pass or requirement completion is inferred. Phases 04–10 remain `NOT_APPROVED`, except the existing narrowly authorized release packaging extension.
 
 Track reviews independently from GOALS requirement status. Record explicit user approval with date, authorized phase/scope and conversation reference or a faithful summary in the build log. Update the master/phase review state together. An approval of one phase never silently approves the next.
 
@@ -61,3 +61,22 @@ Append a dated entry per meaningful work unit; correct previous entries with a n
 - Next concrete action and any review needed.
 
 Never store credentials, decrypted secrets or sensitive command arguments in the log. Keep generated binaries, caches and local configuration outside tracked artifacts. This harness creates no external messages, commits, PRs, deployment or release by itself.
+
+## 2026-11-22 progression amendment
+
+The user confirmed Phase 03 was merged and authorized continuation. Fetch and
+rebase to origin/main completed at `eed2b62` without conflicts. Phase 03 is
+accepted for progression; historical unavailable checks are not relabeled as
+passes. Phase 04 is authorized on `codex/phase-04-built-in-actions`. Earlier
+statements that Phase 04 is unapproved describe the previous state and are
+superseded by this amendment. Review the [HTTP proposal](designs/http-actions.md)
+before its implementation. Phases 05–10 remain unapproved except the existing
+release packaging extension.
+
+## HTTP implementation amendment
+
+The user accepted the HTTP contract. Both actions and their local tests, race
+verification, benchmark and documentation are implemented. See the [review](reviews/phase-04-http.md).
+The new [toolchain security decision](designs/go-http-security-patch.md)
+blocks completion after govulncheck reported GO-2026-6859. Retain current toolchain
+until this explicitly required decision is resolved. No later phase is authorized.

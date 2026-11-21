@@ -13,6 +13,7 @@ import (
 	"time"
 
 	"github.com/PHPDevsr/opsweave/internal/config"
+	"github.com/PHPDevsr/opsweave/internal/httpaction"
 	"github.com/PHPDevsr/opsweave/internal/registry"
 	"github.com/PHPDevsr/opsweave/internal/storage/sqlite"
 	"github.com/PHPDevsr/opsweave/internal/workflow"
@@ -82,7 +83,14 @@ func foundationCommands(out, diagnostics io.Writer, catalog registry.Catalog) []
 				if err != nil {
 					return err
 				}
-				candidates, err := registry.PrepareDispatcher(ctx, sources, catalog)
+				effectiveCatalog := catalog
+				if effectiveCatalog == nil {
+					_, effectiveCatalog, err = httpaction.Runtime(cfg.HTTP)
+					if err != nil {
+						return err
+					}
+				}
+				candidates, err := registry.PrepareDispatcher(ctx, sources, effectiveCatalog)
 				if err != nil {
 					return err
 				}

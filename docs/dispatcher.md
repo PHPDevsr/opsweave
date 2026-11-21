@@ -5,8 +5,8 @@ The [maintenance guide](maintenance.md) covers `server status`, dispatcher readi
 The accepted [dispatcher contract](../harness/designs/single-node-dispatcher.md)
 extends the [serial reliability core](reliability.md) with a bounded action pool,
 durable queue, workflow concurrency, parallel DAG steps and conservative recovery.
-The production action catalog is still empty; handlers used in tests are not
-installable actions. The server also evaluates persisted cron triggers. See [scheduled workflows](scheduling.md).
+The opt-in [HTTP actions](http-actions.md) use the production runtime. Test-only
+handlers remain unavailable through configuration. The server also evaluates persisted cron triggers. See [scheduled workflows](scheduling.md).
 
 ## Commands and configuration
 

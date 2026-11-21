@@ -46,9 +46,8 @@ opsweave execution get --json execution-id
 The same server owns the scheduler and the bounded worker pool. It polls once per
 second and processes batches of up to 64 cursors with a one-second scan budget
 between entries. Additional due cursors are processed on subsequent ticks. A
-standalone `run` only processes its manual admission. The development binary's
-production action catalog is empty, so deployments require an available action
-implementation. See [dispatcher operations](dispatcher.md).
+standalone `run` only processes its manual admission. Configure the opt-in
+[HTTP actions](http-actions.md) for production request/health-check workflows. See [dispatcher operations](dispatcher.md).
 
 The cursor starts at the stored deployment or re-enable timestamp. `workflow
 disable` pauses all schedules of the workflow. Re-enable resets their cursors and

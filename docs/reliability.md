@@ -9,9 +9,10 @@ use execution format 2 with separate durable attempt history.
 The production CLI now uses the accepted [single-node dispatcher](dispatcher.md)
 for bounded parallelism, queued claims and conservative restart recovery. This
 page describes the underlying policy core; the dispatcher guide supplies current
-commands, configuration and ownership/migration procedures. Scheduler, triggers
-and network listeners remain unavailable. The production action catalog is still
-empty until Phase 04; deterministic handlers are test-only.
+commands, configuration and ownership/migration procedures. See [scheduling](scheduling.md)
+and [event ingress](event-triggers.md) for implemented automatic triggers. The
+production runtime supports opt-in [HTTP actions](http-actions.md); deterministic
+fixture handlers remain test-only.
 
 ## Definition and execution policies
 
