@@ -574,3 +574,26 @@ Illustrative local median observations (three samples, ns/op): Parse/Steps1 23,1
   byte-identical to the original accepted HTTP commit `4bf30d6`; only main's
   toolchain/CI/docs and resolved harness history differ. The rewritten commit
   retains a GPG signature. HTTP rows remain IMPLEMENTED pending fresh PR evidence.
+
+## 2026-11-22 (Asia/Jakarta) — HTTP acceptance after security rebase
+
+- Combined HTTP source `dfc0ae5` passed all required PR checks without retries:
+  CI 44940800316 (six native OS/Go jobs plus race/format/module checks), latest
+  vulnerability scan 44940800291 (three native OSes), benchmark 44940800277,
+  Markdown 44940800293, CodeQL 44940800290, and release preview 44940800348
+  (six archives plus assemble). No tag or release was published. Observed exactly
+  six PR workflows and no duplicate push workflow.
+- The [HTTP self-review](reviews/phase-04-http.md) maps acceptance tests and remote
+  run links. Completed only G-5.5-013, G-5.5-014, G-5.15-009 and G-5.15-020.
+  Preserve every other ledger status, static requirement field and prerequisite.
+  Phase 04 remains in progress; shell and later action integrations are incomplete.
+- This acceptance amendment changes documentation and scoped status only. It does
+  not alter the application source/tests that passed the checks above. Earlier
+  intermittent Phase 03 failures are not claimed fixed; this combined run passed
+  without source changes or weakened assertions.
+- Next required human decision: accept or revise the concrete shell.exec contract.
+  Harness authorization rules require reviewing unresolved contracts before their
+  implementation. The proposal specifies operator profiles, direct argv, minimal
+  environment, bounded output/deadlines and native process ownership, including
+  the Unix trusted-command/no-daemonization boundary. No shell runtime was added,
+  and no Phase 05 work or merge was performed.

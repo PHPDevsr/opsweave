@@ -46,6 +46,26 @@ from both branches. Application source/tests are unchanged from `4bf30d6`.
 Full ordinary/race suites, vet, build, module verification and govulncheck@latest
 passed on the combined source. HTTP coverage is 95.3%; engine 82.6%, execution
 86.2%, workflow 94.3%. Bounded fuzzing passed 71,138 executions. Fresh PR checks
-are still required before completing the four HTTP/SSRF ledger rows. See the
+passed and the four HTTP/SSRF ledger rows are completed. See the
 build log for exact benchmark values and command outcomes. Shell has no runtime
 implementation and awaits its separate reviewed contract.
+
+## Remote acceptance evidence
+
+All runs below tested `dfc0ae5` on the rebased HTTP branch and passed:
+
+- [CI 44940800316](https://github.com/PHPDevsr/opsweave/actions/runs/44940800316):
+  all six OS/Go jobs, formatting, module consistency and Linux race.
+- [Vulnerability 44940800291](https://github.com/PHPDevsr/opsweave/actions/runs/44940800291):
+  govulncheck@latest on Linux, Windows and macOS.
+- [Benchmark 44940800277](https://github.com/PHPDevsr/opsweave/actions/runs/44940800277),
+  [Markdown 44940800293](https://github.com/PHPDevsr/opsweave/actions/runs/44940800293),
+  and [CodeQL 44940800290](https://github.com/PHPDevsr/opsweave/actions/runs/44940800290).
+- [Release preview 44940800348](https://github.com/PHPDevsr/opsweave/actions/runs/44940800348):
+  all six target archives and assemble. No release was published.
+
+No rerun or assertion change was needed for these combined HTTP checks. GitHub
+recorded one set of six pull-request workflows and zero push workflows. The final
+acceptance update changes documentation/status only, with no application source
+or test changes. Earlier intermittent Phase 03 failures remain historical evidence
+and are not silently relabeled as fixes by this work unit.

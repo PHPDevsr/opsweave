@@ -39,5 +39,6 @@ patch. Reference [Go release history](https://go.dev/doc/devel/release#go1.27.4)
 
 At proposal time, [PLANS.md](../../PLANS.md) stated: "Retain Go 1.27.3 unless a separately justified
 change is approved." The user authorized this patch-version increase on a separate branch. That
-change is now merged; retain HTTP rows `IMPLEMENTED` until the rebased combination
-passes its own required verification.
+change is now merged; the rebased combination has now passed its own required verification, including
+latest-scanner CI on all three native OSes. The four scoped HTTP/SSRF rows are
+completed with exact evidence in the [HTTP review](../reviews/phase-04-http.md).
