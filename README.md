@@ -149,6 +149,10 @@ See [foundation benchmarks](docs/benchmarks.md) for parser, preflight and SQLite
 measurements. The dedicated `Benchmarks` workflow runs them for pull requests and
 `main`, and uploads allocation/timing reports with environment metadata.
 
+Feature branches run checks through pull requests. Push-triggered checks are
+limited to `main`; version tags retain their release workflow. Manual dispatch
+and scheduled security scans keep their existing behavior.
+
 The workflows run the checks relevant to changed files:
 
 | Workflow             | Push and pull request triggers                                                              | Checks                                                                                 |

@@ -444,3 +444,22 @@ Illustrative local median observations (three samples, ns/op): Parse/Steps1 23,1
   the official Go vulnerability database. The exact latest scan exited 0 with
   "No vulnerabilities found." Existing positive-control evidence applies to the
   same resolved scanner version. actionlint, Markdown and whitespace checks pass.
+
+## 2026-11-22 (Asia/Jakarta) — Avoid duplicate feature-branch CI
+
+- Before merging, the user requested avoiding simultaneous push and pull-request
+  CI runs because of excessive job volume. Restrict push events to main in CI,
+  Markdown and vulnerability workflows. Benchmark and CodeQL already restrict
+  pushes to main; release pushes already restrict to version tags. Keep all PR
+  validation, path filters, manual dispatch and scheduled security scans.
+- Updated README and contribution policy. Every feature-branch update now uses
+  PR validation only, retaining separate post-merge main verification and tag
+  publication. No job, security scan, test assertion or matrix coverage is removed.
+- Prior latest-scanner head `dd6a966` passed PR CI 44939032093 (all six OS/Go
+  jobs and race), govulncheck 44939032160 (all three OSes), benchmark 44939032224,
+  Markdown 44939032156, CodeQL 44939032132 and six-target release/assemble 44939032148. Publish was skipped. This evidence remains attributed to that head;
+  current changes only affect CI event routing and documentation.
+
+- All-workflow actionlint, pinned Bun Markdown and diff whitespace checks exited 0. Audited all six event blocks: five workflows allow pushes only to main;
+  release allows only version-tag pushes; every PR trigger remains. No Go source
+  changed and no repeated local product tests are claimed for event-only edits.

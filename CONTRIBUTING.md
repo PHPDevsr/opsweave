@@ -162,7 +162,7 @@ go run golang.org/x/vuln/cmd/govulncheck@latest ./...
 ```
 
 The tool is a build-time check and does not add an application dependency to
-go.mod/go.sum. The workflow runs on Go/module/workflow pushes and pull requests,
+go.mod/go.sum. The workflow runs on relevant pull requests and pushes to main,
 manual dispatch, and weekly against the default branch. Native Linux, Windows and
 macOS jobs scan their own build configuration using the minimum supported Go
 version. Other architectures/build tags and test-only code are outside this scan;
@@ -174,3 +174,13 @@ replace this gate. Scanner/database failures also fail the job; do not use
 continue-on-error or suppress the exit status. Review the [official scanner
 reference](https://pkg.go.dev/golang.org/x/vuln/cmd/govulncheck) when changing its
 invocation. No repository write or security-events permission is needed.
+
+## CI event policy
+
+Use pull requests for feature-branch verification. Push-triggered Go, Markdown,
+benchmark, CodeQL and vulnerability checks run only on main, retaining their
+existing path filters. Release tag pushes keep their separate packaging/publication
+flow. Manual dispatch and scheduled security scans remain available. This avoids
+duplicate push/PR runs for the same feature-branch update without removing the
+post-merge verification of main. Do not add unrestricted push triggers to new
+checks without revisiting this policy.
