@@ -392,3 +392,42 @@ Illustrative local median observations (three samples, ns/op): Parse/Steps1 23,1
   passed. No source/test change followed these product checks. Next step is the
   separately authorized security PR and its remote quality gates; no merge or
   HTTP rebase occurs before the user merges the patch.
+
+## 2026-11-22 (Asia/Jakarta) — Vulnerability CI on the patch branch
+
+- The user explicitly requested govulncheck CI on this same patch branch. Added
+  a read-only native Linux/Windows/macOS matrix using the declared minimum Go
+  toolchain and pinned govulncheck v1.10.0. Official scanner documentation confirms
+  text-mode findings fail, while JSON/SARIF output does not enforce that exit
+  behavior. Use text output with no continue-on-error or exit-code suppression.
+- Added Go/module/workflow path triggers, manual dispatch and a weekly default
+  branch schedule, concurrency cancellation and a 15-minute job timeout. Existing
+  checkout/setup-go SHA pins are reused with checkout credentials disabled.
+  Application dependencies and go.sum remain unchanged. README and contribution
+  instructions document commands, build-configuration limits and branch protection.
+- Prior patch commit `2ff7302`: normal CI push, benchmark, Markdown, CodeQL and
+  six-target release preview/assemble passed. The first PR CI Windows/stable
+  attempt failed TestReliableCoordinatorCancelsMaximumGraphWithinCleanupBudget
+  after its five-second persistence cleanup budget expired on a slow runner. The
+  same Go 1.27.4 source passed push Windows/stable and PR Windows/minimum. Ten
+  targeted local repetitions passed. Reran only the failed job, with no source or
+  assertion change. This timing failure is disclosed rather than hidden.
+- PR-triggered jobs initially appeared late. Two temporary manual dispatches of
+  benchmark/CodeQL were cancelled once their equivalent PR jobs appeared, avoiding
+  duplicate verification work. Their cancellations are not test failures or passes.
+
+- The failed Windows/stable PR job passed its targeted rerun on unchanged
+  `2ff7302`; no test or source fix is inferred from that rerun. Full initial CI
+  evidence and the intermittent cleanup failure remain disclosed in PR #9.
+- Verified exact CI command `go run golang.org/x/vuln/cmd/govulncheck@v1.10.0
+./...` with Go 1.27.4: exit 0, "No vulnerabilities found." Installed the same
+  pinned scanner into an ignored task-local tool directory for a positive control.
+  An isolated, unexecuted fixture importing net/http under Go 1.27.3 returned
+  native exit 3 and GO-2026-6859. This proves findings fail rather than silently
+  passing. No vulnerable fixture or downloaded tool is tracked.
+- Workflow self-review checked read-only permissions, disabled persisted checkout
+  credentials, exact tool/action pins, bounded timeout, matrix failure reporting,
+  no shell interpolation of untrusted values and no finding/error suppression.
+  actionlint, pinned Bun Markdown and whitespace checks exited 0. This work unit
+  changes only CI/docs, so prior full unit/race evidence remains attributed to
+  `2ff7302`; no application test rerun is claimed for this workflow-only follow-up.

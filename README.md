@@ -151,13 +151,14 @@ measurements. The dedicated `Benchmarks` workflow runs them for pull requests an
 
 The workflows run the checks relevant to changed files:
 
-| Workflow     | Push and pull request triggers                                                              | Checks                                                                                 |
-| ------------ | ------------------------------------------------------------------------------------------- | -------------------------------------------------------------------------------------- |
-| `CI`         | Go files, `go.mod`, `go.sum`, files under `testdata` or `migrations`, or the Go CI workflow | Go format, build, vet, tests, module consistency, CLI smoke tests, and race detection. |
-| `Benchmarks` | Changes under `internal`, module files, or benchmark workflow; PRs and pushes to `main`     | Parser/expression/preflight/SQLite timing, allocations and environment artifacts.      |
-| `Markdown`   | Any `.md` file, formatter configuration, `.bun-version`, or the Markdown workflow           | Native `bun fmt --check` with the pinned Bun version.                                  |
+| Workflow             | Push and pull request triggers                                                              | Checks                                                                                 |
+| -------------------- | ------------------------------------------------------------------------------------------- | -------------------------------------------------------------------------------------- |
+| `CI`                 | Go files, `go.mod`, `go.sum`, files under `testdata` or `migrations`, or the Go CI workflow | Go format, build, vet, tests, module consistency, CLI smoke tests, and race detection. |
+| `Benchmarks`         | Changes under `internal`, module files, or benchmark workflow; PRs and pushes to `main`     | Parser/expression/preflight/SQLite timing, allocations and environment artifacts.      |
+| `Markdown`           | Any `.md` file, formatter configuration, `.bun-version`, or the Markdown workflow           | Native `bun fmt --check` with the pinned Bun version.                                  |
+| `Vulnerability scan` | Go files, module files, or its workflow                                                     | Pinned govulncheck on Linux, Windows and macOS using the minimum Go toolchain.         |
 
-All three workflows above support manual dispatch. Build, vet, and unit tests run on
+All four workflows above support manual dispatch. Build, vet, and unit tests run on
 Linux and Windows with Go 1.27.4 and the latest stable Go release. Race detection
 runs on Linux with CGO enabled. External GitHub Actions use full commit SHA pins
 with release-tag comments. Dependabot checks Actions and Go Modules weekly. Bun version updates are reviewed
@@ -183,6 +184,14 @@ Repository code scanning must be available and advanced setup must be enabled;
 disable an existing CodeQL default setup before using this advanced workflow.
 Workflow execution and CodeQL uploads must be verified on GitHub after the files
 are pushed. Repository branch protection is configured separately.
+
+The `Vulnerability scan` workflow also runs weekly on Mondays at 04:00 UTC using
+`govulncheck` v1.10.0 and the Go version from go.mod. It checks reachable known
+vulnerabilities in each native runner's build configuration; findings and scanner
+errors fail CI. The live Go vulnerability database changes over time, so a prior
+clean scan is not permanent security evidence. Repository branch protection must
+require this check separately if merge enforcement is desired. See
+[local vulnerability checks](CONTRIBUTING.md#vulnerability-checks).
 
 ## Troubleshooting
 

@@ -151,3 +151,26 @@ Before submitting a pull request, review the diff, include relevant tests and
 documentation, explain compatibility or migration impacts, and list the checks
 actually executed. Distinguish successful local checks from GitHub workflow
 results that still need verification.
+
+## Vulnerability checks
+
+Use the declared Go toolchain and the same pinned scanner as CI:
+
+```sh
+go mod verify
+go run golang.org/x/vuln/cmd/govulncheck@v1.10.0 ./...
+```
+
+The tool is a build-time check and does not add an application dependency to
+go.mod/go.sum. The workflow runs on Go/module/workflow pushes and pull requests,
+manual dispatch, and weekly against the default branch. Native Linux, Windows and
+macOS jobs scan their own build configuration using the minimum supported Go
+version. Other architectures/build tags and test-only code are outside this scan;
+platform tests, CodeQL and code review remain separate checks.
+
+Keep the default text output so reachable findings return a failing exit code.
+JSON/SARIF output modes can exit successfully despite findings and must not
+replace this gate. Scanner/database failures also fail the job; do not use
+continue-on-error or suppress the exit status. Review the [official scanner
+reference](https://pkg.go.dev/golang.org/x/vuln/cmd/govulncheck) when changing its
+pin or invocation. No repository write or security-events permission is needed.
