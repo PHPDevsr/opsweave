@@ -350,3 +350,116 @@ Illustrative local median observations (three samples, ns/op): Parse/Steps1 23,1
 - The full standard Go suite, `go vet ./...`, `go mod verify` and `go build ./...` passed. Build emitted the existing local module stat-cache permissions warning and exited zero. Tests cover active and queued work, draining shutdown, retry backoff, old schema upgrade and stale publication.
 - `BenchmarkServerWorkerStatus` passed three 200 ms samples at 1.40–1.46 ms per read on local Windows. Benchmark CI checks its output. `actionlint`, Bun Markdown and the source diff checks passed. See the [maintenance guide](../docs/maintenance.md) and [implementation review](reviews/phase-03-maintenance.md).
 - Phase 03 implementation is available for verification and acceptance. The release milestone and CodeQL upload configuration remain open. Later phases require user authorization.
+
+## 2026-11-22 (Asia/Jakarta) — Isolated Go HTTP security patch
+
+- While implementing the user-accepted HTTP contract on Phase 04, govulncheck
+  reported GO-2026-6859 in Go 1.27.3 net/http, fixed in Go 1.27.4. Verified the
+  official vulnerability report and Go release history. Broad reachable symbol
+  matches are scan evidence, not a demonstrated exploit in OpsWeave handlers.
+- The user instructed keeping the HTTP branch and making this change on a new
+  branch, then rebasing HTTP onto origin/main after the patch is merged. This
+  authorizes the patch-level toolchain increase and a separate review. Fetch
+  confirmed origin/main at `eed2b62`. Created `codex/go-1.27.4-security-patch` from
+  origin/main in an isolated ignored worktree. HTTP commit `4bf30d6` remains on
+  `codex/phase-04-built-in-actions`, draft PR #8, without cherry-picking it here.
+- Updated go.mod, the explicit minimum-version CI matrix, active installation and
+  contribution requirements, and the current plan toolchain policy to Go 1.27.4.
+  Added security rebuild/upgrade guidance. No application source, module dependency,
+  go.sum, schema migration, workflow contract or requirement status is changed.
+  Historical assessment and test evidence retain their original version labels.
+- Next: verify with Go 1.27.4, open a separate patch PR targeting main, and leave
+  merging to the user. Rebase the HTTP branch only after the patch is merged.
+
+- Local Go 1.27.4 verification: full `go test -count=1 ./...`, `go vet ./...`,
+  `go mod verify`, `go mod tidy -diff`, and `go build ./...` exited 0.
+  `govulncheck ./...` exited 0 with "No vulnerabilities found." Formatting,
+  Markdown and CI actionlint passed. Full race verification is recorded below
+  after completion, rather than inferred from the normal suite.
+- Self-review verified that only the toolchain directive and explicit CI minimum
+  changed executable build inputs; all application dependencies/go.sum, source,
+  migrations, requirement ledger IDs/statuses and historical evidence are unchanged.
+  Existing tests supply regression coverage; no implementation-mirroring test was
+  added for a version-string edit. The upstream patch is verified by the clean
+  vulnerability scan and repository suites.
+- Independent HTTP PR #8 checks on `4bf30d6` completed successfully: CI run
+  44937235807 (all six OS/toolchain jobs and race), benchmark 44937235815,
+  Markdown 44937235827, CodeQL 44937235682. These are evidence for that HTTP
+  source commit, not tests of the separate patch or the future rebased combination.
+
+- Full `go test -race -count=1 ./...` exited 0 on Go 1.27.4 with CGO and the
+  existing Clang toolchain. Link verification and exact seven-file scope check
+  passed. No source/test change followed these product checks. Next step is the
+  separately authorized security PR and its remote quality gates; no merge or
+  HTTP rebase occurs before the user merges the patch.
+
+## 2026-11-22 (Asia/Jakarta) — Vulnerability CI on the patch branch
+
+- The user explicitly requested govulncheck CI on this same patch branch. Added
+  a read-only native Linux/Windows/macOS matrix using the declared minimum Go
+  toolchain and pinned govulncheck v1.10.0. Official scanner documentation confirms
+  text-mode findings fail, while JSON/SARIF output does not enforce that exit
+  behavior. Use text output with no continue-on-error or exit-code suppression.
+- Added Go/module/workflow path triggers, manual dispatch and a weekly default
+  branch schedule, concurrency cancellation and a 15-minute job timeout. Existing
+  checkout/setup-go SHA pins are reused with checkout credentials disabled.
+  Application dependencies and go.sum remain unchanged. README and contribution
+  instructions document commands, build-configuration limits and branch protection.
+- Prior patch commit `2ff7302`: normal CI push, benchmark, Markdown, CodeQL and
+  six-target release preview/assemble passed. The first PR CI Windows/stable
+  attempt failed TestReliableCoordinatorCancelsMaximumGraphWithinCleanupBudget
+  after its five-second persistence cleanup budget expired on a slow runner. The
+  same Go 1.27.4 source passed push Windows/stable and PR Windows/minimum. Ten
+  targeted local repetitions passed. Reran only the failed job, with no source or
+  assertion change. This timing failure is disclosed rather than hidden.
+- PR-triggered jobs initially appeared late. Two temporary manual dispatches of
+  benchmark/CodeQL were cancelled once their equivalent PR jobs appeared, avoiding
+  duplicate verification work. Their cancellations are not test failures or passes.
+
+- The failed Windows/stable PR job passed its targeted rerun on unchanged
+  `2ff7302`; no test or source fix is inferred from that rerun. Full initial CI
+  evidence and the intermittent cleanup failure remain disclosed in PR #9.
+- Verified exact CI command `go run golang.org/x/vuln/cmd/govulncheck@v1.10.0
+./...` with Go 1.27.4: exit 0, "No vulnerabilities found." Installed the same
+  pinned scanner into an ignored task-local tool directory for a positive control.
+  An isolated, unexecuted fixture importing net/http under Go 1.27.3 returned
+  native exit 3 and GO-2026-6859. This proves findings fail rather than silently
+  passing. No vulnerable fixture or downloaded tool is tracked.
+- Workflow self-review checked read-only permissions, disabled persisted checkout
+  credentials, exact tool/action pins, bounded timeout, matrix failure reporting,
+  no shell interpolation of untrusted values and no finding/error suppression.
+  actionlint, pinned Bun Markdown and whitespace checks exited 0. This work unit
+  changes only CI/docs, so prior full unit/race evidence remains attributed to
+  `2ff7302`; no application test rerun is claimed for this workflow-only follow-up.
+
+## 2026-11-22 (Asia/Jakarta) — Latest vulnerability scanner
+
+- The user explicitly requested govulncheck latest. Changed the workflow and local
+  contribution command to `go run golang.org/x/vuln/cmd/govulncheck@latest ./...`.
+  This supersedes the scanner version pin in `cf2f891`; historical pinned-scanner
+  results above retain their attribution. Action SHA pins, minimum Go toolchain,
+  native OS matrix, read-only permissions and failing text-mode gate are unchanged.
+
+- Verified `@latest -version` resolved govulncheck v1.10.0 using Go 1.27.4 and
+  the official Go vulnerability database. The exact latest scan exited 0 with
+  "No vulnerabilities found." Existing positive-control evidence applies to the
+  same resolved scanner version. actionlint, Markdown and whitespace checks pass.
+
+## 2026-11-22 (Asia/Jakarta) — Avoid duplicate feature-branch CI
+
+- Before merging, the user requested avoiding simultaneous push and pull-request
+  CI runs because of excessive job volume. Restrict push events to main in CI,
+  Markdown and vulnerability workflows. Benchmark and CodeQL already restrict
+  pushes to main; release pushes already restrict to version tags. Keep all PR
+  validation, path filters, manual dispatch and scheduled security scans.
+- Updated README and contribution policy. Every feature-branch update now uses
+  PR validation only, retaining separate post-merge main verification and tag
+  publication. No job, security scan, test assertion or matrix coverage is removed.
+- Prior latest-scanner head `dd6a966` passed PR CI 44939032093 (all six OS/Go
+  jobs and race), govulncheck 44939032160 (all three OSes), benchmark 44939032224,
+  Markdown 44939032156, CodeQL 44939032132 and six-target release/assemble 44939032148. Publish was skipped. This evidence remains attributed to that head;
+  current changes only affect CI event routing and documentation.
+
+- All-workflow actionlint, pinned Bun Markdown and diff whitespace checks exited 0. Audited all six event blocks: five workflows allow pushes only to main;
+  release allows only version-tag pushes; every PR trigger remains. No Go source
+  changed and no repeated local product tests are claimed for event-only edits.

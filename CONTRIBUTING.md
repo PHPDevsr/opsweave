@@ -7,7 +7,7 @@ merely because code exists.
 
 ## Toolchain and dependencies
 
-Use Go 1.27.3 or newer, as declared in `go.mod`. CI tests the minimum supported Go
+Use Go 1.27.4 or newer, as declared in `go.mod`. CI tests the minimum supported Go
 version and the latest stable version on Linux and Windows. Keep `go.mod` and
 `go.sum` consistent, prefer the standard library, and justify new dependencies.
 Use `go mod tidy` after dependency changes; do not hand-edit checksums or disable
@@ -151,3 +151,36 @@ Before submitting a pull request, review the diff, include relevant tests and
 documentation, explain compatibility or migration impacts, and list the checks
 actually executed. Distinguish successful local checks from GitHub workflow
 results that still need verification.
+
+## Vulnerability checks
+
+Use the declared Go toolchain and the same scanner invocation as CI:
+
+```sh
+go mod verify
+go run golang.org/x/vuln/cmd/govulncheck@latest ./...
+```
+
+The tool is a build-time check and does not add an application dependency to
+go.mod/go.sum. The workflow runs on relevant pull requests and pushes to main,
+manual dispatch, and weekly against the default branch. Native Linux, Windows and
+macOS jobs scan their own build configuration using the minimum supported Go
+version. Other architectures/build tags and test-only code are outside this scan;
+platform tests, CodeQL and code review remain separate checks.
+
+Keep the default text output so reachable findings return a failing exit code.
+JSON/SARIF output modes can exit successfully despite findings and must not
+replace this gate. Scanner/database failures also fail the job; do not use
+continue-on-error or suppress the exit status. Review the [official scanner
+reference](https://pkg.go.dev/golang.org/x/vuln/cmd/govulncheck) when changing its
+invocation. No repository write or security-events permission is needed.
+
+## CI event policy
+
+Use pull requests for feature-branch verification. Push-triggered Go, Markdown,
+benchmark, CodeQL and vulnerability checks run only on main, retaining their
+existing path filters. Release tag pushes keep their separate packaging/publication
+flow. Manual dispatch and scheduled security scans remain available. This avoids
+duplicate push/PR runs for the same feature-branch update without removing the
+post-merge verification of main. Do not add unrestricted push triggers to new
+checks without revisiting this policy.

@@ -49,7 +49,7 @@ Important dependencies apply before exposure: phase 01 reviews the full DSL cont
 
 ## Quality and compatibility gates
 
-- Follow GOALS and AGENTS throughout. Keep a modular monolith, SQL-independent domain logic, injected infrastructure, explicit boundaries and minimal public interfaces. Retain Go 1.27.3 unless a separately justified change is approved.
+- Follow GOALS and AGENTS throughout. Keep a modular monolith, SQL-independent domain logic, injected infrastructure, explicit boundaries and minimal public interfaces. Retain Go 1.27.4 unless a separately justified change is approved. The user approved this patch-level security increase on 2026-11-22 for GO-2026-6859; historical verification remains attributed to its original toolchain.
 - Security, structured logging, resource bounds, cancellation, tests and English documentation accompany their feature. Phase 10 audits completeness rather than postponing protections. Dangerous actions default disabled; no unauthenticated management endpoints or exactly-once side-effect claims.
 - Validate/persist state changes and propagate infrastructure errors. Keep revisions immutable, SQLite single-node, and PostgreSQL ownership controls isolated. No mandatory Redis or RabbitMQ.
 - Product phases require `gofmt -l .`, `go vet ./...`, `go test -count=1 ./...`, `go test -race -count=1 ./...`, `go mod verify`, `go build ./...`, Markdown checks and relevant acceptance suites. Core parser/engine/state-machine coverage targets at least 80%; security paths need important success/failure coverage. Benchmarks precede optimization.
