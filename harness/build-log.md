@@ -431,3 +431,16 @@ Illustrative local median observations (three samples, ns/op): Parse/Steps1 23,1
   actionlint, pinned Bun Markdown and whitespace checks exited 0. This work unit
   changes only CI/docs, so prior full unit/race evidence remains attributed to
   `2ff7302`; no application test rerun is claimed for this workflow-only follow-up.
+
+## 2026-11-22 (Asia/Jakarta) — Latest vulnerability scanner
+
+- The user explicitly requested govulncheck latest. Changed the workflow and local
+  contribution command to `go run golang.org/x/vuln/cmd/govulncheck@latest ./...`.
+  This supersedes the scanner version pin in `cf2f891`; historical pinned-scanner
+  results above retain their attribution. Action SHA pins, minimum Go toolchain,
+  native OS matrix, read-only permissions and failing text-mode gate are unchanged.
+
+- Verified `@latest -version` resolved govulncheck v1.10.0 using Go 1.27.4 and
+  the official Go vulnerability database. The exact latest scan exited 0 with
+  "No vulnerabilities found." Existing positive-control evidence applies to the
+  same resolved scanner version. actionlint, Markdown and whitespace checks pass.

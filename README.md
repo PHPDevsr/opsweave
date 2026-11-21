@@ -156,7 +156,7 @@ The workflows run the checks relevant to changed files:
 | `CI`                 | Go files, `go.mod`, `go.sum`, files under `testdata` or `migrations`, or the Go CI workflow | Go format, build, vet, tests, module consistency, CLI smoke tests, and race detection. |
 | `Benchmarks`         | Changes under `internal`, module files, or benchmark workflow; PRs and pushes to `main`     | Parser/expression/preflight/SQLite timing, allocations and environment artifacts.      |
 | `Markdown`           | Any `.md` file, formatter configuration, `.bun-version`, or the Markdown workflow           | Native `bun fmt --check` with the pinned Bun version.                                  |
-| `Vulnerability scan` | Go files, module files, or its workflow                                                     | Pinned govulncheck on Linux, Windows and macOS using the minimum Go toolchain.         |
+| `Vulnerability scan` | Go files, module files, or its workflow                                                     | Latest govulncheck on Linux, Windows and macOS using the minimum Go toolchain.         |
 
 All four workflows above support manual dispatch. Build, vet, and unit tests run on
 Linux and Windows with Go 1.27.4 and the latest stable Go release. Race detection
@@ -186,7 +186,7 @@ Workflow execution and CodeQL uploads must be verified on GitHub after the files
 are pushed. Repository branch protection is configured separately.
 
 The `Vulnerability scan` workflow also runs weekly on Mondays at 04:00 UTC using
-`govulncheck` v1.10.0 and the Go version from go.mod. It checks reachable known
+`govulncheck@latest` and the Go version from go.mod. It checks reachable known
 vulnerabilities in each native runner's build configuration; findings and scanner
 errors fail CI. The live Go vulnerability database changes over time, so a prior
 clean scan is not permanent security evidence. Repository branch protection must

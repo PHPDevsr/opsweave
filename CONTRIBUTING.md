@@ -154,11 +154,11 @@ results that still need verification.
 
 ## Vulnerability checks
 
-Use the declared Go toolchain and the same pinned scanner as CI:
+Use the declared Go toolchain and the same scanner invocation as CI:
 
 ```sh
 go mod verify
-go run golang.org/x/vuln/cmd/govulncheck@v1.10.0 ./...
+go run golang.org/x/vuln/cmd/govulncheck@latest ./...
 ```
 
 The tool is a build-time check and does not add an application dependency to
@@ -173,4 +173,4 @@ JSON/SARIF output modes can exit successfully despite findings and must not
 replace this gate. Scanner/database failures also fail the job; do not use
 continue-on-error or suppress the exit status. Review the [official scanner
 reference](https://pkg.go.dev/golang.org/x/vuln/cmd/govulncheck) when changing its
-pin or invocation. No repository write or security-events permission is needed.
+invocation. No repository write or security-events permission is needed.
