@@ -82,3 +82,14 @@ native CI gates. Prior statements that Docker is unaccepted describe the previou
 state and are superseded by this amendment. The next
 [filesystem proposal](../designs/filesystem-actions.md) remains PROPOSED; do not
 implement it before human review. Notification contracts/Phase 05 remain separate.
+
+## Docker unit acceptance and next contract
+
+Combined source `3ecbe68` passed full local verification and all six PR workflows.
+The [Docker review](../reviews/phase-04-docker.md) records exact native/race/
+security/benchmark/release evidence. Six scoped Docker/security rows are now
+COMPLETED; seven HTTP/shell rows remain completed. No dependency or migration
+is required. Phase 04 remains in progress. The next
+[filesystem proposal](../designs/filesystem-actions.md) is concrete but PROPOSED;
+obtain its path/deletion/copy/cancellation decision before runtime implementation.
+Notification contracts and Phase 05 remain separate.

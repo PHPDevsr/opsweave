@@ -930,3 +930,39 @@ Illustrative local median observations (three samples, ns/op): Parse/Steps1 23,1
   followed these checks. Markdown, Go formatting and diff checks passed. Push a
   separate scoped retry-boundary fix commit and require fresh native CI before
   marking any of the six Docker rows complete.
+
+## 2026-11-22 (Asia/Jakarta) — Docker unit accepted by verification
+
+- Final combined source `3ecbe68`, draft PR #8 targeting main, authorized Phase 04.
+  Implementation/tests/self-review/English documentation and compatibility are
+  complete for the accepted four-action Docker contract. All six fresh workflows
+  passed:
+  [CI 44980216309](https://github.com/PHPDevsr/opsweave/actions/runs/44980216309),
+  [scanner 44980216282](https://github.com/PHPDevsr/opsweave/actions/runs/44980216282),
+  [benchmark 44980216287](https://github.com/PHPDevsr/opsweave/actions/runs/44980216287),
+  [Markdown 44980216333](https://github.com/PHPDevsr/opsweave/actions/runs/44980216333),
+  [CodeQL 44980216360](https://github.com/PHPDevsr/opsweave/actions/runs/44980216360),
+  [release 44980216283](https://github.com/PHPDevsr/opsweave/actions/runs/44980216283).
+  CI passed all six OS/Go jobs and Linux race; latest scanner passed three OS
+  families; benchmark required DockerInspectIPC; all six release packages and
+  assemble passed. Publish was skipped. Every workflow used pull_request, with
+  no duplicate push run. No merge/tag/release/deployment occurred.
+- Local final full ordinary/race/static/build/module/scanner checks passed.
+  Final core coverage: engine 85.0%, execution 86.2%, workflow 94.3%; Docker 88.0%.
+  Both native deadline fixes and all new security/ownership/output/CLI regressions
+  passed fresh CI. Failed earlier runs remain explicitly recorded above.
+- Mark only G-5.5-018, G-5.5-019, G-5.5-020, G-5.5-021, G-5.15-008 and G-5.15-018
+  COMPLETED. Preserve all 561 IDs/static fields, every unrelated status and seven
+  completed HTTP/shell rows. No dependency, migration, real credential, generated
+  binary or historical release documentation is included.
+- Master/harness/phase state becomes PHASE_04_FILESYSTEM_CONTRACT_REVIEW_REQUIRED.
+  The prepared filesystem design is concrete but PROPOSED; it explicitly covers
+  local-root restrictions, single-file deletion, no-overwrite hard-link copy
+  publication and cooperative filesystem cancellation (including stalled syscall
+  limits). No filesystem runtime is implemented. Request that contract decision
+  and stop before implementation as harness/README.md and the phase plan require.
+  Notification contracts and Phase 05 remain separate human decisions.
+- Final acceptance documentation passed Bun formatting, full local link checks,
+  whitespace checks and 561-row/static-field reconciliation. Exactly six scoped
+  Docker statuses changed; only six documentation files changed after the fully
+  passing combined-source CI. Product source remains identical to 3ecbe68.

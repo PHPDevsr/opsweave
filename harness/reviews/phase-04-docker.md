@@ -111,3 +111,38 @@ waits recheck due time. State validation is unchanged. The new
 on original source and passes on the fix, preserving one invocation/attempt and
 the timed-out step outcome. Ordinary/race repetitions passed; full/fresh CI
 evidence remains tracked in the append-only log. See [reliability docs](../../docs/reliability.md).
+
+## Combined-source acceptance — 2026-11-22
+
+All six workflows passed on final combined source `3ecbe68`:
+
+| Workflow           | Successful run                                                               | Acceptance evidence                                                                                       |
+| ------------------ | ---------------------------------------------------------------------------- | --------------------------------------------------------------------------------------------------------- |
+| CI                 | [44980216309](https://github.com/PHPDevsr/opsweave/actions/runs/44980216309) | Linux/macOS/Windows on minimum Go 1.27.4 and stable; Linux race; formatting/module/vet/build/smoke checks |
+| Vulnerability scan | [44980216282](https://github.com/PHPDevsr/opsweave/actions/runs/44980216282) | govulncheck@latest on all three OS families                                                               |
+| Benchmarks         | [44980216287](https://github.com/PHPDevsr/opsweave/actions/runs/44980216287) | Required DockerInspectIPC plus existing benchmark families and artifact upload                            |
+| Markdown           | [44980216333](https://github.com/PHPDevsr/opsweave/actions/runs/44980216333) | Bun formatting                                                                                            |
+| CodeQL             | [44980216360](https://github.com/PHPDevsr/opsweave/actions/runs/44980216360) | Static security checks                                                                                    |
+| Release            | [44980216283](https://github.com/PHPDevsr/opsweave/actions/runs/44980216283) | All six Linux/macOS/Windows amd64/arm64 packages and assembly; publish skipped                            |
+
+Every run used the pull_request event. No duplicate push run, release publication,
+merge or deployment was performed. Native execution closes the platform gate;
+cross-compilation alone was not accepted as native evidence.
+
+Full local ordinary/race, vet/build/module/scanner/format/workflow checks passed
+on final source. Final coverage is Docker 88.0%, engine 85.0%, execution 86.2%,
+workflow 94.3%; HTTP/shell/config/CLI coverage is unchanged. The final native CI
+also covers both deadline corrections and their unchanged/new regression assertions.
+Earlier failed results remain documented rather than relabeled as passes.
+
+Implementation, automated tests, code/security self-review, English operator
+reference and compatibility evidence are complete for `G-5.5-018`, `G-5.5-019`,
+`G-5.5-020`, `G-5.5-021`, `G-5.15-008` and `G-5.15-018`. Only these six rows now
+transition from IMPLEMENTED to COMPLETED. Seven completed HTTP/shell rows remain
+unchanged. No dependency, schema migration or historical release-doc change is
+required. This supersedes earlier pending acceptance statements in this review.
+
+Phase 04 remains in progress at review of the concrete filesystem proposal.
+Its deletion, exclusive hard-link copy publication and cooperative cancellation
+limits require human acceptance before implementation. The phase PR remains
+draft targeting main; notification contracts and Phase 05 remain unapproved.
