@@ -1,6 +1,6 @@
 # Phase 04 — Built-in actions
 
-Milestone: v0.3.x. Requirement status: `IN_PROGRESS`. Review state: APPROVED_FOR_PHASE_04; HTTP contract ACCEPTED; HTTP unit COMPLETED; toolchain patch MERGED; shell contract ACCEPTED; runtime IMPLEMENTED; native CI OPEN.
+Milestone: v0.3.x. Requirement status: `IN_PROGRESS`. Review state: APPROVED_FOR_PHASE_04; all five action-family contracts ACCEPTED; seventeen earlier rows COMPLETED; notifications IMPLEMENTED; combined native CI OPEN; phase acceptance OPEN.
 
 Authorization: the user confirmed Phase 03 was merged and requested continuation
 on 2026-11-22 (Asia/Jakarta). Phase approval is separate from action contract
@@ -117,3 +117,16 @@ notification adapters still unimplemented. Review the concrete
 [notification proposal](../designs/notification-actions.md), including environment
 credentials, fixed profiles/destinations and verified bounded HTTP/SMTP delivery,
 before implementation. No Phase 05 or persistent secret store is authorized.
+
+## Notification implementation amendment
+
+The user explicitly ACCEPTED the four-channel contract on 2026-11-22. All four
+notification adapters are IMPLEMENTED with strict fixed profiles, private
+environment credential snapshots and bounded verified HTTPS/SMTP delivery. See
+[notification review](../reviews/phase-04-notification.md) and
+[operator reference](../../docs/notification-actions.md). Local required checks,
+security review, bounded fuzzing and the required benchmark family pass. Four
+notification rows and the aggregate action milestone await fresh combined-source
+native CI. Seventeen earlier completed rows remain unchanged. The aggregate
+milestone also retains phase/release acceptance, matching earlier milestone
+accounting. No provider message, tag, release or Phase 05 work is performed.

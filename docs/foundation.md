@@ -206,3 +206,9 @@ Opt-in [filesystem actions](filesystem-actions.md) expose metadata checks,
 single-file cleanup and bounded no-overwrite copy under explicit local root/action
 grants. They add no default filesystem capability and remain independent from
 HTTP, shell and Docker policies.
+
+Opt-in [notification actions](notification-actions.md) deliver Telegram, Slack,
+email and webhook messages through fixed administrator profiles and privately
+snapshotted environment credentials. They share the engine, cancellation and
+history contracts. Automatic lifecycle delivery and persistent secrets remain
+later-phase work.

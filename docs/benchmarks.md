@@ -1,9 +1,9 @@
 # Foundation benchmarks
 
 OpsWeave measures the parser, expression validator, registry preflight, single-node
-SQLite repository and Phase 02 manual execution/history. Execution uses only
-deterministic in-process action doubles. These measurements do not represent real
-integrations. No product optimization or
+SQLite repository and Phase 02 manual execution/history. Engine execution benchmarks use deterministic in-process action doubles.
+Action benchmarks additionally use isolated native process/filesystem and local
+network fixtures; these measurements do not represent production integrations. No product optimization or
 dependency change is included in this measurement baseline.
 
 ## Running locally
@@ -11,7 +11,7 @@ dependency change is included in this measurement baseline.
 From the repository root, with the Go version declared in `go.mod`:
 
 ```sh
-go test -run '^$' -bench '^Benchmark' -benchmem -benchtime=200ms -count=3 -cpu=1 ./internal/fileaction ./internal/dockeraction ./internal/shellaction ./internal/httpaction ./internal/webhook ./internal/schedule ./internal/workflow ./internal/registry ./internal/storage/sqlite ./internal/execution ./internal/engine
+go test -run '^$' -bench '^Benchmark' -benchmem -benchtime=200ms -count=3 -cpu=1 ./internal/notificationaction ./internal/fileaction ./internal/dockeraction ./internal/shellaction ./internal/httpaction ./internal/webhook ./internal/schedule ./internal/workflow ./internal/registry ./internal/storage/sqlite ./internal/execution ./internal/engine
 ```
 
 Use `-benchtime=1x -count=1` for a one-iteration correctness smoke run, or
@@ -89,7 +89,7 @@ include migration 004 and must not be treated as identical migration workloads.
 The `Benchmarks` workflow runs on relevant pull requests, matching pushes to
 `main`, and manual dispatch. A Linux job uses the declared Go version, one logical
 CPU setting (`-cpu=1`), three samples and 200 ms target measurement windows. It
-verifies all twenty benchmark families, including both execution prune cases and the worker status probe. Benchmark errors or missing
+verifies all configured benchmark families, including both execution prune cases and the worker status probe. Benchmark errors or missing
 families fail the job; shell pipe failures cannot be hidden by `tee`.
 
 Each run uploads `benchmark-results.txt` plus `benchmark-environment.txt` with
@@ -143,3 +143,10 @@ iterations are outside timing. The source content is fixed and directory/filesys
 cache behavior affects results. This is a host-specific filesystem baseline,
 without an optimization, SLA, crash-durability or network-filesystem claim. CI
 requires this family and uploads the existing environment/results artifacts.
+
+`BenchmarkNotificationWebhook` measures one real loopback HTTPS/TLS delivery,
+JSON payload, bounded acknowledgment, runtime output validation and connection
+cleanup. Synthetic credential/profile/certificate/listener setup is outside timing;
+each invocation establishes a fresh verified connection without pooling. It does
+not measure external provider latency or establish a delivery SLA. CI requires
+this family and uploads the existing environment/results artifacts.

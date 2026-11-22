@@ -15,6 +15,7 @@ import (
 	"github.com/PHPDevsr/opsweave/internal/dockeraction"
 	"github.com/PHPDevsr/opsweave/internal/fileaction"
 	"github.com/PHPDevsr/opsweave/internal/httpaction"
+	"github.com/PHPDevsr/opsweave/internal/notificationaction"
 	"github.com/PHPDevsr/opsweave/internal/shellaction"
 	"github.com/PHPDevsr/opsweave/internal/yamlutil"
 	"go.yaml.in/yaml/v3"
@@ -33,6 +34,7 @@ type Config struct {
 	Shell        shellaction.Config
 	Docker       dockeraction.Config
 	Filesystem   fileaction.Config
+	Notification notificationaction.Config
 }
 
 // ValidStoragePath rejects driver options/URIs while permitting local paths.
@@ -86,12 +88,21 @@ func Load(ctx context.Context, path, cwd string, environ []string) (Config, erro
 	} else if explicit || !errors.Is(err, os.ErrNotExist) {
 		return Config{}, errors.New("open configuration failed")
 	}
+	secretNames := map[string]bool{}
+	for _, name := range c.Notification.SecretNames() {
+		secretNames[name] = true
+	}
 	for _, entry := range environ {
 		key, value, _ := strings.Cut(entry, "=")
 		if !strings.HasPrefix(key, "OPSWEAVE_") {
 			continue
 		}
 		switch key {
+		case "OPSWEAVE_NOTIFICATION_ENABLED":
+			if value != "true" && value != "false" {
+				return Config{}, errors.New("invalid notification enabled setting")
+			}
+			c.Notification.Enabled = value == "true"
 		case "OPSWEAVE_FILESYSTEM_ENABLED":
 			if value != "true" && value != "false" {
 				return Config{}, errors.New("invalid filesystem enabled setting")
@@ -137,8 +148,15 @@ func Load(ctx context.Context, path, cwd string, environ []string) (Config, erro
 				return Config{}, err
 			}
 		default:
+			if strings.HasPrefix(key, "OPSWEAVE_ACTION_SECRET_") && secretNames[key] {
+				// Values are intentionally not retained in exported configuration.
+				continue
+			}
 			return Config{}, errors.New("unknown OpsWeave environment setting")
 		}
+	}
+	if err := c.Notification.Validate(); err != nil {
+		return Config{}, err
 	}
 	if err := c.Filesystem.Validate(); err != nil {
 		return Config{}, err
@@ -329,6 +347,10 @@ func decodeActions(n *yaml.Node, c *Config) error {
 	}
 	for i := 0; i < len(n.Content); i += 2 {
 		switch n.Content[i].Value {
+		case "notification":
+			if err := decodeNotification(n.Content[i+1], &c.Notification); err != nil {
+				return err
+			}
 		case "filesystem":
 			if err := decodeFilesystem(n.Content[i+1], &c.Filesystem); err != nil {
 				return err

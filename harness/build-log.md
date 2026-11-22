@@ -1102,3 +1102,52 @@ Illustrative local median observations (three samples, ns/op): Parse/Steps1 23,1
   change to COMPLETED; only six documentation files change after the fully
   passing product CI. Evidence text keeps the existing ledger table width to
   avoid unrelated formatting churn. Product source is identical to 2bb4908.
+
+## 2026-11-22 (Asia/Jakarta) — accepted notification contract implemented
+
+- Baseline 54b24cf, existing Phase 04 branch/draft PR #8, initially clean.
+  The latest user ACCEPT explicitly approves the reviewed four-channel contract:
+  fixed profiles, environment-only credentials, verified bounded delivery, SMTP
+  implicit TLS or mandatory STARTTLS and uncertain external-side-effect semantics.
+- Added notificationaction, strict YAML/environment support and CLI composition;
+  shared only an immutable wrapper around existing HTTP destination policy.
+  Ordinary HTTP authorization restrictions remain unchanged. No new dependency,
+  toolchain, schema migration, persistent secrets, management API or Phase 06
+  notification policy is added. No existing Git tags exist; development docs use
+  one source. English operator/reference/security/rotation/backup/troubleshooting
+  docs, workflow examples, README/foundation links and self-review are included.
+- All tests use synthetic credentials and isolated HTTPS/SMTP fixtures. All four
+  provider contracts, input/grant/version/profile checks, DNS/SSRF/TLS, MIME and
+  injection limits, bounded replies, cancellation/deadline, ambiguous acceptance,
+  cleanup failure, CLI/history/log redaction, queued shutdown and revocation have
+  observable tests mapped in the review. No real provider message was sent.
+- Initial test compilation rejected an unparenthesized composite literal; fixed.
+  A PowerShell unquoted coverage option split at the dot; reran with the entire
+  option quoted. A TLS cancellation fixture signaled before ownership was proved;
+  synchronized on real received TLS bytes and preserved the closure assertion.
+  Code review expanded printable validation to Unicode controls, with regression
+  coverage. Targeted notification/config/HTTP/CLI tests subsequently passed.
+- gofmt -l ., go vet ./..., go test -count=1 with full coverage, go mod verify
+  and go build ./...: each exit 0, Go 1.27.4. Full go test -race -count=1 ./...
+  passed using CGO and the existing LLVM-MinGW clang. Final test-only extensions
+  passed targeted ordinary and three notification race repetitions. Coverage:
+  notification 91.8%, HTTP 94.8%, config 97.2%, CLI 82.5%, engine 84.8%, execution
+  86.2%, workflow 94.3%. Existing local Windows filesystem symlink privilege skips
+  remain explicit; mandatory native CI gates must run them. No build warning.
+- go install golang.org/x/vuln/cmd/govulncheck@latest followed by scanner ./...:
+  exit 0, no vulnerabilities found. actionlint: exit 0. Notification parser fuzz
+  run (-run '^$', -fuzz '^FuzzNotificationCredentialParsers$', -fuzztime=4s,
+  -parallel=2) passed 51,664 executions; FuzzConfig with the same limits passed
+  51,555. No unbounded network/filesystem work is done by fuzz parsers.
+- go test -run '^$' -bench '^BenchmarkNotificationWebhook$' -benchmem
+  -benchtime=200ms -count=3 -cpu=1 ./internal/notificationaction: exit 0.
+  Windows samples 1164322/1119071/1105517 ns/op, 139134-139432 B/op and 970
+  allocs/op. Fresh verified TLS/payload/ack/cleanup included; synthetic fixture
+  setup excluded. No optimization/SLA claim. Benchmark CI requires this family
+  and existing environment/results artifacts, preserving PR-only feature checks.
+- Four notification rows and G-11-004 become IMPLEMENTED only. Preserve all 561
+  IDs/static fields, unrelated statuses and seventeen completed earlier rows.
+  G-11-004 retains explicit release/phase acceptance; no release is implied by code.
+  Next: fresh native ordinary/race/scanner/benchmark/Markdown/CodeQL/release-preview
+  workflows, then close only verified notification rows and present Phase 04 for
+  human acceptance. Phase 05 remains unapproved. No merge/tag/deployment occurs.

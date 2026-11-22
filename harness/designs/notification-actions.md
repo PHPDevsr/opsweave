@@ -1,7 +1,8 @@
 # Phase 04 notification action proposal
 
-Status `PROPOSED`. Review delivery destinations, credential handling and network
-policy before implementation. Filesystem approval does not authorize this scope.
+Status `ACCEPTED` by user reply `ACCEPT` on 2026-11-22 (Asia/Jakarta), answering
+the concrete four-channel fixed-profile/environment-credential/verified-network
+contract question. This authorizes only these workflow adapters within Phase 04.
 
 ## Scope, profiles and credentials
 

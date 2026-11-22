@@ -14,8 +14,9 @@ alongside help, version information, JSON output and shell completion. See the
 The opt-in [HTTP request and health actions](docs/http-actions.md),
 [configured shell execution](docs/shell-action.md),
 [local Docker actions](docs/docker-actions.md) and
-[granted filesystem actions](docs/filesystem-actions.md) provide production integrations through the [manual execution engine and history
-CLI](docs/execution.md). HTTP, shell, Docker and filesystem actions default to disabled and require explicit operator policy
+[granted filesystem actions](docs/filesystem-actions.md) and
+[fixed-profile notification actions](docs/notification-actions.md) provide production integrations through the [manual execution engine and history
+CLI](docs/execution.md). HTTP, shell, Docker, filesystem and notification actions default to disabled and require explicit operator policy
 configuration. The [single-node dispatcher server](docs/dispatcher.md) drains queued work and evaluates [persisted cron schedules](docs/scheduling.md). See [event triggers](docs/event-triggers.md) for startup, local internal events, and signed loopback webhooks.
 The GOALS.md example remains illustrative.
 
