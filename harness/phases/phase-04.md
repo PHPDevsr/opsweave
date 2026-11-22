@@ -105,3 +105,15 @@ native CI must execute them before completion. The Docker traceability amendment
 also completes its seventh allowlist row using existing `3ecbe68` evidence.
 The next [notification proposal](../designs/notification-actions.md) remains
 PROPOSED. Do not implement it before review or advance Phase 05.
+
+## Filesystem unit acceptance and next contract
+
+Combined source `2bb4908` passed all six PR workflows. Native Windows security
+prerequisites were satisfied in both Go jobs, closing the three local privilege
+limitations; Linux/macOS link/special-file tests and Linux race also passed.
+See the [filesystem review](../reviews/phase-04-filesystem.md) for exact evidence.
+Three filesystem rows are now COMPLETED. Phase 04 remains in progress with
+notification adapters still unimplemented. Review the concrete
+[notification proposal](../designs/notification-actions.md), including environment
+credentials, fixed profiles/destinations and verified bounded HTTP/SMTP delivery,
+before implementation. No Phase 05 or persistent secret store is authorized.

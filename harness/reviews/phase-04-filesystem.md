@@ -94,3 +94,39 @@ The three filesystem rows remain IMPLEMENTED pending all native/scanner/benchmar
 Markdown/CodeQL/release checks. The next
 [notification proposal](../designs/notification-actions.md) is concrete but PROPOSED,
 with no notification runtime, credential store or Phase 05 implementation.
+
+## Combined-source acceptance — 2026-11-22
+
+All six PR workflows passed final combined source `2bb4908`:
+
+| Workflow           | Successful run                                                               | Acceptance evidence                                                                         |
+| ------------------ | ---------------------------------------------------------------------------- | ------------------------------------------------------------------------------------------- |
+| CI                 | [45018171115](https://github.com/PHPDevsr/opsweave/actions/runs/45018171115) | Linux/macOS/Windows on Go 1.27.4 and stable, Linux race, formatting/modules/vet/build/smoke |
+| Vulnerability scan | [45018171088](https://github.com/PHPDevsr/opsweave/actions/runs/45018171088) | govulncheck@latest on three native OS families                                              |
+| Benchmarks         | [45018171119](https://github.com/PHPDevsr/opsweave/actions/runs/45018171119) | Required FilesystemCopy and existing families, with environment/results artifacts           |
+| Markdown           | [45018171157](https://github.com/PHPDevsr/opsweave/actions/runs/45018171157) | Bun formatting                                                                              |
+| CodeQL             | [45018171204](https://github.com/PHPDevsr/opsweave/actions/runs/45018171204) | Static security checks                                                                      |
+| Release            | [45018171127](https://github.com/PHPDevsr/opsweave/actions/runs/45018171127) | Six OS/architecture packages plus assembly; publication skipped                             |
+
+The three Windows symlink tests cannot use their local missing-privilege skip
+path under CI/GITHUB_ACTIONS. Both Windows jobs passed this mandatory gate, and
+Linux/macOS executed their native link/special-file tests. The fresh native
+results close the platform/security gate; they do not relabel the earlier local
+privilege skips as passing tests. Cross-compilation alone was never acceptance.
+
+All workflows were pull_request events, with no duplicate push runs. No merge,
+tag, release publication or deployment occurred. Full local ordinary/race,
+static/build/module/scanner/fuzz/benchmark/format checks and code/security review
+are recorded above, with their exact platform limitations and core coverage.
+Final documentation links and 561-row reconciliation are recorded in the log.
+
+Implementation, tests, self-review, English documentation and compatibility are
+complete for `G-5.5-023`, `G-5.5-024` and `G-5.5-025`. Only these three rows now
+transition from IMPLEMENTED to COMPLETED. Fourteen completed HTTP/shell/Docker
+rows remain unchanged. No dependency, schema migration or historical release-doc
+change is required. This supersedes earlier pending statements in this review.
+
+Phase 04 remains in progress at the notification contract decision. Its four
+fixed-profile, environment-credential, verified-network adapters are PROPOSED
+only; no notification runtime, persistent secret store or Phase 05 work is added.
+The PR remains draft targeting main.

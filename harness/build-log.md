@@ -1064,3 +1064,41 @@ Illustrative local median observations (three samples, ns/op): Parse/Steps1 23,1
   no actual provider connection, notification message, persistent secret store or
   later-phase code was added. Next: fresh multi-OS/race/scanner/benchmark/Markdown/
   CodeQL/release checks before completing any filesystem row, then contract review.
+
+## 2026-11-22 (Asia/Jakarta) — filesystem unit accepted by verification
+
+- Final combined source 2bb4908, existing Phase 04 branch and draft PR #8 targeting
+  main. The accepted three filesystem adapters have implementation, automated
+  tests, code/security self-review, English docs and compatibility evidence.
+  All six fresh workflows passed:
+  [CI 45018171115](https://github.com/PHPDevsr/opsweave/actions/runs/45018171115),
+  [scanner 45018171088](https://github.com/PHPDevsr/opsweave/actions/runs/45018171088),
+  [benchmark 45018171119](https://github.com/PHPDevsr/opsweave/actions/runs/45018171119),
+  [Markdown 45018171157](https://github.com/PHPDevsr/opsweave/actions/runs/45018171157),
+  [CodeQL 45018171204](https://github.com/PHPDevsr/opsweave/actions/runs/45018171204),
+  [release 45018171127](https://github.com/PHPDevsr/opsweave/actions/runs/45018171127).
+  CI passed all six native OS/Go jobs and Linux race. Both Windows jobs passed
+  the strict CI/GITHUB_ACTIONS symlink gate; Linux/macOS link/special-file tests
+  passed. All six release packages and assemble passed; publish was skipped.
+- Local privilege skips remain accurately recorded, not relabeled. Fresh native
+  results close those security/platform gates. Local full source ordinary/race,
+  static/build/module/latest-scanner and bounded fuzz/benchmark results are
+  attributed above; core coverage remains engine 85.3%, execution 86.2%, workflow
+  94.3%, with fileaction 87.3% local coverage before native-only paths. No regression
+  or dependency/schema/toolchain change is known after all required checks passed.
+- Mark only G-5.5-023, G-5.5-024 and G-5.5-025 COMPLETED. Preserve all 561 IDs and
+  static fields, every unrelated status and fourteen completed HTTP/shell/Docker
+  rows (including the separately reconciled Docker allowlist requirement).
+- Master/harness/phase state becomes PHASE_04_NOTIFICATION_CONTRACT_REVIEW_REQUIRED.
+  The next concrete notification proposal is PROPOSED and needs a human decision
+  about fixed destinations, environment-only adapter credentials and verified
+  bounded HTTP/SMTP delivery. No notification implementation, actual delivery,
+  persistent secret store, Phase 05 or automatic notification policy is added.
+  Stop before implementing that contract, as harness/README.md requires.
+- All six workflows used pull_request events with no duplicate push runs. No
+  merge/tag/release/deployment or external notification was performed.
+- Final acceptance docs passed Bun formatting, local-link validation, whitespace
+  checks and 561-row/static-field reconciliation. Exactly three filesystem rows
+  change to COMPLETED; only six documentation files change after the fully
+  passing product CI. Evidence text keeps the existing ledger table width to
+  avoid unrelated formatting churn. Product source is identical to 2bb4908.
