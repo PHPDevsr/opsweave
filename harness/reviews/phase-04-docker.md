@@ -146,3 +146,14 @@ Phase 04 remains in progress at review of the concrete filesystem proposal.
 Its deletion, exclusive hard-link copy publication and cooperative cancellation
 limits require human acceptance before implementation. The phase PR remains
 draft targeting main; notification contracts and Phase 05 remain unapproved.
+
+## Docker allowlist traceability amendment
+
+The subsequent Phase 04 ledger audit identified `G-5.15-019` (configured container
+allowlists) as a seventh Docker/security row, omitted from the six-row update.
+The existing `TestDockerAllowlistSnapshotAndPermissions`, `TestDockerPolicyAndOptIn`,
+configuration/CLI revocation tests, operator policy and all-six-workflow evidence
+on `3ecbe68` already satisfy this row. It is now COMPLETED with that same evidence.
+This is a traceability correction only; no Docker source or security policy changed.
+All 561 IDs/static fields and unrelated statuses remain intact. Earlier entries
+correctly record six transitions; this amendment records the additional seventh.

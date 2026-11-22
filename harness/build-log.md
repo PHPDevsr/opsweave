@@ -966,3 +966,18 @@ Illustrative local median observations (three samples, ns/op): Parse/Steps1 23,1
   whitespace checks and 561-row/static-field reconciliation. Exactly six scoped
   Docker statuses changed; only six documentation files changed after the fully
   passing combined-source CI. Product source remains identical to 3ecbe68.
+
+## 2026-11-22 (Asia/Jakarta) — filesystem contract accepted and Docker traceability amendment
+
+- The user explicitly accepted filesystem implementation after reviewing the
+  concrete path/deletion/no-overwrite/hard-link/cooperative-cancellation contract.
+  Authorize only file.exists, file.cleanup and file.copy within Phase 04.
+  Notification contracts and Phase 05 remain unapproved.
+- Traceability audit found G-5.15-019 (Docker configured container allowlists)
+  omitted from the six-row Docker acceptance update. Its existing implementation,
+  TestDockerAllowlistSnapshotAndPermissions, configuration/CLI tests, English
+  policy and all-six-workflow evidence on 3ecbe68 already satisfy it. Correct
+  this seventh Docker row to COMPLETED without a runtime change. The prior log
+  accurately records six transitions; this explicit amendment records the seventh.
+  Preserve all 561 IDs/static fields and unrelated statuses. Filesystem rows stay
+  PLANNED until implementation/tests/documentation exist.
