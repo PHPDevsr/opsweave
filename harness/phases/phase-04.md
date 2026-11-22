@@ -50,15 +50,24 @@ Run `gofmt -l .`, `go vet ./...`, `go test -count=1 ./...`, `go test -race -coun
 HTTP runtime/tests/docs are implemented. See the [review](../reviews/phase-04-http.md)
 and [security patch decision](../designs/go-http-security-patch.md). The next
 [shell contract](../designs/shell-action.md) is accepted and implemented; see the
-[shell review](../reviews/phase-04-shell.md) for local evidence and native CI gates.
+[shell review](../reviews/phase-04-shell.md) for completed local and native CI acceptance evidence.
 
 ## HTTP unit acceptance
 
 Combined local verification and PR checks passed on `dfc0ae5` after rebase to
 main `0033480`. The [review](../reviews/phase-04-http.md) and
 [build log](../build-log.md) record the evidence closing the four HTTP/SSRF rows.
-The phase remains in progress: shell awaits native CI, while Docker, filesystem and notification actions
+The phase remains in progress: shell is completed, while Docker, filesystem and notification actions
 remain unimplemented. No Phase 05 work is authorized.
 
 The user accepted the shell contract on 2026-11-22. Implement only that reviewed
 scope; Docker, filesystem and notification contracts remain unaccepted.
+
+## Shell unit acceptance and next contract
+
+All required checks passed on combined source `3bd23de`; see the
+[shell review](../reviews/phase-04-shell.md) and append-only build log. Three scoped
+shell/security rows are COMPLETED. The next work unit is review of the
+[Docker proposal](../designs/docker-actions.md), covering four opt-in local-IPC
+adapters with exact container/action allowlists. Do not implement that runtime
+before acceptance. Filesystem/notification contracts and Phase 05 remain separate.

@@ -760,3 +760,36 @@ Illustrative local median observations (three samples, ns/op): Parse/Steps1 23,1
   formatting and diff checks passed. The full source ordinary/race suites remain
   attributed to the prior final dispatcher source, which is unchanged; fresh CI
   will test this fixture correction across all native matrices.
+
+## 2026-11-22 (Asia/Jakarta) — shell unit accepted by verification
+
+- Baseline combined source `3bd23de`, branch codex/phase-04-built-in-actions,
+  draft PR #8 targeting main. The accepted Phase 04 shell contract is implemented,
+  tested, reviewed and documented. Fresh all-check acceptance is now available:
+  [CI 44976628487](https://github.com/PHPDevsr/opsweave/actions/runs/44976628487),
+  [vulnerability 44976628507](https://github.com/PHPDevsr/opsweave/actions/runs/44976628507),
+  [benchmarks 44976628467](https://github.com/PHPDevsr/opsweave/actions/runs/44976628467),
+  [Markdown 44976628468](https://github.com/PHPDevsr/opsweave/actions/runs/44976628468),
+  [CodeQL 44976628471](https://github.com/PHPDevsr/opsweave/actions/runs/44976628471),
+  [release 44976628571](https://github.com/PHPDevsr/opsweave/actions/runs/44976628571).
+  All six workflows completed successfully as pull_request events. No duplicate
+  push runs. CI includes all six OS/Go jobs and Linux race; scanner covers three
+  OS families; release includes six target archives and assembly. Publish skipped.
+- The self-review maps exact native, security, CLI/history, cancellation and
+  process ownership tests. Previous failed runs and their corrections remain
+  explicit above. Latest remote evidence covers the final test fixture correction;
+  full local ordinary/race/vet/build/module/scanner results remain attributed to
+  unchanged production source, with 30 ordinary/10 race repetitions for that fix.
+- Mark only G-5.5-016, G-5.15-007 and G-5.15-017 COMPLETED. Reconciliation preserved
+  all 561 IDs and static requirement fields, every unrelated row and all four
+  previously completed HTTP rows. No dependency, schema, release-doc version,
+  binary or secret change. No migration is required.
+- Update master/harness/phase current state to
+  PHASE_04_DOCKER_CONTRACT_REVIEW_REQUIRED and attach the final acceptance table.
+  Docker proposal is already concrete and reviewable, but remains PROPOSED.
+  Stop before implementation for that contract decision, as harness/README.md
+  and the phase plan require. No Phase 05 work, merge, tag, deployment or external
+  message is authorized by this documentation update.
+- Final documentation-only acceptance update passed Bun Markdown formatting,
+  added-local-link validation, diff whitespace checks and 561-row reconciliation.
+  No product source changed after the fully passing combined-source CI above.

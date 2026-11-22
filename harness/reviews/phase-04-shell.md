@@ -80,3 +80,34 @@ after its explicit release. It does not admit a second cron occurrence when the
 simulated clock crosses a minute. All execution-count, first real admission,
 cancellation and join assertions remain. This test-only correction does not
 change the final dispatcher source.
+
+## Combined-source acceptance — 2026-11-22
+
+Final combined source `3bd23de` passed every required PR workflow:
+
+| Workflow           | Successful run                                                               | Evidence                                                                                                           |
+| ------------------ | ---------------------------------------------------------------------------- | ------------------------------------------------------------------------------------------------------------------ |
+| CI                 | [44976628487](https://github.com/PHPDevsr/opsweave/actions/runs/44976628487) | Linux/macOS/Windows on Go 1.27.4 and stable, Linux race, formatting, module consistency, vet/build and smoke tests |
+| Vulnerability scan | [44976628507](https://github.com/PHPDevsr/opsweave/actions/runs/44976628507) | govulncheck@latest on three native OS families                                                                     |
+| Benchmarks         | [44976628467](https://github.com/PHPDevsr/opsweave/actions/runs/44976628467) | Required benchmark families, including ShellExecution                                                              |
+| Markdown           | [44976628468](https://github.com/PHPDevsr/opsweave/actions/runs/44976628468) | Bun formatting                                                                                                     |
+| CodeQL             | [44976628471](https://github.com/PHPDevsr/opsweave/actions/runs/44976628471) | Static security analysis                                                                                           |
+| Release            | [44976628571](https://github.com/PHPDevsr/opsweave/actions/runs/44976628571) | Linux/macOS/Windows amd64/arm64 packages and assembly; publish skipped                                             |
+
+All six were pull_request runs; no duplicate push workflow was triggered. No
+release was published. Native tests close the platform gate; local cross-compile
+results alone were never counted as native acceptance.
+
+Local final production source passed full ordinary/race suites, vet, build,
+module verification and vulnerability scan. Core coverage: engine 85.6%,
+execution 86.2%, workflow 94.3%; shell 82.7%, HTTP 94.9%. The subsequent scheduler
+fixture-only correction passed 30 ordinary and 10 race repetitions, then the full
+native matrix above. Formatting and scoped ledger reconciliation also passed.
+The recorded failed intermediate runs remain in the build log.
+
+Implementation, tests, self-review, English documentation, compatibility and
+security evidence are complete for `G-5.5-016`, `G-5.15-007` and `G-5.15-017`;
+these three rows are now COMPLETED. Existing four HTTP rows stay completed.
+No dependency or schema migration is required. This status does not complete
+Phase 04: the next Docker contract still requires human review, and the phase PR
+remains draft targeting main. Filesystem/notification and Phase 05 remain open.
