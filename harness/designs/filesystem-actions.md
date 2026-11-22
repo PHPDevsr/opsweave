@@ -1,7 +1,9 @@
 # Phase 04 filesystem action proposal
 
-Status `PROPOSED`. Review this separate path/destructive-operation contract
-before implementation; Docker approval does not authorize it.
+Status `ACCEPTED` by the user's explicit approval to implement this filesystem
+contract on 2026-11-22 (Asia/Jakarta). The approval includes single-file
+cleanup, exclusive hard-link copy publication and cooperative filesystem
+cancellation limits. It does not authorize notification contracts or Phase 05.
 
 ## Configuration and scope
 

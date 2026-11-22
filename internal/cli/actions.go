@@ -4,6 +4,7 @@ import (
 	"github.com/PHPDevsr/opsweave/internal/action"
 	"github.com/PHPDevsr/opsweave/internal/config"
 	"github.com/PHPDevsr/opsweave/internal/dockeraction"
+	"github.com/PHPDevsr/opsweave/internal/fileaction"
 	"github.com/PHPDevsr/opsweave/internal/httpaction"
 	"github.com/PHPDevsr/opsweave/internal/registry"
 	"github.com/PHPDevsr/opsweave/internal/shellaction"
@@ -25,6 +26,11 @@ func configuredActions(cfg config.Config) (*action.Runtime, registry.Catalog, er
 		return nil, nil, err
 	}
 	entries = append(entries, docker...)
+	files, err := fileaction.Registrations(cfg.Filesystem)
+	if err != nil {
+		return nil, nil, err
+	}
+	entries = append(entries, files...)
 	var grants []string
 	bindings := map[string]string{}
 	for _, entry := range entries {

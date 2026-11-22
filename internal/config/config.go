@@ -13,6 +13,7 @@ import (
 	"time"
 
 	"github.com/PHPDevsr/opsweave/internal/dockeraction"
+	"github.com/PHPDevsr/opsweave/internal/fileaction"
 	"github.com/PHPDevsr/opsweave/internal/httpaction"
 	"github.com/PHPDevsr/opsweave/internal/shellaction"
 	"github.com/PHPDevsr/opsweave/internal/yamlutil"
@@ -31,6 +32,7 @@ type Config struct {
 	HTTP         httpaction.Config
 	Shell        shellaction.Config
 	Docker       dockeraction.Config
+	Filesystem   fileaction.Config
 }
 
 // ValidStoragePath rejects driver options/URIs while permitting local paths.
@@ -90,6 +92,11 @@ func Load(ctx context.Context, path, cwd string, environ []string) (Config, erro
 			continue
 		}
 		switch key {
+		case "OPSWEAVE_FILESYSTEM_ENABLED":
+			if value != "true" && value != "false" {
+				return Config{}, errors.New("invalid filesystem enabled setting")
+			}
+			c.Filesystem.Enabled = value == "true"
 		case "OPSWEAVE_DOCKER_ENABLED":
 			if value != "true" && value != "false" {
 				return Config{}, errors.New("invalid Docker enabled setting")
@@ -132,6 +139,9 @@ func Load(ctx context.Context, path, cwd string, environ []string) (Config, erro
 		default:
 			return Config{}, errors.New("unknown OpsWeave environment setting")
 		}
+	}
+	if err := c.Filesystem.Validate(); err != nil {
+		return Config{}, err
 	}
 	if err := c.Docker.Validate(); err != nil {
 		return Config{}, err
@@ -319,6 +329,10 @@ func decodeActions(n *yaml.Node, c *Config) error {
 	}
 	for i := 0; i < len(n.Content); i += 2 {
 		switch n.Content[i].Value {
+		case "filesystem":
+			if err := decodeFilesystem(n.Content[i+1], &c.Filesystem); err != nil {
+				return err
+			}
 		case "docker":
 			if err := decodeDocker(n.Content[i+1], &c.Docker); err != nil {
 				return err

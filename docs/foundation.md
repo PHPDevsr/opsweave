@@ -201,3 +201,8 @@ operator permissions alongside the existing [HTTP actions](http-actions.md).
 Opt-in [Docker actions](docker-actions.md) add exact-container/action grants over
 local Unix sockets or Windows named pipes. No Docker operation is enabled by
 default; HTTP, shell and Docker permissions remain independent.
+
+Opt-in [filesystem actions](filesystem-actions.md) expose metadata checks,
+single-file cleanup and bounded no-overwrite copy under explicit local root/action
+grants. They add no default filesystem capability and remain independent from
+HTTP, shell and Docker policies.

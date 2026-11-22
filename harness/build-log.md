@@ -981,3 +981,86 @@ Illustrative local median observations (three samples, ns/op): Parse/Steps1 23,1
   accurately records six transitions; this explicit amendment records the seventh.
   Preserve all 561 IDs/static fields and unrelated statuses. Filesystem rows stay
   PLANNED until implementation/tests/documentation exist.
+
+## 2026-11-22 (Asia/Jakarta) — filesystem adapters locally implemented
+
+- Baseline 57f9494, with separate traceability amendment f0a3d81 on the existing
+  codex/phase-04-built-in-actions branch/draft PR #8. The user explicitly accepted
+  the concrete filesystem contract, including single-file deletion, no-overwrite
+  hard-link copy and cooperative cancellation limits. Only these three adapters
+  are authorized; notification runtime and Phase 05 remain unapproved.
+- A prior verification command was not executed because automatic approval review
+  hit its service usage limit; this was not an unsafe-action determination. After
+  the user said continue, the same authorized verification resumed successfully.
+  No approval bypass or passing result is inferred from the rejected command.
+- Implemented internal/fileaction, strict filesystem YAML/environment validation,
+  exact root/action snapshots and independent production CLI composition. Default
+  disabled; max 128 roots, 1-64 MiB copy cap (default 16 MiB), canonical bounded
+  portable paths, no implicit roots, unknown fields or arbitrary flags. Copy needs
+  grants on both roots; existing configuration remains valid. Service-wide grants
+  are not per-user RBAC. Restart a server to load changed configuration.
+- Use os.Root for containment and opened parent handles for final operations.
+  Native final opens reject following links: Unix openat NONBLOCK/NOFOLLOW/CLOEXEC;
+  Windows synchronous relative NtCreateFile DONT_REPARSE/OPEN_REPARSE_POINT/
+  NON_DIRECTORY_FILE with native case lookup. Verify file type/identity after open.
+  Windows can return a nonregular reparse metadata handle; the caller rejects it,
+  and the native test checks it never describes the external regular target.
+- Cleanup removes one regular file only: Unix unlinkat cannot remove directories;
+  Windows reopens the validated handle for DELETE and uses POSIX file disposition,
+  with no readonly-attribute bypass or unsafe path fallback. Library/handle closes
+  are checked. Native directory-prevention and Windows case/readonly-error tests
+  passed locally. No filesystem I/O goroutine is detached.
+- Copy uses 32 KiB bounded chunks, pre/post source checks, random reserved O_EXCL
+  temporary file, flush/close, one exclusive hard link and checked temporary cleanup.
+  Existing destinations are preserved. No copy-to-final fallback or destructive
+  rollback. Cancellation checks occur before work/chunks/publication/deletion;
+  cleanup has a five-second check budget. Stalled kernel I/O can delay shutdown,
+  as explicitly accepted. No snapshot, OS sandbox or crash-durable-directory claim.
+- Tests cover normal binary/empty copy, exists/missing/directory results, repeated
+  deletion, immutable grants, version/permission/root revocation, invalid paths,
+  source size/growth, existing targets, concurrent exclusive publication, direct
+  I/O/flush/cancel/publication failure cleanup and native directory protection.
+  A private transfer-function seam tests failures with real roots, without globals
+  or another filesystem abstraction. Production CLI history contains typed results,
+  not file contents. A test-only gate after a real queued copy proves shutdown joins
+  and cannot roll back committed data or run pending cleanup; it is absent in config.
+- Extended link-swap tests check both source and destination plus outside deletion
+  protection, and join the swap owner before final inspection. Three local Windows
+  tests are unavailable due to missing symlink privilege: TestFilesystemSymlinkBoundaries,
+  TestFilesystemSymlinkSwapCannotEscapeRoot and TestNativeOpenDoesNotFollowFinalSymlink.
+  Tests fail rather than skip under CI/GITHUB_ACTIONS if the prerequisite is missing.
+  Native security evidence remains mandatory; local skips are not passes.
+- Corrected a Windows NtCreateFile argument from nil to uintptr zero after compiler
+  verification caught its signature. The CLI revocation test retains other action
+  grants so it specifically observes denial of destination copy, rather than an
+  unrelated unavailable cleanup registration. No security assertion was removed.
+- Full go test -count=1 with .cache/filesystem-final-coverage.out exited 0, with
+  the three explicit local privilege skips. Full go test -race -count=1 ./... also
+  exited 0 with the same gate. Coverage: fileaction 87.3%, engine 85.3%, execution
+  86.2%, workflow 94.3%, HTTP 94.9%, shell 82.7%, Docker 88.0%, config 97.5%, CLI 82.3%.
+  Subsequent test-only boundary/link-swap refinements compiled/passed locally and
+  affected filesystem/CLI race tests passed three repetitions. Product source is
+  unchanged after the full-suite verification.
+- go vet ./..., go build ./..., go mod verify, go mod tidy -diff exited 0; go.mod
+  and go.sum remain unchanged. Installed govulncheck@latest and scanned ./...:
+  exit 0, no vulnerabilities found. Linux/Darwin fileaction and CLI test binaries
+  cross-compiled. Go formatting, all-workflow actionlint and whitespace checks passed.
+  No build warning. Native Unix special-file/link tests remain fresh CI gates.
+- BenchmarkFilesystemCopy passed three Windows 4 KiB samples: 4813277, 4928714,
+  5187738 ns/op; 42256-42297 B/op; 176-177 allocs/op. Fixture/setup and between-run
+  final-target removal are excluded; flush/publication/temp cleanup are included.
+  This is a short host/filesystem-specific baseline, not an optimization/SLA claim.
+  Benchmark CI now requires FilesystemCopy and the existing artifact format.
+- FuzzFilesystemPath passed a four-second/two-worker run with 58,964 executions.
+  Fuzzing performs no filesystem operations. Tests operate only on isolated trees,
+  with synthetic content and no user/production files or real credentials.
+- Added English filesystem reference/config/CLI/security/cancellation/backup/
+  troubleshooting docs, README/foundation/benchmark links and code/security
+  self-review. Three filesystem rows become IMPLEMENTED pending fresh native CI;
+  preserve all 561 IDs/static fields and fourteen completed HTTP/shell/Docker rows.
+- Prepared a concrete notification proposal only, following official Telegram/Slack
+  and Go mail/SMTP references. It requires fixed profiles, environment-only adapter
+  credentials, verified network policy and bounded delivery. It remains PROPOSED;
+  no actual provider connection, notification message, persistent secret store or
+  later-phase code was added. Next: fresh multi-OS/race/scanner/benchmark/Markdown/
+  CodeQL/release checks before completing any filesystem row, then contract review.

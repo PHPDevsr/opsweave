@@ -93,3 +93,15 @@ is required. Phase 04 remains in progress. The next
 [filesystem proposal](../designs/filesystem-actions.md) is concrete but PROPOSED;
 obtain its path/deletion/copy/cancellation decision before runtime implementation.
 Notification contracts and Phase 05 remain separate.
+
+## Filesystem implementation amendment
+
+The user explicitly accepted the filesystem contract on 2026-11-22, including
+its deletion/publication/cancellation limits. The three filesystem adapters are
+IMPLEMENTED with [review evidence](../reviews/phase-04-filesystem.md), English
+operator docs and passing local ordinary/race/static/security/fuzz/benchmark
+checks. Three local Windows symlink tests are unavailable due to account privilege;
+native CI must execute them before completion. The Docker traceability amendment
+also completes its seventh allowlist row using existing `3ecbe68` evidence.
+The next [notification proposal](../designs/notification-actions.md) remains
+PROPOSED. Do not implement it before review or advance Phase 05.

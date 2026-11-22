@@ -11,7 +11,7 @@ dependency change is included in this measurement baseline.
 From the repository root, with the Go version declared in `go.mod`:
 
 ```sh
-go test -run '^$' -bench '^Benchmark' -benchmem -benchtime=200ms -count=3 -cpu=1 ./internal/dockeraction ./internal/shellaction ./internal/httpaction ./internal/webhook ./internal/schedule ./internal/workflow ./internal/registry ./internal/storage/sqlite ./internal/execution ./internal/engine
+go test -run '^$' -bench '^Benchmark' -benchmem -benchtime=200ms -count=3 -cpu=1 ./internal/fileaction ./internal/dockeraction ./internal/shellaction ./internal/httpaction ./internal/webhook ./internal/schedule ./internal/workflow ./internal/registry ./internal/storage/sqlite ./internal/execution ./internal/engine
 ```
 
 Use `-benchtime=1x -count=1` for a one-iteration correctness smoke run, or
@@ -135,3 +135,11 @@ It uses a fake Unix-socket/named-pipe daemon, with listener/policy setup exclude
 from timing. It does not measure a real Docker daemon or container operation
 latency. CI requires this family and uploads the existing environment/results
 artifacts; no absolute performance threshold or optimization claim is introduced.
+
+`BenchmarkFilesystemCopy` measures a real 4 KiB local copy, root/grant validation,
+handle-relative opens, flush, exclusive hard-link publication and temporary-file
+cleanup. Fixture/configuration setup and removal of the published target between
+iterations are outside timing. The source content is fixed and directory/filesystem
+cache behavior affects results. This is a host-specific filesystem baseline,
+without an optimization, SLA, crash-durability or network-filesystem claim. CI
+requires this family and uploads the existing environment/results artifacts.
