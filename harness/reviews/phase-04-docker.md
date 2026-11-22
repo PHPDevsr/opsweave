@@ -99,3 +99,15 @@ checks and scanner. Coverage amendment: Docker 88.0%, engine 85.6%; other core
 coverage unchanged. The earlier Windows benchmark remains attributed to source
 62dcf4a; the final CI benchmark will measure corrected source separately. Native
 all-check acceptance remains pending.
+
+## Existing serial retry boundary follow-up
+
+All Docker native tests passed after the IPC/context correction. CI on 16d86c6
+found only Windows/minimum Go's existing serial backoff deadline test: an early
+context wake reached storage before the stored UTC retry timestamp. The coordinator
+now finishes a bounded metadata wait before timeout validation; system clock
+waits recheck due time. State validation is unchanged. The new
+`TestReliableCoordinatorEarlyDeadlineCannotStartRetry` fails deterministically
+on original source and passes on the fix, preserving one invocation/attempt and
+the timed-out step outcome. Ordinary/race repetitions passed; full/fresh CI
+evidence remains tracked in the append-only log. See [reliability docs](../../docs/reliability.md).

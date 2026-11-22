@@ -893,3 +893,40 @@ Illustrative local median observations (three samples, ns/op): Parse/Steps1 23,1
   measure the corrected source, with no performance equivalence claim inferred.
   Operator docs now explain preservation of the engine deadline outcome. Final
   Markdown/diff checks passed; fresh native combined-source CI is next.
+
+## 2026-11-22 (Asia/Jakarta) — existing retry deadline boundary correction
+
+- Corrected Docker source 16d86c6 passed native Docker tests on every OS/Go job;
+  the original Docker deadline test now passes in all jobs, including Linux race.
+  Scanner, benchmark, Markdown, CodeQL and six-target release/assemble workflows
+  passed. CI [44979573387](https://github.com/PHPDevsr/opsweave/actions/runs/44979573387)
+  failed only Windows/minimum Go's existing
+  TestReliableCoordinatorStepDeadlineIncludesBackoff: StartAttempt was rejected
+  as invalid at the five-second stored retry/step deadline, with one prior failed
+  attempt. No Docker requirement is completed using that failed run.
+- Root cause: the context timer may wake before the persisted UTC wall timestamp.
+  The serial coordinator then asks storage to start/classify a retry while its
+  due time is still in the future. State validation correctly rejects this; do
+  not relax it or allow an early action invocation.
+- systemClock.WaitUntil now rechecks wall due time after timer wakeup. When an
+  injected/native clock reports DeadlineExceeded before the stored retry time,
+  finish that timestamp wait under the existing independent five-second metadata
+  budget before validating the timeout. Preserve cancellation, errors, attempt
+  counts, worker ownership and absolute deadlines. No storage/domain contract,
+  dependency, schema or public API change; docs/reliability.md explains behavior.
+- New TestReliableCoordinatorEarlyDeadlineCannotStartRetry forces the early
+  deadline without arbitrary sleep. The original coordinator deterministically
+  failed it with the same invalid-transition result; the fixed source passed
+  three ordinary and three race repetitions. The test asserts a failed execution,
+  timed-out step, one actual attempt and one handler call. The original five-second
+  backoff test also passed. TestSystemClockWaitUntilChecksDueTimeAndCancellation
+  verifies UTC due-time and immediate cancellation behavior.
+- Full ordinary/race suites were restarted for this core production change.
+  Final vet, build, module verification and scanner passed (exit 0, no findings or
+  warnings). CI remains open until fresh combined-source native checks pass.
+- Final full ordinary (.cache/docker-retry-final-coverage.out) and full race
+  suites both exited 0. Coverage amendment: engine 85.0%, Docker 88.0%, execution
+  86.2%, workflow 94.3%; other package coverage unchanged. No production change
+  followed these checks. Markdown, Go formatting and diff checks passed. Push a
+  separate scoped retry-boundary fix commit and require fresh native CI before
+  marking any of the six Docker rows complete.

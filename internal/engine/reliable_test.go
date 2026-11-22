@@ -383,6 +383,42 @@ func TestReliableCoordinatorStepDeadlineIncludesBackoff(t *testing.T) {
 	}
 }
 
+type earlyDeadlineClock struct{ early bool }
+
+func (c *earlyDeadlineClock) WaitUntil(_ context.Context, at time.Time) error {
+	c.early = time.Now().Before(at)
+	return context.DeadlineExceeded
+}
+
+func TestReliableCoordinatorEarlyDeadlineCannotStartRetry(t *testing.T) {
+	doc := strings.Replace(source, "with: {message: hello}}", "timeout: 1s, with: {message: hello}, retry: {attempts: 2, backoff: 1m, maxBackoff: 1m}}", 1)
+	calls := 0
+	e, _ := reliableEngineFixture(t, func(context.Context, map[string]any) (map[string]any, error) {
+		calls++
+		return nil, errors.New("retryable")
+	}, doc)
+	clock := &earlyDeadlineClock{}
+	e.Clock = clock
+	ctx, cancel := context.WithTimeout(t.Context(), 10*time.Second)
+	defer cancel()
+	snap, err := e.Run(ctx, "example")
+	if !clock.early || err != execution.ErrAction || snap.State != execution.Failed || snap.Steps[0].State != execution.TimedOut || len(snap.Steps[0].Attempts) != 1 || calls != 1 {
+		t.Fatal("early timer violated durable retry boundary", snap, err, calls, clock.early)
+	}
+}
+
+func TestSystemClockWaitUntilChecksDueTimeAndCancellation(t *testing.T) {
+	at := time.Now().Add(20 * time.Millisecond)
+	if err := (systemClock{}).WaitUntil(t.Context(), at); err != nil || time.Now().Before(at) {
+		t.Fatal("wait returned before due time", err)
+	}
+	ctx, cancel := context.WithCancel(t.Context())
+	cancel()
+	if err := (systemClock{}).WaitUntil(ctx, time.Now().Add(time.Hour)); err != context.Canceled {
+		t.Fatal(err)
+	}
+}
+
 func TestReliableCoordinatorExecutionDeadlineAndCallerCancellation(t *testing.T) {
 	for _, deadline := range []bool{false, true} {
 		var cancel context.CancelFunc

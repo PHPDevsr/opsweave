@@ -51,6 +51,10 @@ persist the terminal outcome. Actions still observe the original deadline.
 Absolute deadlines are stored, not reset between attempts. Exhaustion fails the
 step; a step timeout fails the execution, while an execution deadline produces
 timed_out. Failure/cancellation handlers do not erase the original outcome.
+Retry waits recheck the stored UTC due time after timer wakeup. If a context
+deadline wakes early, the coordinator finishes a bounded five-second metadata
+wait before persisting the timeout; it never starts a retry before its due time
+or weakens transition validation to accommodate native timer resolution.
 
 ## Commands and cancellation
 

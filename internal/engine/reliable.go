@@ -23,13 +23,22 @@ type Clock interface {
 type systemClock struct{}
 
 func (systemClock) WaitUntil(ctx context.Context, at time.Time) error {
-	timer := time.NewTimer(time.Until(at))
-	defer timer.Stop()
-	select {
-	case <-ctx.Done():
-		return ctx.Err()
-	case <-timer.C:
-		return nil
+	for {
+		if err := ctx.Err(); err != nil {
+			return err
+		}
+		if !time.Now().Before(at) {
+			return nil
+		}
+		timer := time.NewTimer(time.Until(at))
+		select {
+		case <-ctx.Done():
+			timer.Stop()
+			return ctx.Err()
+		case <-timer.C:
+			// Persisted due times are UTC wall time. A timer wakeup is only a
+			// hint, including on platforms with coarse timer resolution.
+		}
 	}
 }
 
@@ -375,6 +384,19 @@ func (e Engine) coordinate(parent context.Context, snap execution.Snapshot, owne
 					active.set("", nil)
 					stepCancel()
 					return snap, &execution.Failure{Cause: waitErr}
+				}
+				if errors.Is(waitErr, context.DeadlineExceeded) && time.Now().Before(*step.NextAttemptAt) {
+					// A context timer may fire before the persisted wall deadline.
+					// Finish that bounded metadata wait before asking storage to
+					// validate the timeout; never admit an early retry attempt.
+					budget, stop := dispatchContext(parent, 5*time.Second)
+					waitErr = (systemClock{}).WaitUntil(budget, *step.NextAttemptAt)
+					stop()
+					if waitErr != nil {
+						active.set("", nil)
+						stepCancel()
+						return snap, safeRepositoryError(waitErr)
+					}
 				}
 				if err := fault(); err != nil {
 					active.set("", nil)
