@@ -793,3 +793,70 @@ Illustrative local median observations (three samples, ns/op): Parse/Steps1 23,1
 - Final documentation-only acceptance update passed Bun Markdown formatting,
   added-local-link validation, diff whitespace checks and 561-row reconciliation.
   No product source changed after the fully passing combined-source CI above.
+
+## 2026-11-22 (Asia/Jakarta) — accepted Docker adapters implemented locally
+
+- Baseline `923831e` on codex/phase-04-built-in-actions, draft PR #8 targeting
+  main. The user replied ACCEPT to the concrete local-IPC/exact-ID/action-allowlist
+  Docker contract. Record the contract ACCEPTED and authorize only its four
+  adapters within Phase 04. Seven completed HTTP/shell rows remain unchanged.
+- Implement internal/dockeraction for docker.start/stop/restart/inspect version 1.
+  Strict native endpoint/full-ID/action policy is snapshotted; dangerous access
+  defaults to disabled. Strict YAML and OPSWEAVE_DOCKER_ENABLED override compose
+  independently with existing HTTP/shell actions at the CLI boundary. No daemon
+  discovery, Docker CLI/SDK, ambient proxy/config, dependency or migration added.
+- One invocation owns one local connection and one fixed API 1.48 request. Standard
+  bounded HTTP parsing has no transport goroutines, redirects, retries, pool or
+  decompression. Total budget 30s, connection/header budgets 5s, headers 16 KiB,
+  body 1 MiB, existing output 64 KiB. Cancellation joins its once-close callback.
+  Oversize rejection closes IPC before body cleanup to prevent unbounded draining.
+  Inspect captures only validated typed fields and omits raw daemon/env/mount data.
+- Windows client uses non-inheritable overlapped pipe handles with anonymous SQOS.
+  Native tests prove busy-pipe deadline and inability to impersonate the service
+  token. Fake daemons use private current-user/SYSTEM-only local pipes; Unix
+  fixtures use short private socket paths. Production never imports test utilities.
+- Tests cover exact API paths/methods/status/grace, immutable grants, permission
+  subsets, malformed inputs/responses, version failure, redirect/encoding rejection,
+  header/body bounds, cancellation/deadline/peer closure, concurrent invocations,
+  all four production CLI actions to SQLite history, redaction/revocation and queued
+  server shutdown. See reviews/phase-04-docker.md for exact test names.
+- Initial tests caught test expectations: run JSON is a summary, so the four-step
+  assertion belongs on execution get history; Windows file-close cleanup can
+  return os.ErrClosed as well as net.ErrClosed. Assertions were moved to the
+  actual detailed output or retained with native equivalent close semantics.
+- Initial full ordinary suite passed, but full race exposed a new fake listener
+  owner failing to join. Focused repeated race and diagnostic stacks located a
+  pending GetOverlappedResult; escape analysis showed the asynchronous OVERLAPPED
+  address on a movable Go stack. Pin it with runtime.Pinner until cancellation
+  and kernel completion join, then close the event. Join every pending-I/O exit,
+  including failed waits. No timeout was expanded or join assertion discarded.
+  Some diagnostic repetitions failed; one superseded diagnostic run was stopped.
+- After that fix, 30 TestProductionQueuedDockerShutdown race repetitions and
+  three complete Docker-package race repetitions passed. Escape analysis now
+  reports OVERLAPPED moved to heap. Final full ordinary coverage suite and full
+  go test -race -count=1 ./... both exited 0. Core final coverage: engine 85.5%,
+  execution 86.2%, workflow 94.3%; Docker 87.6%, HTTP 94.9%, shell 82.7%, config
+  97.1%, CLI 82.4%. All source is tested; no native assertion was weakened.
+- Final go vet ./..., go build ./..., go mod verify and go mod tidy -diff exited 0. go.mod/go.sum unchanged. Go formatting, all six workflow actionlint and diff
+  checks passed. Installed govulncheck@latest and scanned ./...: exit 0, no
+  vulnerabilities found. No build warning was emitted.
+- Cross-compiled Docker/CLI test binaries for Linux and Darwin successfully;
+  native execution remains a CI gate. Four-second/two-worker fuzz runs passed:
+  FuzzDockerInspect 113,091 executions; FuzzDockerPolicy 135,163 executions. No
+  production Docker daemon or credential is accessed by these tests.
+- BenchmarkDockerInspectIPC passed three 200ms/cpu=1 Windows samples:
+  135052, 122476, 155917 ns/op; 19455-19461 B/op; 108 allocs/op. This measures a
+  real private fake-daemon connection/request/filter/cleanup, excluding setup.
+  It is a short host-specific baseline, with no optimization, SLA or actual Docker
+  latency claim. Benchmark CI now requires DockerInspectIPC and uploads existing
+  environment/results artifacts; native correctness CI is unchanged.
+- Added English Docker reference/configuration/workflow/CLI/security/upgrade/
+  troubleshooting docs, README/foundation links and benchmark guidance. Added
+  code/security self-review, accepted contract and phase/master status updates.
+  Reconciliation preserved all 561 IDs/static fields and changed exactly six
+  owned Docker/security rows from PLANNED to IMPLEMENTED; native CI is pending.
+- Prepared a concrete filesystem proposal only, using reviewed Go Root API
+  boundaries and explicit destructive/copy/cancellation limits. It remains
+  PROPOSED with no filesystem runtime. Notification contracts and Phase 05 remain
+  unapproved. Next: push updated draft PR and observe every fresh native/scanner/
+  benchmark/security/release check before closing any Docker requirement.

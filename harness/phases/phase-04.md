@@ -71,3 +71,14 @@ shell/security rows are COMPLETED. The next work unit is review of the
 [Docker proposal](../designs/docker-actions.md), covering four opt-in local-IPC
 adapters with exact container/action allowlists. Do not implement that runtime
 before acceptance. Filesystem/notification contracts and Phase 05 remain separate.
+
+## Docker implementation amendment
+
+The user accepted the concrete Docker contract on 2026-11-22. The four local-IPC
+adapters and their six Docker/security rows are IMPLEMENTED, with passing local
+ordinary/race/static/security/fuzz/benchmark checks. See the
+[Docker review](../reviews/phase-04-docker.md) for exact test mapping and remaining
+native CI gates. Prior statements that Docker is unaccepted describe the previous
+state and are superseded by this amendment. The next
+[filesystem proposal](../designs/filesystem-actions.md) remains PROPOSED; do not
+implement it before human review. Notification contracts/Phase 05 remain separate.

@@ -197,3 +197,7 @@ scan for the updated build. See the [Go release notes](https://go.dev/doc/devel/
 
 Opt-in [shell profiles](shell-action.md) add direct command execution under explicit
 operator permissions alongside the existing [HTTP actions](http-actions.md).
+
+Opt-in [Docker actions](docker-actions.md) add exact-container/action grants over
+local Unix sockets or Windows named pipes. No Docker operation is enabled by
+default; HTTP, shell and Docker permissions remain independent.

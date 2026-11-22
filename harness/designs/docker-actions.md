@@ -1,7 +1,8 @@
 # Phase 04 Docker action proposal
 
-Status `PROPOSED`. Review this separate daemon/security contract before runtime
-implementation. It does not follow automatically from shell approval.
+Status `ACCEPTED` by user reply `ACCEPT` on 2026-11-22 (Asia/Jakarta), following
+the concrete Docker contract question. This authorizes only the four adapters
+and their reviewed local-IPC/security boundaries within Phase 04.
 
 ## Delivery and configuration
 
