@@ -1,6 +1,6 @@
 # Phase 04 — Built-in actions
 
-Milestone: v0.3.x. Requirement status: `IN_PROGRESS`. Review state: APPROVED_FOR_PHASE_04; all five action-family contracts ACCEPTED; seventeen earlier rows COMPLETED; notifications IMPLEMENTED; combined native CI OPEN; phase acceptance OPEN.
+Milestone: v0.3.x. Requirement status: `IN_PROGRESS`. Review state: APPROVED_FOR_PHASE_04; all five action-family contracts ACCEPTED; all twenty-one action/security rows COMPLETED; combined native CI PASSED; phase acceptance OPEN.
 
 Authorization: the user confirmed Phase 03 was merged and requested continuation
 on 2026-11-22 (Asia/Jakarta). Phase approval is separate from action contract
@@ -41,10 +41,10 @@ Owned IDs: `G-5.5-013`, `G-5.5-014`, `G-5.5-016`, `G-5.5-018`, `G-5.5-019`, `G-5
 
 Run `gofmt -l .`, `go vet ./...`, `go test -count=1 ./...`, `go test -race -count=1 ./...`, `go mod verify`, `go build ./...`, `bun fmt --check "**/*.md"` and relevant phase acceptance suites. Add bounded fuzz runs for introduced parsers and isolated integration resources. Use deterministic synchronization and context deadlines. Record exact test/benchmark commands when introduced.
 
-- [ ] Every owned row has exact test/review and documentation evidence attached; shared policy obligations audited.
-- [ ] All applicable checks passed; unavailable checks remain explicit open gates.
-- [ ] Security, compatibility and migration implications reviewed; source changes scoped.
-- [ ] Append commands, exit codes, evidence, limitations and next steps to [build log](../build-log.md).
+- [x] Every owned row has exact test/review and documentation evidence attached; shared policy obligations audited.
+- [x] All applicable checks passed; unavailable checks remain explicit open gates.
+- [x] Security, compatibility and migration implications reviewed; source changes scoped.
+- [x] Append commands, exit codes, evidence, limitations and next steps to [build log](../build-log.md).
 - [ ] Present results and obtain user acceptance before advancing. Do not treat code presence or this checklist as acceptance evidence.
 
 HTTP runtime/tests/docs are implemented. See the [review](../reviews/phase-04-http.md)
@@ -130,3 +130,15 @@ notification rows and the aggregate action milestone await fresh combined-source
 native CI. Seventeen earlier completed rows remain unchanged. The aggregate
 milestone also retains phase/release acceptance, matching earlier milestone
 accounting. No provider message, tag, release or Phase 05 work is performed.
+
+## All action families verified — phase acceptance required
+
+Final combined product source `963d143` passed all six PR workflows. See the
+[notification acceptance review](../reviews/phase-04-notification.md) for exact
+run links, native platform/race/security/benchmark evidence and earlier reviews.
+All twenty-one action/security rows are COMPLETED, preserving every unrelated
+status. The v0.3 aggregate milestone remains IMPLEMENTED pending human phase and
+release acceptance; no tag/publication is implied. Implementation, automated tests,
+review, documentation and compatibility verification are complete for all five
+approved action families. State `PHASE_04_ACCEPTANCE_REQUIRED`: present this
+review and PR #8, then stop. Phase 05 requires separate user authorization.

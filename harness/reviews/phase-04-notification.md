@@ -89,3 +89,37 @@ The four notification rows and aggregate milestone are IMPLEMENTED pending all
 fresh PR workflows. Seventeen earlier completed rows remain unchanged. Phase 04
 acceptance and Phase 05 authorization remain human decisions. No merge, tag,
 release publication, real provider message or deployment was performed.
+
+## Combined-source acceptance — 2026-11-22
+
+All six fresh PR workflows passed exact product source `963d143`:
+
+| Workflow           | Successful run                                                               | Evidence                                                                          |
+| ------------------ | ---------------------------------------------------------------------------- | --------------------------------------------------------------------------------- |
+| CI                 | [45024238339](https://github.com/PHPDevsr/opsweave/actions/runs/45024238339) | Six native OS/Go jobs, Linux race, formatting/modules/vet/build/smoke             |
+| Vulnerability scan | [45024238286](https://github.com/PHPDevsr/opsweave/actions/runs/45024238286) | govulncheck@latest on Linux, macOS and Windows                                    |
+| Benchmarks         | [45024238291](https://github.com/PHPDevsr/opsweave/actions/runs/45024238291) | Required NotificationWebhook and existing families; environment/results artifacts |
+| Markdown           | [45024238392](https://github.com/PHPDevsr/opsweave/actions/runs/45024238392) | Bun formatting                                                                    |
+| CodeQL             | [45024238284](https://github.com/PHPDevsr/opsweave/actions/runs/45024238284) | Go static security analysis                                                       |
+| Release            | [45024238307](https://github.com/PHPDevsr/opsweave/actions/runs/45024238307) | Six OS/architecture packages and assemble; publication skipped                    |
+
+All runs used pull_request events, without duplicate feature push workflows.
+The native test jobs cover Go 1.27.4 and stable on Linux, macOS and Windows.
+Both Windows jobs passed the existing mandatory symlink security prerequisite;
+Linux/macOS ran their native filesystem paths and notification HTTPS/SMTP fixtures.
+This closes the fresh combined-source platform gate without relabeling earlier
+local privilege skips. Linux race and three-OS latest-scanner checks also passed.
+
+Implementation, automated acceptance/security/integration tests, code review,
+English documentation and compatibility evidence are complete for the four
+notification rows. Only `G-5.5-031`, `G-5.5-032`, `G-5.5-033` and `G-5.5-034`
+now transition to COMPLETED; seventeen earlier completed rows are preserved.
+All 561 IDs/static fields and unrelated statuses remain unchanged. Final
+acceptance documentation is separate from the fully tested product source.
+
+All five Phase 04 action families are complete. `G-11-004` remains IMPLEMENTED
+because human phase/release acceptance remains open, consistent with earlier
+milestone accounting. Phase 04 stops at `PHASE_04_ACCEPTANCE_REQUIRED`; Phase 05
+is unapproved. The existing PR remains draft targeting main. No merge, release
+tag/publication, deployment or real provider message occurred. These results
+supersede this review's earlier native-CI-pending statements.

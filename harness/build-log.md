@@ -1151,3 +1151,37 @@ Illustrative local median observations (three samples, ns/op): Parse/Steps1 23,1
   Next: fresh native ordinary/race/scanner/benchmark/Markdown/CodeQL/release-preview
   workflows, then close only verified notification rows and present Phase 04 for
   human acceptance. Phase 05 remains unapproved. No merge/tag/deployment occurs.
+
+## 2026-11-22 (Asia/Jakarta) — notification verification and Phase 04 review gate
+
+- The user confirmed signing/commit completion ("sudah commit"). The pending
+  signed commit completed as 963d14340fcedb7911b0ad7c5bcf2698aa5e1346 and pushed
+  to codex/phase-04-built-in-actions. Worktree was clean. Draft PR #8 remains OPEN,
+  targeting main; its title/body now describe all five built-in action families.
+- All six fresh workflows passed exactly that head SHA:
+  - [CI 45024238339](https://github.com/PHPDevsr/opsweave/actions/runs/45024238339): Six native OS/Go jobs, Linux race, formatting/modules/vet/build/smoke.
+  - [Vulnerability scan 45024238286](https://github.com/PHPDevsr/opsweave/actions/runs/45024238286): govulncheck@latest on Linux, macOS and Windows.
+  - [Benchmarks 45024238291](https://github.com/PHPDevsr/opsweave/actions/runs/45024238291): Required NotificationWebhook and existing families; environment/results artifacts.
+  - [Markdown 45024238392](https://github.com/PHPDevsr/opsweave/actions/runs/45024238392): Bun formatting.
+  - [CodeQL 45024238284](https://github.com/PHPDevsr/opsweave/actions/runs/45024238284): Go static security analysis.
+  - [Release 45024238307](https://github.com/PHPDevsr/opsweave/actions/runs/45024238307): Six OS/architecture packages and assemble; publication skipped.
+- Verified every native CI job: Linux/macOS/Windows, minimum Go 1.27.4 and stable,
+  Linux race, formats and module consistency. Both Windows jobs satisfied the
+  mandatory existing filesystem symlink gate. Earlier local privilege limitations
+  remain historically accurate, not relabeled. Latest scanner passed three OS
+  jobs. Release built all six packages and assemble; publish was skipped.
+- gh run view for all six runs: exit 0, exact head SHA, completed/success. All
+  events were pull_request with no duplicate push checks. No real provider message,
+  merge/tag/release publication or deployment occurred. No dependency, schema,
+  minimum Go version or management API change was needed.
+- Four notification requirements now become COMPLETED with exact review/CI/docs
+  evidence; preserve seventeen completed earlier action/security rows, all 561 IDs
+  and static fields. G-11-004 retains IMPLEMENTED, with CI verified but human
+  phase/release acceptance open. No unrelated requirement status changes.
+- Master/harness/phase review state becomes PHASE_04_ACCEPTANCE_REQUIRED. All five
+  approved action families have implementation/tests/code review/docs and complete
+  verification. The remaining checklist item requires presenting results and user
+  acceptance before advancing. Phase 05 remains unapproved; stop at that gate.
+- Final documentation-only changes are checked with Bun, local-link/ledger
+  reconciliation and git diff --check. Product source remains identical to the
+  fully verified 963d143, so broad product tests are not repeated for prose changes.
