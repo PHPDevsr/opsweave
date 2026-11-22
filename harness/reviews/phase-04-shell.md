@@ -71,3 +71,12 @@ its scan and verifies joined shutdown plus cancellation of an already running
 action. No assertion was removed. The regression fails with the original scan
 contexts and passes with the fix. Exact local/remote outcomes are appended to the
 build log; all-check acceptance remains pending until fresh CI passes.
+
+The subsequent Windows/stable CI run exposed a fixture clock crossing a cron
+minute (:58 plus two seconds). The scheduler correctly admitted another intent.
+The first real scan retains actual admission time. The second fake scan, whose
+only purpose is the shutdown handshake, now returns an empty completed result
+after its explicit release. It does not admit a second cron occurrence when the
+simulated clock crosses a minute. All execution-count, first real admission,
+cancellation and join assertions remain. This test-only correction does not
+change the final dispatcher source.

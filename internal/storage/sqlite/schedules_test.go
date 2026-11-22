@@ -45,7 +45,9 @@ func (r *interruptibleScheduleScan) DueSchedules(ctx context.Context, f executio
 	close(r.entered)
 	select {
 	case <-r.release:
-		return r.Repository.DueSchedules(ctx, f, now)
+		// The second scan exists only to synchronize shutdown. Return an empty
+		// completed scan so crossing a real cron minute cannot add another job.
+		return nil, nil
 	case <-ctx.Done():
 		return nil, ctx.Err()
 	}

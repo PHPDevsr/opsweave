@@ -726,3 +726,37 @@ Illustrative local median observations (three samples, ns/op): Parse/Steps1 23,1
 - Final installed govulncheck scan exited 0: no vulnerabilities found. Markdown
   checks passed across all sources. Diff check passed; Git only warned that
   PowerShell-written documentation line endings would normalize to repository LF.
+
+## 2026-11-22 (Asia/Jakarta) — scheduler fixture minute boundary
+
+- Follow-up `7788a31` CI [44976137400](https://github.com/PHPDevsr/opsweave/actions/runs/44976137400)
+  passed all Linux/macOS matrices, Windows minimum Go and Linux race. Shell and
+  engine tests passed in every job. Windows/stable failed only the modified
+  scheduler shutdown integration's one-execution count: its wall-clock scan at
+  02:28:58 plus the simulated two seconds reached 02:29:00 and legitimately
+  admitted a second cron occurrence. This is fixture time dependence, not a
+  failed cancellation or surviving action; the original execution was cancelled.
+- Use scheduledFixture's existing fixed :10 instant, after workflow creation,
+  instead of wall-clock seconds. Both simulated scans stay in the same minute.
+  Preserve exact execution count, one handler call, cancellation, joined scan and
+  pinned scheduled-at assertions. No production source changed after `7788a31`.
+- Vulnerability, benchmark, Markdown and CodeQL checks on `7788a31` passed.
+  Six-target release/assemble remains tracked separately. Shell rows remain
+  IMPLEMENTED while a fully green combined-source CI result is unavailable.
+- Fixture approach amendment: using scheduledFixture's future :10 instant also
+  moved queue availability into the future, so the first exploratory verification
+  stalled until its deadline; it was stopped, not counted as passing. The final
+  correction retains real admission time for the first real repository scan.
+  After the shutdown handshake, the second fake scan completes with no entries,
+  matching its synchronization-only purpose. It no longer performs a second real
+  cron admission at a simulated minute boundary. The first real scheduled run,
+  exact count, joined scan, action cancellation and history assertions remain.
+  An exploratory verbose run timed out after 35 seconds; no such future-time
+  change is retained. This supersedes the proposed fixed-:10 approach above.
+- Release run 44976137445 passed all six packages and assembly, with publication
+  correctly skipped for the PR. No tag or release was created.
+- Final correction passed 30 ordinary and 10 race repetitions of
+  TestSchedulerDispatcherCompletesAndInterrupts (exit 0). Final vet, Go/Markdown
+  formatting and diff checks passed. The full source ordinary/race suites remain
+  attributed to the prior final dispatcher source, which is unchanged; fresh CI
+  will test this fixture correction across all native matrices.
