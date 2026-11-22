@@ -14,6 +14,7 @@ import (
 	"github.com/PHPDevsr/opsweave/internal/dispatchlock"
 	"github.com/PHPDevsr/opsweave/internal/execution"
 	"github.com/PHPDevsr/opsweave/internal/registry"
+	"github.com/PHPDevsr/opsweave/internal/scheduler"
 	"github.com/PHPDevsr/opsweave/internal/storage/sqlite"
 )
 
@@ -456,5 +457,113 @@ func TestDispatcherPersistenceBoundaries(t *testing.T) {
 				t.Fatal(snap, err)
 			}
 		})
+	}
+}
+
+type shutdownScheduleRepository struct {
+	*sqlite.Store
+	scan func(context.Context) error
+}
+
+func (r shutdownScheduleRepository) DueSchedules(ctx context.Context, fence execution.Fence, now time.Time) ([]scheduler.Entry, error) {
+	if err := r.scan(ctx); err != nil {
+		return nil, err
+	}
+	return r.Store.DueSchedules(ctx, fence, now)
+}
+
+func TestDispatcherShutdownDuringDurableScan(t *testing.T) {
+	for _, kind := range []string{"startup", "schedule"} {
+		for _, fail := range []bool{false, true} {
+			name := kind + "/success"
+			if fail {
+				name = kind + "/storage_failure"
+			}
+			t.Run(name, func(t *testing.T) {
+				var calls atomic.Int32
+				document := source
+				if kind == "startup" {
+					document = strings.Replace(source, "spec:", "spec:\n  triggers: [{id: ready, type: startup}]", 1)
+				}
+				d, s := dispatchFixture(t, func(context.Context, map[string]any) (map[string]any, error) {
+					calls.Add(1)
+					return map[string]any{}, nil
+				}, document)
+				queued, err := d.Engine.Enqueue(t.Context(), s, d.Capacity, "example", RunOptions{})
+				if err != nil {
+					t.Fatal(err)
+				}
+				ctx, cancel := context.WithCancel(t.Context())
+				defer cancel()
+				failure := errors.New("storage scan failed")
+				var scanContext context.Context
+				scan := func(scanCtx context.Context) error {
+					scanContext = scanCtx
+					cancel() // Deterministically interrupt after the scan has started.
+					if err := scanCtx.Err(); err != nil {
+						t.Fatalf("shutdown canceled durable scan: %v", err)
+					}
+					deadline, ok := scanCtx.Deadline()
+					if !ok || time.Until(deadline) <= 0 || time.Until(deadline) > 5*time.Second {
+						t.Fatal("scan has no bounded metadata budget", deadline)
+					}
+					if fail {
+						return failure
+					}
+					return nil
+				}
+				if kind == "startup" {
+					if err := s.BeginStartup(t.Context(), d.Fence); err != nil {
+						t.Fatal(err)
+					}
+					d.Startup = func(scanCtx context.Context) (bool, error) {
+						if err := scan(scanCtx); err != nil {
+							return false, err
+						}
+						return s.AdvanceStartup(scanCtx, d.Fence, d.Capacity)
+					}
+				} else {
+					d.Scheduler = &scheduler.Service{
+						Repository: shutdownScheduleRepository{Store: s, scan: scan},
+						Preflight:  func(context.Context, registry.Record) error { return nil },
+					}
+				}
+				_, err = d.Run(ctx, "")
+				if fail {
+					var persistence *execution.Failure
+					if !errors.As(err, &persistence) || !errors.Is(err, failure) {
+						t.Fatal("shutdown hid storage failure", err)
+					}
+				} else if err != context.Canceled {
+					t.Fatal(err)
+				}
+				if scanContext == nil || scanContext.Err() != context.Canceled {
+					t.Fatal("scan context was not released")
+				}
+				got, err := s.Execution(t.Context(), queued.Snapshot.ID)
+				if err != nil || got.State != execution.Queued || calls.Load() != 0 {
+					t.Fatal("shutdown invoked waiting work", got, calls.Load(), err)
+				}
+				if kind == "startup" {
+					history, err := s.EventHistory(t.Context(), "example", 100)
+					if err != nil {
+						t.Fatal(err)
+					}
+					if fail {
+						if len(history) != 0 {
+							t.Fatal("failed scan admitted an event", history)
+						}
+					} else {
+						if len(history) != 1 || history[0].Type != "startup" || history[0].Execution == "" {
+							t.Fatal("lost committed startup admission", history)
+						}
+						startup, err := s.Execution(t.Context(), history[0].Execution)
+						if err != nil || startup.State != execution.Queued {
+							t.Fatal(startup, err)
+						}
+					}
+				}
+			})
+		}
 	}
 }

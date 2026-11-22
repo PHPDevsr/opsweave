@@ -29,6 +29,12 @@ func dispatcherOwner() (string, error) {
 }
 
 func managedRun(ctx context.Context, cfg config.Config, runtime *action.Runtime, out io.Writer, asJSON bool, name string, options engine.RunOptions, enqueue bool) (err error) {
+	if runtime == nil {
+		runtime, _, err = configuredActions(cfg)
+		if err != nil {
+			return err
+		}
+	}
 	var lock *dispatchlock.Lock
 	if !enqueue {
 		lock, err = dispatchlock.Acquire(cfg.StoragePath)
@@ -114,6 +120,13 @@ func serverCommand(out, diagnostics io.Writer, runtime *action.Runtime) *urfave.
 		if err != nil {
 			return err
 		}
+		effectiveRuntime := runtime
+		if effectiveRuntime == nil {
+			effectiveRuntime, _, err = configuredActions(cfg)
+			if err != nil {
+				return err
+			}
+		}
 		lock, err := dispatchlock.Acquire(cfg.StoragePath)
 		if err != nil {
 			return executionDiagnostic(err)
@@ -153,7 +166,7 @@ func serverCommand(out, diagnostics io.Writer, runtime *action.Runtime) *urfave.
 				level = slog.LevelError
 			}
 			logger := slog.New(slog.NewJSONHandler(&outputWriter{writer: diagnostics}, &slog.HandlerOptions{Level: level}))
-			e := engine.Engine{Workflows: store, Executions: store, Reliable: store, Actions: runtime}
+			e := engine.Engine{Workflows: store, Executions: store, Reliable: store, Actions: effectiveRuntime}
 			schedules := &scheduler.Service{Repository: store, Preflight: e.ValidateScheduled}
 			if err = store.BeginStartup(ctx, fence); err != nil {
 				return executionDiagnostic(err)

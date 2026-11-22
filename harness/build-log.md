@@ -463,3 +463,725 @@ Illustrative local median observations (three samples, ns/op): Parse/Steps1 23,1
 - All-workflow actionlint, pinned Bun Markdown and diff whitespace checks exited 0. Audited all six event blocks: five workflows allow pushes only to main;
   release allows only version-tag pushes; every PR trigger remains. No Go source
   changed and no repeated local product tests are claimed for event-only edits.
+
+## 2026-11-22 (Asia/Jakarta) — Phase 04 authorization and HTTP design
+
+- The user confirmed Phase 03 was merged and requested rebase to origin/main and
+  continuation. This accepts Phase 03 for progression and authorizes Phase 04.
+  Independent CodeQL configuration and prior release-preview billing limitations
+  remain historical open checks, not inferred passes.
+- The worktree was clean. Fetch updated origin/main to `eed2b62`. Rebase completed
+  without conflicts. Created `codex/phase-04-built-in-actions` at that baseline.
+  Inspected GOALS, AGENTS, plans, ledger ownership, action runtime/registry,
+  configuration, CLI composition and existing action/CLI tests. No release tags
+  exist. No product implementation or requirement completion is claimed.
+- Prepared the [HTTP action contract](designs/http-actions.md) as the first Phase
+  04 work unit. It specifies descriptor/output behavior, default-disabled network
+  permissions, SSRF controls, explicit private-origin access, bounds and acceptance
+  tests. Existing configuration and engine/storage behavior remain unchanged.
+- The harness requires: "If a required contract is unresolved, complete its design
+  task and seek the relevant decision before implementing it." Phase 04 task 1
+  likewise requires reviewing action contracts. Runtime implementation waits for
+  this concrete security/behavior decision, rather than repeating phase approval.
+- Next: accept or revise the HTTP contract, then implement both actions, tests,
+  benchmark CI coverage, documentation and code/security review. Remaining Phase
+  04 action contracts and Phase 05 remain unapproved.
+- Planning verification exited zero: pinned Bun 1.4.4 Markdown formatting/check,
+  `git diff --check`, changed-document local link validation and exact comparison
+  of all 561 ledger rows. The first formatter attempt could not locate Bun on
+  PATH; the pinned existing `.cache/bun-1.4.4` executable supplied the successful
+  run. Git emitted existing CRLF normalization warnings. No Go source changed,
+  so Go tests were not rerun for this design-only work unit. Self-review checked
+  scope, permission defaults, credential handling and preservation of all ledger
+  statuses. No commit, push, PR, tag or release was created in this work unit.
+
+## 2026-11-22 (Asia/Jakarta) — HTTP action implementation and security gate
+
+- The user replied `ACCEPT` to the HTTP contract. Implemented exact-version
+  `http.request` and `http.health_check`, strict opt-in configuration/environment
+  overrides, production preflight/run/replay/server composition, SSRF policy and
+  bounded HTTP I/O. No new dependencies, migrations or engine/state changes.
+- Added isolated policy/header/transport/security tests, production CLI history
+  and server startup/shutdown tests, bounded URL/policy fuzzing, and
+  `BenchmarkHTTPPolicy` asserted by benchmark CI. Updated English operational
+  documentation and removed obsolete empty-production-catalog statements.
+  [Self-review](reviews/phase-04-http.md) maps test names to the accepted contract.
+- `go test -count=1 '-coverprofile=.cache/http-phase04-full.out' ./...` exited 0.
+  Core coverage: HTTP 95.3%, engine 82.9%, execution 86.2%, workflow 94.3%.
+  `go test -race -count=1 ./...` exited 0 with CGO/Clang and loopback access.
+  The additional production server test subsequently passed focused normal and
+  race runs (`-run '^TestProductionHTTP' ./internal/cli`).
+- `go vet ./...`, `go mod verify`, `go build ./...`, and benchmark actionlint
+  exited 0. Build emitted the existing module stat-cache access-denied warning.
+  `gofmt -l .` initially reported ignored generated files in an abandoned build
+  directory dated 2026-11-14. Verified its resolved path stayed within
+  `.cache/go-tmp`, removed only that stale generated directory, and reran
+  `gofmt -l .` with no paths and exit 0. Tracked Go sources were already formatted.
+- Initial sandboxed loopback tests were blocked by Windows socket permissions;
+  the same suites passed with isolated loopback access. An initial unquoted
+  PowerShell coverage flag was split into an unintended package argument; the
+  corrected quoted full-suite command above passed. No assertion was weakened.
+- Fuzz command `go test -run '^$' -fuzz '^FuzzHTTPURLPolicy$' -fuzztime=4s
+-parallel=2 ./internal/httpaction` exited 0 with 55,279 executions.
+  Benchmark command `go test -run '^$' -bench '^BenchmarkHTTPPolicy$' -benchmem
+-benchtime=200ms -count=3 -cpu=1 ./internal/httpaction` exited 0: 1205–1305 ns/op,
+  267 B/op, 6 allocs/op on this Windows host. No optimization is claimed.
+- `govulncheck ./...` exited 1 with GO-2026-6859 in Go 1.27.3 net/http, fixed in
+  1.27.4. Verified the official Go vulnerability report/release history. No other
+  module vulnerability was reported. This is a real open gate; the broad symbol
+  matches are not proof of an exploit in OpsWeave. PLANS requires approval for
+  the toolchain change. Prepared the [concrete patch proposal](designs/go-http-security-patch.md).
+- Four HTTP/SSRF ledger rows are `IMPLEMENTED`, not `COMPLETED`. Phase 04 remains
+  active. The next [shell contract](designs/shell-action.md) is prepared for later
+  review, with no shell runtime implementation. Resolve the toolchain decision
+  and security scan before claiming the HTTP feature complete. Phase 05 is not
+  authorized. Remote CI evidence and final publication outcomes are recorded in
+  subsequent amendments rather than inferred from local checks.
+- Final planning/documentation checks passed: pinned Bun Markdown formatting/check,
+  changed-document local links, source diff whitespace and all 561 ledger IDs,
+  ownership/prerequisite/source fields. Only the four HTTP/SSRF rows changed status
+  and evidence. Corrected a Windows text-encoding/newline issue in README during
+  validation and restored unaffected text from the baseline before reapplying the
+  scoped edit. No product assertions or security controls were relaxed.
+
+## 2026-11-22 (Asia/Jakarta) — Rebase HTTP after the security merge
+
+- The user confirmed PR #9 was merged. Fetch updated origin/main from `eed2b62`
+  to `0033480`. Rebased `codex/phase-04-built-in-actions`; the only conflict was
+  the append-only build log. Preserved the complete main log and appended all
+  original HTTP-only entries. No application conflict or source edit occurred.
+  The replayed HTTP implementation commit is `d3ede94`.
+- The branch now inherits Go 1.27.4, govulncheck@latest, and main-only push checks
+  while feature branches use PR checks. The independent security patch remains
+  in main; no security-branch changes were copied back into the HTTP feature diff.
+- Updated current harness state to combined HTTP verification. Earlier open
+  security-decision statements are superseded by the explicit merge evidence.
+  Shell remains a proposed contract, not an implemented or accepted action.
+- Next: complete required Go/race/security checks on the combined source, update
+  PR #8 with a lease-protected rebase push, observe its single set of PR checks,
+  and close only requirements whose acceptance evidence actually passes.
+
+- Combined-source verification with Go 1.27.4 exited 0: full ordinary suite with
+  `.cache/http-rebased-coverage.out`, full race suite with CGO/Clang, vet, module
+  verification, build and the exact govulncheck@latest command. Scanner reported
+  "No vulnerabilities found." Coverage: HTTP 95.3%, engine 82.6%, execution
+  86.2%, workflow 94.3%. No application failure or build warning was emitted.
+- HTTP policy benchmark passed three 200 ms samples: 1111-1231 ns/op, 267 B/op,
+  6 allocs/op on local Windows. Four-second URL/policy fuzzing passed 71,138
+  executions. No optimization was introduced. Go formatting, all-workflow
+  actionlint, pinned Bun Markdown and diff whitespace checks passed.
+- Rebase review confirmed application source, tests, go.sum and command code are
+  byte-identical to the original accepted HTTP commit `4bf30d6`; only main's
+  toolchain/CI/docs and resolved harness history differ. The rewritten commit
+  retains a GPG signature. HTTP rows remain IMPLEMENTED pending fresh PR evidence.
+
+## 2026-11-22 (Asia/Jakarta) — HTTP acceptance after security rebase
+
+- Combined HTTP source `dfc0ae5` passed all required PR checks without retries:
+  CI 44940800316 (six native OS/Go jobs plus race/format/module checks), latest
+  vulnerability scan 44940800291 (three native OSes), benchmark 44940800277,
+  Markdown 44940800293, CodeQL 44940800290, and release preview 44940800348
+  (six archives plus assemble). No tag or release was published. Observed exactly
+  six PR workflows and no duplicate push workflow.
+- The [HTTP self-review](reviews/phase-04-http.md) maps acceptance tests and remote
+  run links. Completed only G-5.5-013, G-5.5-014, G-5.15-009 and G-5.15-020.
+  Preserve every other ledger status, static requirement field and prerequisite.
+  Phase 04 remains in progress; shell and later action integrations are incomplete.
+- This acceptance amendment changes documentation and scoped status only. It does
+  not alter the application source/tests that passed the checks above. Earlier
+  intermittent Phase 03 failures are not claimed fixed; this combined run passed
+  without source changes or weakened assertions.
+- Next required human decision: accept or revise the concrete shell.exec contract.
+  Harness authorization rules require reviewing unresolved contracts before their
+  implementation. The proposal specifies operator profiles, direct argv, minimal
+  environment, bounded output/deadlines and native process ownership, including
+  the Unix trusted-command/no-daemonization boundary. No shell runtime was added,
+  and no Phase 05 work or merge was performed.
+
+## 2026-11-22 (Asia/Jakarta) — Configured shell action implementation
+
+- The user replied `ACCEPT` to the shell execution proposal. Work started at
+  `76387d3` on `codex/phase-04-built-in-actions`, with a clean worktree. Phase 04
+  remains authorized; no Docker, filesystem, notification or Phase 05 runtime
+  scope is inferred.
+- Added shell.exec version 1 with strict opt-in profiles, immutable configuration
+  snapshots, absolute local executable/directory checks, combined argv bounds,
+  minimal native environment and bounded UTF-8 stdout/stderr capture. The existing
+  CLI composes enabled HTTP and shell registrations with independent exact grants.
+  HTTP behavior stays unchanged. No dependency, go.sum, schema or DSL change.
+- Native Windows execution starts suspended, assigns a non-breakaway kill-on-close
+  job, validates the initial thread's process ID and resumes only after assignment.
+  Cleanup terminates/queries the job and checks handle closes. Linux/macOS use
+  process groups under the accepted trusted-command/no-daemonization boundary.
+  Capture goroutines join before output inspection and ownership release. The
+  cancellation and cleanup paths share one two-second budget.
+- Tests cover argument preservation, environment isolation, permission/version
+  gates, fixed cwd, profile revocation/snapshots, invalid input, output/JSON limits,
+  start failure, native pre-execution ownership, failed assignment, cancellation,
+  deadlines, descendant cleanup and CLI-to-SQLite/queued-server shutdown. Fixtures
+  are isolated compiled programs and loopback handshakes, with bounded test-owner
+  cleanup. Windows job termination may produce WSAECONNRESET rather than EOF;
+  corrected the initial closure assertion to accept that exact native result
+  after a readiness handshake, while retaining timeout/survival failures.
+- Initial integration editing had a pointer-level mismatch in decodeActions; fixed
+  it before verification. A sandboxed HTTP regression run lacked loopback access;
+  the same suite passed with isolated loopback permission. No assertion or runtime
+  security control was weakened. Linux and Darwin shell test binaries cross-compiled
+  successfully; native behavior awaits the existing CI matrix.
+- Full `go test -count=1 '-coverprofile=.cache/shell-full-coverage.out' ./...`
+  and full `go test -race -count=1 ./...` exited 0 on Go 1.27.4. Race used CGO and
+  existing Clang. Coverage: shell 83.7%, HTTP 94.9%, engine 83.0%, execution 86.2%,
+  workflow 94.3%, CLI 82.4%, config 96.6%. Added permission-composition and valid-Unicode argv cases
+  subsequently passed targeted ordinary and race tests. No production source
+  changed after the full suites.
+- Vet, build, `go mod verify`, `go mod tidy -diff`, govulncheck@latest, all-workflow
+  actionlint, Go/Markdown formatting and whitespace checks exited 0. Scanner
+  reported "No vulnerabilities found." No build warning was emitted.
+- `go test -run '^$' -bench '^BenchmarkShellExecution$' -benchmem -benchtime=200ms
+-count=3 -cpu=1 ./internal/shellaction` passed. Three Windows samples measured
+  397-439 ms/op, 75,808-83,080 B/op and 148-206 allocs/op with one iteration per
+  sample. Fixture compilation is outside timing; these host/process startup
+  measurements are a baseline, not a production tool latency claim or optimization.
+  Benchmark CI asserts this real isolated-process case.
+- `go test -run '^$' -fuzz '^FuzzShellArguments$' -fuzztime=4s -parallel=2
+./internal/shellaction` exited 0 with 83,022 executions. No fixture binaries,
+  cache output or test data containing real credentials are tracked.
+- Updated the [shell reference](../docs/shell-action.md), configuration/benchmark
+  documentation and [self-review](reviews/phase-04-shell.md). Three shell/security
+  ledger rows are IMPLEMENTED pending native CI. Four completed HTTP/SSRF rows
+  remain unchanged. Next: observe native OS/Go/race/security/benchmark/release
+  checks on the updated draft PR, then close only the fully verified shell rows.
+
+- Prepared the next [Docker contract](designs/docker-actions.md) with explicit
+  local IPC, exact full-ID/action allowlists, bounded safe inspect output and API
+  1.48 compatibility. Checked official Docker transport/version documentation
+  and the pinned API specification. No Docker runtime or daemon access was added.
+  The design remains PROPOSED and requires the next human contract decision.
+
+- Final review amendment: after the earlier passing suites, replaced per-invocation
+  lazy DLL lookup with balanced System32-only LoadLibraryEx/FreeLibrary ownership
+  around GetProcAddress/SyscallN. This avoids accumulating library references.
+  The native source change justified repeating full verification; it is not
+  covered merely by the earlier "source unchanged" observation.
+- Final ordinary suite (`.cache/shell-final-coverage.out`), full race suite, vet,
+  build and govulncheck@latest all exited 0 on this final native implementation.
+  Final coverage: shell 82.7%, HTTP 94.9%, engine 82.7%, execution 86.2%, workflow
+  94.3%. No scanner finding or build warning. No production source changed after
+  these final checks. Argument/environment tests now assert exact OS-specific
+  variables and values, including valid Unicode argv preservation.
+- Refreshed final Windows benchmark passed three single-iteration samples at
+  453-494 ms/op, 75,664-83,256 B/op, 144-209 allocs/op. The same measurement limits
+  apply; no performance improvement or regression conclusion is inferred from
+  these short host-specific startup samples.
+- Final documentation/link, all-workflow actionlint, Markdown, Go formatting and
+  whitespace checks passed. Reconciliation preserves all 561 IDs/static fields,
+  changes exactly the three scoped shell rows from PLANNED to IMPLEMENTED, and
+  preserves all four previously completed HTTP rows. No dependency, migration,
+  generated binary or secret file is included.
+
+## 2026-11-22 (Asia/Jakarta) — bounded scan shutdown follow-up
+
+- Baseline `c1e2b28`, authorized Phase 04 shell acceptance on PR #8. Native
+  shell tests passed on Linux, macOS and Windows; latest vulnerability, Markdown,
+  benchmark, CodeQL and six-target release/assemble checks passed. CI run
+  [44974954486](https://github.com/PHPDevsr/opsweave/actions/runs/44974954486)
+  failed only Ubuntu/stable `TestDispatcherCLIRequiresUnmanagedAdoption`, reporting
+  sanitized persistence failure during immediate shutdown. No requirement was
+  completed using that failed run. No push-trigger duplicate workflow was created.
+- Investigation found startup/schedule transactions still inherited immediate
+  parent cancellation, unlike other independently bounded dispatcher metadata.
+  database/sql can automatically roll back a canceled transaction before Commit,
+  returning ErrTxDone instead of the parent's cancellation error. The original
+  intermittent CI error's underlying cause was sanitized, so that exact instance
+  is not claimed as locally reproduced: 200 original adoption repetitions passed.
+  Temporary local cause diagnostics were removed without a product change.
+- Startup/schedule scans now use the existing five-second independent metadata
+  budget. The dispatcher joins the scan, then enters shutdown without claiming
+  waiting work. Actual scan errors remain failures. A committed startup admission
+  can remain queued for the next server; docs/dispatcher.md now explains this.
+  No action security policy, schema, dependency or public contract changed.
+- `TestDispatcherShutdownDuringDurableScan` deterministically cancels the parent
+  inside startup/schedule scans and verifies the bounded scan context survives,
+  is released on return, storage failures remain visible, no waiting action runs,
+  and committed startup admission remains durably queued. Replacing only the two
+  fixed scan contexts with their original implementation made all four cases fail
+  as expected; restored implementation passed. Ten initial regression repetitions
+  and 30 adoption repetitions passed. The expanded durable-admission test passed.
+- Initial full ordinary/race runs caught the old scheduler fixture intentionally
+  blocking until parent cancellation, which now reaches the independent five-second
+  deadline. Updated it to explicitly release its scan after cancellation and assert
+  the dispatcher cannot return before joining it. The running-action cancellation
+  and durable trigger assertions remain. Three targeted repetitions passed.
+- Final full ordinary suite with `.cache/shell-shutdown-coverage.out` exited 0.
+  Core coverage: engine 85.6%, execution 86.2%, workflow 94.3%; shell 82.7%, HTTP
+  94.9%. Final vet, build, module verification, Go formatting and whitespace checks
+  passed. Full race and fresh remote checks are pending at this log entry.
+- Self-review: the independent budget is finite, uses existing context value
+  propagation, adds no goroutine or new storage abstraction, and never interprets
+  an infrastructure error as successful shutdown. Existing worker joining and
+  cancellation remain in place. No release/deployment/merge was performed.
+- Final full `go test -race -count=1 ./...` exited 0 with CGO/Clang on Windows,
+  including engine, scheduler storage and shell process ownership. Remote CI is
+  the remaining native combined-source acceptance gate.
+- Final installed govulncheck scan exited 0: no vulnerabilities found. Markdown
+  checks passed across all sources. Diff check passed; Git only warned that
+  PowerShell-written documentation line endings would normalize to repository LF.
+
+## 2026-11-22 (Asia/Jakarta) — scheduler fixture minute boundary
+
+- Follow-up `7788a31` CI [44976137400](https://github.com/PHPDevsr/opsweave/actions/runs/44976137400)
+  passed all Linux/macOS matrices, Windows minimum Go and Linux race. Shell and
+  engine tests passed in every job. Windows/stable failed only the modified
+  scheduler shutdown integration's one-execution count: its wall-clock scan at
+  02:28:58 plus the simulated two seconds reached 02:29:00 and legitimately
+  admitted a second cron occurrence. This is fixture time dependence, not a
+  failed cancellation or surviving action; the original execution was cancelled.
+- Use scheduledFixture's existing fixed :10 instant, after workflow creation,
+  instead of wall-clock seconds. Both simulated scans stay in the same minute.
+  Preserve exact execution count, one handler call, cancellation, joined scan and
+  pinned scheduled-at assertions. No production source changed after `7788a31`.
+- Vulnerability, benchmark, Markdown and CodeQL checks on `7788a31` passed.
+  Six-target release/assemble remains tracked separately. Shell rows remain
+  IMPLEMENTED while a fully green combined-source CI result is unavailable.
+- Fixture approach amendment: using scheduledFixture's future :10 instant also
+  moved queue availability into the future, so the first exploratory verification
+  stalled until its deadline; it was stopped, not counted as passing. The final
+  correction retains real admission time for the first real repository scan.
+  After the shutdown handshake, the second fake scan completes with no entries,
+  matching its synchronization-only purpose. It no longer performs a second real
+  cron admission at a simulated minute boundary. The first real scheduled run,
+  exact count, joined scan, action cancellation and history assertions remain.
+  An exploratory verbose run timed out after 35 seconds; no such future-time
+  change is retained. This supersedes the proposed fixed-:10 approach above.
+- Release run 44976137445 passed all six packages and assembly, with publication
+  correctly skipped for the PR. No tag or release was created.
+- Final correction passed 30 ordinary and 10 race repetitions of
+  TestSchedulerDispatcherCompletesAndInterrupts (exit 0). Final vet, Go/Markdown
+  formatting and diff checks passed. The full source ordinary/race suites remain
+  attributed to the prior final dispatcher source, which is unchanged; fresh CI
+  will test this fixture correction across all native matrices.
+
+## 2026-11-22 (Asia/Jakarta) — shell unit accepted by verification
+
+- Baseline combined source `3bd23de`, branch codex/phase-04-built-in-actions,
+  draft PR #8 targeting main. The accepted Phase 04 shell contract is implemented,
+  tested, reviewed and documented. Fresh all-check acceptance is now available:
+  [CI 44976628487](https://github.com/PHPDevsr/opsweave/actions/runs/44976628487),
+  [vulnerability 44976628507](https://github.com/PHPDevsr/opsweave/actions/runs/44976628507),
+  [benchmarks 44976628467](https://github.com/PHPDevsr/opsweave/actions/runs/44976628467),
+  [Markdown 44976628468](https://github.com/PHPDevsr/opsweave/actions/runs/44976628468),
+  [CodeQL 44976628471](https://github.com/PHPDevsr/opsweave/actions/runs/44976628471),
+  [release 44976628571](https://github.com/PHPDevsr/opsweave/actions/runs/44976628571).
+  All six workflows completed successfully as pull_request events. No duplicate
+  push runs. CI includes all six OS/Go jobs and Linux race; scanner covers three
+  OS families; release includes six target archives and assembly. Publish skipped.
+- The self-review maps exact native, security, CLI/history, cancellation and
+  process ownership tests. Previous failed runs and their corrections remain
+  explicit above. Latest remote evidence covers the final test fixture correction;
+  full local ordinary/race/vet/build/module/scanner results remain attributed to
+  unchanged production source, with 30 ordinary/10 race repetitions for that fix.
+- Mark only G-5.5-016, G-5.15-007 and G-5.15-017 COMPLETED. Reconciliation preserved
+  all 561 IDs and static requirement fields, every unrelated row and all four
+  previously completed HTTP rows. No dependency, schema, release-doc version,
+  binary or secret change. No migration is required.
+- Update master/harness/phase current state to
+  PHASE_04_DOCKER_CONTRACT_REVIEW_REQUIRED and attach the final acceptance table.
+  Docker proposal is already concrete and reviewable, but remains PROPOSED.
+  Stop before implementation for that contract decision, as harness/README.md
+  and the phase plan require. No Phase 05 work, merge, tag, deployment or external
+  message is authorized by this documentation update.
+- Final documentation-only acceptance update passed Bun Markdown formatting,
+  added-local-link validation, diff whitespace checks and 561-row reconciliation.
+  No product source changed after the fully passing combined-source CI above.
+
+## 2026-11-22 (Asia/Jakarta) — accepted Docker adapters implemented locally
+
+- Baseline `923831e` on codex/phase-04-built-in-actions, draft PR #8 targeting
+  main. The user replied ACCEPT to the concrete local-IPC/exact-ID/action-allowlist
+  Docker contract. Record the contract ACCEPTED and authorize only its four
+  adapters within Phase 04. Seven completed HTTP/shell rows remain unchanged.
+- Implement internal/dockeraction for docker.start/stop/restart/inspect version 1.
+  Strict native endpoint/full-ID/action policy is snapshotted; dangerous access
+  defaults to disabled. Strict YAML and OPSWEAVE_DOCKER_ENABLED override compose
+  independently with existing HTTP/shell actions at the CLI boundary. No daemon
+  discovery, Docker CLI/SDK, ambient proxy/config, dependency or migration added.
+- One invocation owns one local connection and one fixed API 1.48 request. Standard
+  bounded HTTP parsing has no transport goroutines, redirects, retries, pool or
+  decompression. Total budget 30s, connection/header budgets 5s, headers 16 KiB,
+  body 1 MiB, existing output 64 KiB. Cancellation joins its once-close callback.
+  Oversize rejection closes IPC before body cleanup to prevent unbounded draining.
+  Inspect captures only validated typed fields and omits raw daemon/env/mount data.
+- Windows client uses non-inheritable overlapped pipe handles with anonymous SQOS.
+  Native tests prove busy-pipe deadline and inability to impersonate the service
+  token. Fake daemons use private current-user/SYSTEM-only local pipes; Unix
+  fixtures use short private socket paths. Production never imports test utilities.
+- Tests cover exact API paths/methods/status/grace, immutable grants, permission
+  subsets, malformed inputs/responses, version failure, redirect/encoding rejection,
+  header/body bounds, cancellation/deadline/peer closure, concurrent invocations,
+  all four production CLI actions to SQLite history, redaction/revocation and queued
+  server shutdown. See reviews/phase-04-docker.md for exact test names.
+- Initial tests caught test expectations: run JSON is a summary, so the four-step
+  assertion belongs on execution get history; Windows file-close cleanup can
+  return os.ErrClosed as well as net.ErrClosed. Assertions were moved to the
+  actual detailed output or retained with native equivalent close semantics.
+- Initial full ordinary suite passed, but full race exposed a new fake listener
+  owner failing to join. Focused repeated race and diagnostic stacks located a
+  pending GetOverlappedResult; escape analysis showed the asynchronous OVERLAPPED
+  address on a movable Go stack. Pin it with runtime.Pinner until cancellation
+  and kernel completion join, then close the event. Join every pending-I/O exit,
+  including failed waits. No timeout was expanded or join assertion discarded.
+  Some diagnostic repetitions failed; one superseded diagnostic run was stopped.
+- After that fix, 30 TestProductionQueuedDockerShutdown race repetitions and
+  three complete Docker-package race repetitions passed. Escape analysis now
+  reports OVERLAPPED moved to heap. Final full ordinary coverage suite and full
+  go test -race -count=1 ./... both exited 0. Core final coverage: engine 85.5%,
+  execution 86.2%, workflow 94.3%; Docker 87.6%, HTTP 94.9%, shell 82.7%, config
+  97.1%, CLI 82.4%. All source is tested; no native assertion was weakened.
+- Final go vet ./..., go build ./..., go mod verify and go mod tidy -diff exited 0. go.mod/go.sum unchanged. Go formatting, all six workflow actionlint and diff
+  checks passed. Installed govulncheck@latest and scanned ./...: exit 0, no
+  vulnerabilities found. No build warning was emitted.
+- Cross-compiled Docker/CLI test binaries for Linux and Darwin successfully;
+  native execution remains a CI gate. Four-second/two-worker fuzz runs passed:
+  FuzzDockerInspect 113,091 executions; FuzzDockerPolicy 135,163 executions. No
+  production Docker daemon or credential is accessed by these tests.
+- BenchmarkDockerInspectIPC passed three 200ms/cpu=1 Windows samples:
+  135052, 122476, 155917 ns/op; 19455-19461 B/op; 108 allocs/op. This measures a
+  real private fake-daemon connection/request/filter/cleanup, excluding setup.
+  It is a short host-specific baseline, with no optimization, SLA or actual Docker
+  latency claim. Benchmark CI now requires DockerInspectIPC and uploads existing
+  environment/results artifacts; native correctness CI is unchanged.
+- Added English Docker reference/configuration/workflow/CLI/security/upgrade/
+  troubleshooting docs, README/foundation links and benchmark guidance. Added
+  code/security self-review, accepted contract and phase/master status updates.
+  Reconciliation preserved all 561 IDs/static fields and changed exactly six
+  owned Docker/security rows from PLANNED to IMPLEMENTED; native CI is pending.
+- Prepared a concrete filesystem proposal only, using reviewed Go Root API
+  boundaries and explicit destructive/copy/cancellation limits. It remains
+  PROPOSED with no filesystem runtime. Notification contracts and Phase 05 remain
+  unapproved. Next: push updated draft PR and observe every fresh native/scanner/
+  benchmark/security/release check before closing any Docker requirement.
+
+## 2026-11-22 (Asia/Jakarta) — native IPC deadline classification correction
+
+- Docker source `62dcf4a` passed benchmark, latest-scanner, Markdown, CodeQL and
+  six-target release/assemble workflows. CI
+  [44979131714](https://github.com/PHPDevsr/opsweave/actions/runs/44979131714)
+  passed Windows minimum/stable, Linux minimum and macOS minimum, but Linux
+  stable, macOS stable and Linux race failed only the deadline=true case of
+  TestDockerCancellationDeadlineAndPeerClosure. The test retained its required
+  DeadlineExceeded assertion; shell and other package tests passed.
+- Native socket deadlines can wake before Go's context timer propagates Err.
+  The handler could therefore return its generic action error while the parent's
+  Err was momentarily nil, and Runtime.Invoke classified it as action failure.
+  This is product behavior, not a reason to relax the deadline assertion.
+- At the action boundary, after owned I/O cleanup, join the action context's
+  cancellation signal if its deadline has elapsed. This covers connection as well
+  as response deadlines and lets the existing runtime observe the parent's proper
+  deadline state. Earlier header-budget failures remain ordinary action failures.
+  The internal 30-second ceiling still fails without changing engine contracts.
+  No context or connection owner is detached, and no infrastructure failure is
+  ignored before the deadline. No dependency or schema change.
+- Five ordinary and five race repetitions of the existing cancellation/deadline
+  regression passed locally. Full ordinary/race suites were restarted for the
+  production change. Final vet/build/module verification and installed latest
+  scanner all exited 0; no vulnerabilities or build warnings. Fresh native CI
+  remains required and all six Docker rows stay IMPLEMENTED.
+- Final full ordinary suite (.cache/docker-deadline-coverage.out) and full race
+  suite both exited 0 after the production correction. Final coverage amendment:
+  Docker 88.0%, engine 85.6%; execution/workflow/HTTP/shell/config/CLI unchanged.
+  Earlier benchmark samples belong to source 62dcf4a; fresh benchmark CI will
+  measure the corrected source, with no performance equivalence claim inferred.
+  Operator docs now explain preservation of the engine deadline outcome. Final
+  Markdown/diff checks passed; fresh native combined-source CI is next.
+
+## 2026-11-22 (Asia/Jakarta) — existing retry deadline boundary correction
+
+- Corrected Docker source 16d86c6 passed native Docker tests on every OS/Go job;
+  the original Docker deadline test now passes in all jobs, including Linux race.
+  Scanner, benchmark, Markdown, CodeQL and six-target release/assemble workflows
+  passed. CI [44979573387](https://github.com/PHPDevsr/opsweave/actions/runs/44979573387)
+  failed only Windows/minimum Go's existing
+  TestReliableCoordinatorStepDeadlineIncludesBackoff: StartAttempt was rejected
+  as invalid at the five-second stored retry/step deadline, with one prior failed
+  attempt. No Docker requirement is completed using that failed run.
+- Root cause: the context timer may wake before the persisted UTC wall timestamp.
+  The serial coordinator then asks storage to start/classify a retry while its
+  due time is still in the future. State validation correctly rejects this; do
+  not relax it or allow an early action invocation.
+- systemClock.WaitUntil now rechecks wall due time after timer wakeup. When an
+  injected/native clock reports DeadlineExceeded before the stored retry time,
+  finish that timestamp wait under the existing independent five-second metadata
+  budget before validating the timeout. Preserve cancellation, errors, attempt
+  counts, worker ownership and absolute deadlines. No storage/domain contract,
+  dependency, schema or public API change; docs/reliability.md explains behavior.
+- New TestReliableCoordinatorEarlyDeadlineCannotStartRetry forces the early
+  deadline without arbitrary sleep. The original coordinator deterministically
+  failed it with the same invalid-transition result; the fixed source passed
+  three ordinary and three race repetitions. The test asserts a failed execution,
+  timed-out step, one actual attempt and one handler call. The original five-second
+  backoff test also passed. TestSystemClockWaitUntilChecksDueTimeAndCancellation
+  verifies UTC due-time and immediate cancellation behavior.
+- Full ordinary/race suites were restarted for this core production change.
+  Final vet, build, module verification and scanner passed (exit 0, no findings or
+  warnings). CI remains open until fresh combined-source native checks pass.
+- Final full ordinary (.cache/docker-retry-final-coverage.out) and full race
+  suites both exited 0. Coverage amendment: engine 85.0%, Docker 88.0%, execution
+  86.2%, workflow 94.3%; other package coverage unchanged. No production change
+  followed these checks. Markdown, Go formatting and diff checks passed. Push a
+  separate scoped retry-boundary fix commit and require fresh native CI before
+  marking any of the six Docker rows complete.
+
+## 2026-11-22 (Asia/Jakarta) — Docker unit accepted by verification
+
+- Final combined source `3ecbe68`, draft PR #8 targeting main, authorized Phase 04.
+  Implementation/tests/self-review/English documentation and compatibility are
+  complete for the accepted four-action Docker contract. All six fresh workflows
+  passed:
+  [CI 44980216309](https://github.com/PHPDevsr/opsweave/actions/runs/44980216309),
+  [scanner 44980216282](https://github.com/PHPDevsr/opsweave/actions/runs/44980216282),
+  [benchmark 44980216287](https://github.com/PHPDevsr/opsweave/actions/runs/44980216287),
+  [Markdown 44980216333](https://github.com/PHPDevsr/opsweave/actions/runs/44980216333),
+  [CodeQL 44980216360](https://github.com/PHPDevsr/opsweave/actions/runs/44980216360),
+  [release 44980216283](https://github.com/PHPDevsr/opsweave/actions/runs/44980216283).
+  CI passed all six OS/Go jobs and Linux race; latest scanner passed three OS
+  families; benchmark required DockerInspectIPC; all six release packages and
+  assemble passed. Publish was skipped. Every workflow used pull_request, with
+  no duplicate push run. No merge/tag/release/deployment occurred.
+- Local final full ordinary/race/static/build/module/scanner checks passed.
+  Final core coverage: engine 85.0%, execution 86.2%, workflow 94.3%; Docker 88.0%.
+  Both native deadline fixes and all new security/ownership/output/CLI regressions
+  passed fresh CI. Failed earlier runs remain explicitly recorded above.
+- Mark only G-5.5-018, G-5.5-019, G-5.5-020, G-5.5-021, G-5.15-008 and G-5.15-018
+  COMPLETED. Preserve all 561 IDs/static fields, every unrelated status and seven
+  completed HTTP/shell rows. No dependency, migration, real credential, generated
+  binary or historical release documentation is included.
+- Master/harness/phase state becomes PHASE_04_FILESYSTEM_CONTRACT_REVIEW_REQUIRED.
+  The prepared filesystem design is concrete but PROPOSED; it explicitly covers
+  local-root restrictions, single-file deletion, no-overwrite hard-link copy
+  publication and cooperative filesystem cancellation (including stalled syscall
+  limits). No filesystem runtime is implemented. Request that contract decision
+  and stop before implementation as harness/README.md and the phase plan require.
+  Notification contracts and Phase 05 remain separate human decisions.
+- Final acceptance documentation passed Bun formatting, full local link checks,
+  whitespace checks and 561-row/static-field reconciliation. Exactly six scoped
+  Docker statuses changed; only six documentation files changed after the fully
+  passing combined-source CI. Product source remains identical to 3ecbe68.
+
+## 2026-11-22 (Asia/Jakarta) — filesystem contract accepted and Docker traceability amendment
+
+- The user explicitly accepted filesystem implementation after reviewing the
+  concrete path/deletion/no-overwrite/hard-link/cooperative-cancellation contract.
+  Authorize only file.exists, file.cleanup and file.copy within Phase 04.
+  Notification contracts and Phase 05 remain unapproved.
+- Traceability audit found G-5.15-019 (Docker configured container allowlists)
+  omitted from the six-row Docker acceptance update. Its existing implementation,
+  TestDockerAllowlistSnapshotAndPermissions, configuration/CLI tests, English
+  policy and all-six-workflow evidence on 3ecbe68 already satisfy it. Correct
+  this seventh Docker row to COMPLETED without a runtime change. The prior log
+  accurately records six transitions; this explicit amendment records the seventh.
+  Preserve all 561 IDs/static fields and unrelated statuses. Filesystem rows stay
+  PLANNED until implementation/tests/documentation exist.
+
+## 2026-11-22 (Asia/Jakarta) — filesystem adapters locally implemented
+
+- Baseline 57f9494, with separate traceability amendment f0a3d81 on the existing
+  codex/phase-04-built-in-actions branch/draft PR #8. The user explicitly accepted
+  the concrete filesystem contract, including single-file deletion, no-overwrite
+  hard-link copy and cooperative cancellation limits. Only these three adapters
+  are authorized; notification runtime and Phase 05 remain unapproved.
+- A prior verification command was not executed because automatic approval review
+  hit its service usage limit; this was not an unsafe-action determination. After
+  the user said continue, the same authorized verification resumed successfully.
+  No approval bypass or passing result is inferred from the rejected command.
+- Implemented internal/fileaction, strict filesystem YAML/environment validation,
+  exact root/action snapshots and independent production CLI composition. Default
+  disabled; max 128 roots, 1-64 MiB copy cap (default 16 MiB), canonical bounded
+  portable paths, no implicit roots, unknown fields or arbitrary flags. Copy needs
+  grants on both roots; existing configuration remains valid. Service-wide grants
+  are not per-user RBAC. Restart a server to load changed configuration.
+- Use os.Root for containment and opened parent handles for final operations.
+  Native final opens reject following links: Unix openat NONBLOCK/NOFOLLOW/CLOEXEC;
+  Windows synchronous relative NtCreateFile DONT_REPARSE/OPEN_REPARSE_POINT/
+  NON_DIRECTORY_FILE with native case lookup. Verify file type/identity after open.
+  Windows can return a nonregular reparse metadata handle; the caller rejects it,
+  and the native test checks it never describes the external regular target.
+- Cleanup removes one regular file only: Unix unlinkat cannot remove directories;
+  Windows reopens the validated handle for DELETE and uses POSIX file disposition,
+  with no readonly-attribute bypass or unsafe path fallback. Library/handle closes
+  are checked. Native directory-prevention and Windows case/readonly-error tests
+  passed locally. No filesystem I/O goroutine is detached.
+- Copy uses 32 KiB bounded chunks, pre/post source checks, random reserved O_EXCL
+  temporary file, flush/close, one exclusive hard link and checked temporary cleanup.
+  Existing destinations are preserved. No copy-to-final fallback or destructive
+  rollback. Cancellation checks occur before work/chunks/publication/deletion;
+  cleanup has a five-second check budget. Stalled kernel I/O can delay shutdown,
+  as explicitly accepted. No snapshot, OS sandbox or crash-durable-directory claim.
+- Tests cover normal binary/empty copy, exists/missing/directory results, repeated
+  deletion, immutable grants, version/permission/root revocation, invalid paths,
+  source size/growth, existing targets, concurrent exclusive publication, direct
+  I/O/flush/cancel/publication failure cleanup and native directory protection.
+  A private transfer-function seam tests failures with real roots, without globals
+  or another filesystem abstraction. Production CLI history contains typed results,
+  not file contents. A test-only gate after a real queued copy proves shutdown joins
+  and cannot roll back committed data or run pending cleanup; it is absent in config.
+- Extended link-swap tests check both source and destination plus outside deletion
+  protection, and join the swap owner before final inspection. Three local Windows
+  tests are unavailable due to missing symlink privilege: TestFilesystemSymlinkBoundaries,
+  TestFilesystemSymlinkSwapCannotEscapeRoot and TestNativeOpenDoesNotFollowFinalSymlink.
+  Tests fail rather than skip under CI/GITHUB_ACTIONS if the prerequisite is missing.
+  Native security evidence remains mandatory; local skips are not passes.
+- Corrected a Windows NtCreateFile argument from nil to uintptr zero after compiler
+  verification caught its signature. The CLI revocation test retains other action
+  grants so it specifically observes denial of destination copy, rather than an
+  unrelated unavailable cleanup registration. No security assertion was removed.
+- Full go test -count=1 with .cache/filesystem-final-coverage.out exited 0, with
+  the three explicit local privilege skips. Full go test -race -count=1 ./... also
+  exited 0 with the same gate. Coverage: fileaction 87.3%, engine 85.3%, execution
+  86.2%, workflow 94.3%, HTTP 94.9%, shell 82.7%, Docker 88.0%, config 97.5%, CLI 82.3%.
+  Subsequent test-only boundary/link-swap refinements compiled/passed locally and
+  affected filesystem/CLI race tests passed three repetitions. Product source is
+  unchanged after the full-suite verification.
+- go vet ./..., go build ./..., go mod verify, go mod tidy -diff exited 0; go.mod
+  and go.sum remain unchanged. Installed govulncheck@latest and scanned ./...:
+  exit 0, no vulnerabilities found. Linux/Darwin fileaction and CLI test binaries
+  cross-compiled. Go formatting, all-workflow actionlint and whitespace checks passed.
+  No build warning. Native Unix special-file/link tests remain fresh CI gates.
+- BenchmarkFilesystemCopy passed three Windows 4 KiB samples: 4813277, 4928714,
+  5187738 ns/op; 42256-42297 B/op; 176-177 allocs/op. Fixture/setup and between-run
+  final-target removal are excluded; flush/publication/temp cleanup are included.
+  This is a short host/filesystem-specific baseline, not an optimization/SLA claim.
+  Benchmark CI now requires FilesystemCopy and the existing artifact format.
+- FuzzFilesystemPath passed a four-second/two-worker run with 58,964 executions.
+  Fuzzing performs no filesystem operations. Tests operate only on isolated trees,
+  with synthetic content and no user/production files or real credentials.
+- Added English filesystem reference/config/CLI/security/cancellation/backup/
+  troubleshooting docs, README/foundation/benchmark links and code/security
+  self-review. Three filesystem rows become IMPLEMENTED pending fresh native CI;
+  preserve all 561 IDs/static fields and fourteen completed HTTP/shell/Docker rows.
+- Prepared a concrete notification proposal only, following official Telegram/Slack
+  and Go mail/SMTP references. It requires fixed profiles, environment-only adapter
+  credentials, verified network policy and bounded delivery. It remains PROPOSED;
+  no actual provider connection, notification message, persistent secret store or
+  later-phase code was added. Next: fresh multi-OS/race/scanner/benchmark/Markdown/
+  CodeQL/release checks before completing any filesystem row, then contract review.
+
+## 2026-11-22 (Asia/Jakarta) — filesystem unit accepted by verification
+
+- Final combined source 2bb4908, existing Phase 04 branch and draft PR #8 targeting
+  main. The accepted three filesystem adapters have implementation, automated
+  tests, code/security self-review, English docs and compatibility evidence.
+  All six fresh workflows passed:
+  [CI 45018171115](https://github.com/PHPDevsr/opsweave/actions/runs/45018171115),
+  [scanner 45018171088](https://github.com/PHPDevsr/opsweave/actions/runs/45018171088),
+  [benchmark 45018171119](https://github.com/PHPDevsr/opsweave/actions/runs/45018171119),
+  [Markdown 45018171157](https://github.com/PHPDevsr/opsweave/actions/runs/45018171157),
+  [CodeQL 45018171204](https://github.com/PHPDevsr/opsweave/actions/runs/45018171204),
+  [release 45018171127](https://github.com/PHPDevsr/opsweave/actions/runs/45018171127).
+  CI passed all six native OS/Go jobs and Linux race. Both Windows jobs passed
+  the strict CI/GITHUB_ACTIONS symlink gate; Linux/macOS link/special-file tests
+  passed. All six release packages and assemble passed; publish was skipped.
+- Local privilege skips remain accurately recorded, not relabeled. Fresh native
+  results close those security/platform gates. Local full source ordinary/race,
+  static/build/module/latest-scanner and bounded fuzz/benchmark results are
+  attributed above; core coverage remains engine 85.3%, execution 86.2%, workflow
+  94.3%, with fileaction 87.3% local coverage before native-only paths. No regression
+  or dependency/schema/toolchain change is known after all required checks passed.
+- Mark only G-5.5-023, G-5.5-024 and G-5.5-025 COMPLETED. Preserve all 561 IDs and
+  static fields, every unrelated status and fourteen completed HTTP/shell/Docker
+  rows (including the separately reconciled Docker allowlist requirement).
+- Master/harness/phase state becomes PHASE_04_NOTIFICATION_CONTRACT_REVIEW_REQUIRED.
+  The next concrete notification proposal is PROPOSED and needs a human decision
+  about fixed destinations, environment-only adapter credentials and verified
+  bounded HTTP/SMTP delivery. No notification implementation, actual delivery,
+  persistent secret store, Phase 05 or automatic notification policy is added.
+  Stop before implementing that contract, as harness/README.md requires.
+- All six workflows used pull_request events with no duplicate push runs. No
+  merge/tag/release/deployment or external notification was performed.
+- Final acceptance docs passed Bun formatting, local-link validation, whitespace
+  checks and 561-row/static-field reconciliation. Exactly three filesystem rows
+  change to COMPLETED; only six documentation files change after the fully
+  passing product CI. Evidence text keeps the existing ledger table width to
+  avoid unrelated formatting churn. Product source is identical to 2bb4908.
+
+## 2026-11-22 (Asia/Jakarta) — accepted notification contract implemented
+
+- Baseline 54b24cf, existing Phase 04 branch/draft PR #8, initially clean.
+  The latest user ACCEPT explicitly approves the reviewed four-channel contract:
+  fixed profiles, environment-only credentials, verified bounded delivery, SMTP
+  implicit TLS or mandatory STARTTLS and uncertain external-side-effect semantics.
+- Added notificationaction, strict YAML/environment support and CLI composition;
+  shared only an immutable wrapper around existing HTTP destination policy.
+  Ordinary HTTP authorization restrictions remain unchanged. No new dependency,
+  toolchain, schema migration, persistent secrets, management API or Phase 06
+  notification policy is added. No existing Git tags exist; development docs use
+  one source. English operator/reference/security/rotation/backup/troubleshooting
+  docs, workflow examples, README/foundation links and self-review are included.
+- All tests use synthetic credentials and isolated HTTPS/SMTP fixtures. All four
+  provider contracts, input/grant/version/profile checks, DNS/SSRF/TLS, MIME and
+  injection limits, bounded replies, cancellation/deadline, ambiguous acceptance,
+  cleanup failure, CLI/history/log redaction, queued shutdown and revocation have
+  observable tests mapped in the review. No real provider message was sent.
+- Initial test compilation rejected an unparenthesized composite literal; fixed.
+  A PowerShell unquoted coverage option split at the dot; reran with the entire
+  option quoted. A TLS cancellation fixture signaled before ownership was proved;
+  synchronized on real received TLS bytes and preserved the closure assertion.
+  Code review expanded printable validation to Unicode controls, with regression
+  coverage. Targeted notification/config/HTTP/CLI tests subsequently passed.
+- gofmt -l ., go vet ./..., go test -count=1 with full coverage, go mod verify
+  and go build ./...: each exit 0, Go 1.27.4. Full go test -race -count=1 ./...
+  passed using CGO and the existing LLVM-MinGW clang. Final test-only extensions
+  passed targeted ordinary and three notification race repetitions. Coverage:
+  notification 91.8%, HTTP 94.8%, config 97.2%, CLI 82.5%, engine 84.8%, execution
+  86.2%, workflow 94.3%. Existing local Windows filesystem symlink privilege skips
+  remain explicit; mandatory native CI gates must run them. No build warning.
+- go install golang.org/x/vuln/cmd/govulncheck@latest followed by scanner ./...:
+  exit 0, no vulnerabilities found. actionlint: exit 0. Notification parser fuzz
+  run (-run '^$', -fuzz '^FuzzNotificationCredentialParsers$', -fuzztime=4s,
+  -parallel=2) passed 51,664 executions; FuzzConfig with the same limits passed
+  51,555. No unbounded network/filesystem work is done by fuzz parsers.
+- go test -run '^$' -bench '^BenchmarkNotificationWebhook$' -benchmem
+  -benchtime=200ms -count=3 -cpu=1 ./internal/notificationaction: exit 0.
+  Windows samples 1164322/1119071/1105517 ns/op, 139134-139432 B/op and 970
+  allocs/op. Fresh verified TLS/payload/ack/cleanup included; synthetic fixture
+  setup excluded. No optimization/SLA claim. Benchmark CI requires this family
+  and existing environment/results artifacts, preserving PR-only feature checks.
+- Four notification rows and G-11-004 become IMPLEMENTED only. Preserve all 561
+  IDs/static fields, unrelated statuses and seventeen completed earlier rows.
+  G-11-004 retains explicit release/phase acceptance; no release is implied by code.
+  Next: fresh native ordinary/race/scanner/benchmark/Markdown/CodeQL/release-preview
+  workflows, then close only verified notification rows and present Phase 04 for
+  human acceptance. Phase 05 remains unapproved. No merge/tag/deployment occurs.
+
+## 2026-11-22 (Asia/Jakarta) — notification verification and Phase 04 review gate
+
+- The user confirmed signing/commit completion ("sudah commit"). The pending
+  signed commit completed as 963d14340fcedb7911b0ad7c5bcf2698aa5e1346 and pushed
+  to codex/phase-04-built-in-actions. Worktree was clean. Draft PR #8 remains OPEN,
+  targeting main; its title/body now describe all five built-in action families.
+- All six fresh workflows passed exactly that head SHA:
+  - [CI 45024238339](https://github.com/PHPDevsr/opsweave/actions/runs/45024238339): Six native OS/Go jobs, Linux race, formatting/modules/vet/build/smoke.
+  - [Vulnerability scan 45024238286](https://github.com/PHPDevsr/opsweave/actions/runs/45024238286): govulncheck@latest on Linux, macOS and Windows.
+  - [Benchmarks 45024238291](https://github.com/PHPDevsr/opsweave/actions/runs/45024238291): Required NotificationWebhook and existing families; environment/results artifacts.
+  - [Markdown 45024238392](https://github.com/PHPDevsr/opsweave/actions/runs/45024238392): Bun formatting.
+  - [CodeQL 45024238284](https://github.com/PHPDevsr/opsweave/actions/runs/45024238284): Go static security analysis.
+  - [Release 45024238307](https://github.com/PHPDevsr/opsweave/actions/runs/45024238307): Six OS/architecture packages and assemble; publication skipped.
+- Verified every native CI job: Linux/macOS/Windows, minimum Go 1.27.4 and stable,
+  Linux race, formats and module consistency. Both Windows jobs satisfied the
+  mandatory existing filesystem symlink gate. Earlier local privilege limitations
+  remain historically accurate, not relabeled. Latest scanner passed three OS
+  jobs. Release built all six packages and assemble; publish was skipped.
+- gh run view for all six runs: exit 0, exact head SHA, completed/success. All
+  events were pull_request with no duplicate push checks. No real provider message,
+  merge/tag/release publication or deployment occurred. No dependency, schema,
+  minimum Go version or management API change was needed.
+- Four notification requirements now become COMPLETED with exact review/CI/docs
+  evidence; preserve seventeen completed earlier action/security rows, all 561 IDs
+  and static fields. G-11-004 retains IMPLEMENTED, with CI verified but human
+  phase/release acceptance open. No unrelated requirement status changes.
+- Master/harness/phase review state becomes PHASE_04_ACCEPTANCE_REQUIRED. All five
+  approved action families have implementation/tests/code review/docs and complete
+  verification. The remaining checklist item requires presenting results and user
+  acceptance before advancing. Phase 05 remains unapproved; stop at that gate.
+- Final documentation-only changes are checked with Bun, local-link/ledger
+  reconciliation and git diff --check. Product source remains identical to the
+  fully verified 963d143, so broad product tests are not repeated for prose changes.

@@ -44,3 +44,11 @@ Run `gofmt -l .`, `go vet ./...`, `go test -count=1 ./...`, `go test -race -coun
 - [ ] Security, compatibility and migration implications reviewed; source changes scoped.
 - [ ] Append commands, exit codes, evidence, limitations and next steps to [build log](../build-log.md).
 - [ ] Present results and obtain user acceptance before advancing. Do not treat code presence or this checklist as acceptance evidence.
+
+## 2026-11-22 acceptance amendment
+
+The user confirmed Phase 03 was merged and requested continuation to Phase 04.
+Review state is ACCEPTED_FOR_PROGRESSION. Earlier authorization and open-acceptance
+statements record the prior state. Independent unavailable CI checks remain open
+and requirement statuses are unchanged; user acceptance does not supply missing
+verification evidence.

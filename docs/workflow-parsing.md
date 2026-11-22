@@ -4,7 +4,7 @@ The internal `workflow` package implements bounded parsing of the
 [accepted workflow v1 design](../harness/designs/workflow-v1.md). The
 [foundation CLI and registry](foundation.md) add catalog/schema preflight and
 persistence. The [manual execution engine](execution.md) uses the same preflight;
-the production action catalog remains empty. This
+the production catalog includes opt-in [HTTP actions](http-actions.md). This
 document describes the parser; the design also covers future execution behavior.
 
 `workflow.Parse(ctx, source)` returns a candidate definition with normalized

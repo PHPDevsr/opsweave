@@ -35,6 +35,7 @@ type interruptibleScheduleScan struct {
 	scheduler.Repository
 	calls   atomic.Int32
 	entered chan struct{}
+	release chan struct{}
 }
 
 func (r *interruptibleScheduleScan) DueSchedules(ctx context.Context, f execution.Fence, now time.Time) ([]scheduler.Entry, error) {
@@ -42,8 +43,14 @@ func (r *interruptibleScheduleScan) DueSchedules(ctx context.Context, f executio
 		return r.Repository.DueSchedules(ctx, f, now)
 	}
 	close(r.entered)
-	<-ctx.Done()
-	return nil, ctx.Err()
+	select {
+	case <-r.release:
+		// The second scan exists only to synchronize shutdown. Return an empty
+		// completed scan so crossing a real cron minute cannot add another job.
+		return nil, nil
+	case <-ctx.Done():
+		return nil, ctx.Err()
+	}
 }
 
 func TestSchedulerDispatcherCompletesAndInterrupts(t *testing.T) {
@@ -72,7 +79,7 @@ func TestSchedulerDispatcherCompletesAndInterrupts(t *testing.T) {
 				t.Fatal(err)
 			}
 			e := engine.Engine{Workflows: s, Executions: s, Actions: runtime}
-			repo := &interruptibleScheduleScan{Repository: s, entered: make(chan struct{})}
+			repo := &interruptibleScheduleScan{Repository: s, entered: make(chan struct{}), release: make(chan struct{})}
 			d := engine.Dispatcher{Engine: e, Repository: s, Fence: f, Capacity: execution.DefaultCapacity(), Scheduler: &scheduler.Service{Repository: repo, Preflight: e.ValidateScheduled}, Now: func() time.Time {
 				if interrupt && calls.Load() > 0 {
 					return now.Add(2 * time.Second)
@@ -95,6 +102,12 @@ func TestSchedulerDispatcherCompletesAndInterrupts(t *testing.T) {
 				}
 				want = execution.Cancelled
 				cancel()
+				select {
+				case <-done:
+					t.Fatal("dispatcher returned without joining the durable scan", runErr)
+				default:
+				}
+				close(repo.release)
 				select {
 				case <-done:
 				case <-time.After(10 * time.Second):

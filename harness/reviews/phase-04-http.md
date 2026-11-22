@@ -1,0 +1,71 @@
+# Phase 04 HTTP implementation review
+
+Scope: `http.request`, `http.health_check`, SSRF policy and production composition.
+Contract accepted by user reply `ACCEPT` on 2026-11-22 (Asia/Jakarta).
+
+## Architecture and security review
+
+- `internal/httpaction` composes exact-version action registrations and an
+  immutable policy snapshot. Configuration validates its policy without network
+  I/O. CLI foundation uses the catalog only for preflight; run/replay/server inject
+  the runtime into the existing engine. Existing test injection remains available.
+- No engine, transition, persistence, migration or workflow DSL changes. No new
+  dependencies. Disabled HTTP yields no registrations or grants. No wildcard
+  grants, TLS bypass, proxy support or configurable test transports are exposed.
+- Review checked DNS validation and literal-IP pinning on every new connection,
+  original Host/TLS names, private subnet containment, metadata/special-address
+  rejection, output bounds, generic errors, body cleanup and cancellation.
+- Response-body cleanup was corrected during review so compressed-response
+  rejection still closes the owned body. Bounded header/body processing does not
+  emit raw input or transport diagnostics. Input values remain ordinary persisted
+  workflow data, as documented; authenticated credentials are outside this delivery.
+
+## Observable test mapping
+
+| Area                                                             | Tests                                                                                   |
+| ---------------------------------------------------------------- | --------------------------------------------------------------------------------------- |
+| Exact versions, defaults, grants, configuration validation       | `TestPolicyValidation`, `TestHTTPConfiguration`                                         |
+| URL parsing, origin normalization, restricted IPs/private grants | `TestURLPolicy`, `TestIPPolicy`, `FuzzHTTPURLPolicy`                                    |
+| DNS rebinding, mixed answers, pinned dialing and cancellation    | `TestDNSPinningRebindingAndCancellation`, `TestPinnedHostnameAndHeaders`                |
+| Success/status/redirect behavior and byte limits                 | `TestHTTPBehaviorAndBounds`, `TestEscapedOutputAndTruncatedResponse`, `TestHeaderRules` |
+| Cancellation, deadlines, TLS rejection and disabled proxies      | `TestHTTPContextTLSAndProxy`, `TestResponseAndConnectionDeadlines`                      |
+| Production CLI preflight/execution, durable history, revocation  | `TestProductionHTTPWorkflow`, `TestProductionHTTPServerCancellation`                    |
+| Performance measurement                                          | `BenchmarkHTTPPolicy`, asserted by benchmark CI                                         |
+
+Verification results and limitations are recorded in the append-only
+[build log](../build-log.md). See the [HTTP reference](../../docs/http-actions.md)
+for configuration, CLI example, semantics, security bounds and troubleshooting.
+Remote CI must be observed before claiming its quality gates passed. This review
+does not complete later Phase 04 actions or authorize Phase 05.
+
+## Rebased verification on Go 1.27.4
+
+The user confirmed the separate security patch was merged. HTTP was rebased onto
+origin/main `0033480`; the only conflict was append-only log history, preserved
+from both branches. Application source/tests are unchanged from `4bf30d6`.
+Full ordinary/race suites, vet, build, module verification and govulncheck@latest
+passed on the combined source. HTTP coverage is 95.3%; engine 82.6%, execution
+86.2%, workflow 94.3%. Bounded fuzzing passed 71,138 executions. Fresh PR checks
+passed and the four HTTP/SSRF ledger rows are completed. See the
+build log for exact benchmark values and command outcomes. Shell has no runtime
+implementation and awaits its separate reviewed contract.
+
+## Remote acceptance evidence
+
+All runs below tested `dfc0ae5` on the rebased HTTP branch and passed:
+
+- [CI 44940800316](https://github.com/PHPDevsr/opsweave/actions/runs/44940800316):
+  all six OS/Go jobs, formatting, module consistency and Linux race.
+- [Vulnerability 44940800291](https://github.com/PHPDevsr/opsweave/actions/runs/44940800291):
+  govulncheck@latest on Linux, Windows and macOS.
+- [Benchmark 44940800277](https://github.com/PHPDevsr/opsweave/actions/runs/44940800277),
+  [Markdown 44940800293](https://github.com/PHPDevsr/opsweave/actions/runs/44940800293),
+  and [CodeQL 44940800290](https://github.com/PHPDevsr/opsweave/actions/runs/44940800290).
+- [Release preview 44940800348](https://github.com/PHPDevsr/opsweave/actions/runs/44940800348):
+  all six target archives and assemble. No release was published.
+
+No rerun or assertion change was needed for these combined HTTP checks. GitHub
+recorded one set of six pull-request workflows and zero push workflows. The final
+acceptance update changes documentation/status only, with no application source
+or test changes. Earlier intermittent Phase 03 failures remain historical evidence
+and are not silently relabeled as fixes by this work unit.

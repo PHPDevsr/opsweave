@@ -2,9 +2,8 @@
 
 Download a published version from [OpsWeave Releases](https://github.com/PHPDevsr/opsweave/releases).
 You do not need Go, Bun, Docker, Redis or RabbitMQ to run the binary. This is
-development software: the production action catalog is still empty, so binaries
-currently provide administration/history commands rather than usable built-in
-workflow actions. Packaging does not imply later roadmap features are complete.
+development software. The opt-in [HTTP actions](http-actions.md) provide request
+and health-check workflows when an operator configures their network policy. Packaging does not imply later roadmap features are complete.
 
 ## Choose a download
 

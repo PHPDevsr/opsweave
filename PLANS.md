@@ -2,7 +2,7 @@
 
 Assessment date: 2026-11-08 (Asia/Jakarta). Baseline commit: `59c5b3f02a155f5979698bfde53c944063222be5`.
 
-Harness state: `PHASE_03_VERIFICATION_REQUIRED`. On 2026-11-08 (Asia/Jakarta), the user confirmed merging [PR #4](https://github.com/PHPDevsr/opsweave/pull/4), requested fetch/rebase and explicitly authorized Phase 03. Fetch/rebase completed without conflicts at `e7d7177fe4eb028c91a8dae98322bfbb7ca2daf3`; the new branch is `codex/phase-03-reliable-orchestration`. Phase 02 is accepted by the user. The first Phase 03 work unit is the [reliable execution proposal](harness/designs/reliable-execution.md), accepted by user reply "ACCEPT"; its serial policy implementation has passed local verification and self-review; the dispatcher contract was accepted by the subsequent user reply "ACCEPT" and its implementation has passed local verification and self-review. The user approved the cron contract and requested continuation. The scheduler is implemented and locally verified. Prior CI, benchmarks, native Bun Markdown and six-target release preview passed on `7aa93ed`; CodeQL upload remains blocked by repository Advanced Security configuration. User acceptance does not turn that check into a pass or complete requirements. Phases 04–10 remain unapproved except the narrow early release packaging extension. This harness is a documentation workflow, not an executable autonomous runner.
+Harness state: `PHASE_04_ACCEPTANCE_REQUIRED`. Phases 01-03 are merged and accepted. Phase 04 is authorized. All five approved action families are complete: twenty-one HTTP/shell/Docker/filesystem/notification rows are COMPLETED. Final combined product source `963d143` passed all six PR workflows: native Linux/macOS/Windows on Go 1.27.4 and stable, Linux race, three-OS latest scanner, required notification benchmark, Bun Markdown, CodeQL and six-target release preview/assemble. Implementation, automated tests, code/security review, English docs and compatibility evidence are recorded in the [notification review](harness/reviews/phase-04-notification.md) and earlier family reviews. The aggregate milestone `G-11-004` remains IMPLEMENTED pending human phase/release acceptance. Stop here and present Phase 04 for acceptance. Phase 05 remains unapproved. Go remains 1.27.4; feature-branch checks use PR events only. The harness is a documentation workflow with no background runner installed.
 
 The user additionally authorized multi-OS release CI before Phase 03 on
 2026-11-08 (Asia/Jakarta). This is a narrow early packaging extension from Phase
@@ -58,6 +58,35 @@ Important dependencies apply before exposure: phase 01 reviews the full DSL cont
 
 ## Review and next action
 
-Phases 01 and 02 are merged and accepted by the user; Phase 03 is authorized. The four [reliable execution decisions](harness/designs/reliable-execution.md) are accepted. Serial retry, conditions, cancellation, replay and idempotency have passed local verification and self-review. The user accepted the [dispatcher contract](harness/designs/single-node-dispatcher.md); bounded parallel capacity, ownership and conservative recovery passed local verification. Verify the accepted [cron scheduler](harness/reviews/phase-03-scheduler.md), and the accepted [event trigger and webhook decisions](harness/designs/event-triggers.md). The user accepted [retention and readiness](harness/designs/retention-readiness.md). See the [maintenance implementation review](harness/reviews/phase-03-maintenance.md). Phase 03 verification and acceptance remain open. Keep the independent CodeQL configuration gate explicit. No Phase 04 work is authorized.
+Phase 04 remains active. HTTP is completed with scoped acceptance evidence.
+The user accepted the [shell contract](harness/designs/shell-action.md); shell
+implementation/tests/docs passed local checks and await native multi-OS CI.
+See the [shell review](harness/reviews/phase-04-shell.md). Keep unrelated rows and
+later phases unchanged. Review the next action contract before implementing it.
 
 See [harness operating instructions](harness/README.md) for resumption, status rules and log requirements. The harness itself remains documentation; no executable runner, background process, scheduled automation or public SDK is installed.
+
+## 2026-11-22 progression amendment
+
+The user confirmed Phase 03 was merged and authorized continuation. Fetch and
+rebase to origin/main completed at `eed2b62` without conflicts. Phase 03 is
+accepted for progression; historical unavailable checks are not relabeled as
+passes. Phase 04 is authorized on `codex/phase-04-built-in-actions`. Earlier
+statements that Phase 04 is unapproved describe the previous state and are
+superseded by this amendment. Review the [HTTP proposal](harness/designs/http-actions.md)
+before its implementation. Phases 05–10 remain unapproved except the existing
+release packaging extension.
+
+## HTTP implementation amendment
+
+The user accepted the HTTP contract. Both actions and their local tests, race
+verification, benchmark and documentation are implemented. See the [review](harness/reviews/phase-04-http.md).
+The [toolchain security decision](harness/designs/go-http-security-patch.md)
+was accepted and merged separately in PR #9. The user confirmed that merge on
+2026-11-22 and authorized the HTTP rebase. Branch HTTP now includes Go 1.27.4,
+latest-scanner CI and feature-branch PR-only checks from origin/main `0033480`.
+Combined HTTP verification passed, including all PR checks and six-target release
+preview/assemble. Four scoped HTTP/SSRF rows are completed with evidence in the
+HTTP review and build log. The next
+[shell contract](harness/designs/shell-action.md) was accepted by the subsequent user reply "ACCEPT". Implementation is locally verified; native multi-OS CI is pending.
+No later phase is authorized.

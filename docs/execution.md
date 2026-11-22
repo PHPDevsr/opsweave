@@ -2,11 +2,10 @@
 
 Phase 02 adds the internal action executor, sequential engine, transactional
 SQLite history and local execution commands. The [accepted contract](../harness/designs/manual-execution.md)
-defines its scope. The production action catalog remains empty until built-in
-integrations ship. Tests inject deterministic trusted actions; there is no CLI
-flag, configuration setting, public SDK or plugin loader to enable those fixtures.
-Consequently, production cannot register or run a usable workflow yet. Successful
-parser validation alone never implies an available executable action.
+defines its scope. Production now supports opt-in [HTTP actions](http-actions.md).
+Tests inject deterministic trusted actions; there is no CLI flag, configuration
+setting, public SDK or plugin loader to enable those fixtures. Successful parser
+validation alone never implies an available executable action.
 
 The [Phase 03 serial reliability core](reliability.md) extends new runs with
 conditions, references, retry/deadline policies, cancellation, replay, idempotency
@@ -28,7 +27,7 @@ opsweave execution logs --json <execution-id>
 ```
 
 Replace placeholders with a registered workflow name and the returned opaque
-32-character hexadecimal execution ID. With the current empty production catalog,
+32-character hexadecimal execution ID. If a required action is disabled or absent,
 `run` reports an unavailable action version before creating an execution. Empty
 history lists succeed. Help and completion do not load configuration or storage.
 

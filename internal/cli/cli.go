@@ -30,7 +30,7 @@ func Run(ctx context.Context, args []string, stdout, stderr io.Writer) int {
 }
 
 func execute(ctx context.Context, args []string, stdout, stderr io.Writer) error {
-	return executeWithCatalog(ctx, args, stdout, stderr, registry.Catalog{})
+	return executeWithCatalog(ctx, args, stdout, stderr, nil)
 }
 
 func executeWithCatalog(ctx context.Context, args []string, stdout, stderr io.Writer, catalog registry.Catalog) error {

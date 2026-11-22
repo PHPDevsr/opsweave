@@ -3,11 +3,11 @@
 Phase 01 provides strict configuration, workflow parsing/preflight, an immutable
 revision registry, single-node SQLite storage and administration commands. It does
 not itself execute workflows; the [Phase 02 engine](execution.md) adds that internal
-boundary and execution history commands. Production currently ships an empty action catalog:
-`validate`, `plan` and `apply` reject action identifiers as unavailable. Tests inject
-validation-only fixture descriptors to verify the full registration lifecycle;
-fixture actions cannot be enabled from configuration or CLI flags. Real action
-implementations belong to later approved phases.
+boundary and execution history commands. Production supports opt-in
+[HTTP actions](http-actions.md). `validate`, `plan` and `apply` require enabled
+action registrations. Tests inject validation-only fixture descriptors to verify
+the registration lifecycle; fixture actions cannot be enabled from configuration
+or CLI flags.
 
 ## Installation and quick start
 
@@ -172,8 +172,8 @@ convert. Future release documentation must continue to build from exact tags.
 
 ## Troubleshooting
 
-- An unavailable-action error is expected with the empty Phase 01 production
-  catalog. Do not bypass it by registering test stubs in production.
+- An unavailable-action error indicates an action is disabled or its exact version
+  is unavailable. Configure [HTTP actions](http-actions.md) when needed.
 - A database error can indicate permissions, a directory/file collision, an
   incompatible schema or contention exceeding the busy timeout. Verify the local
   path and matching binary, stop conflicting processes, and use a backup for
@@ -194,3 +194,21 @@ syntax, runtime configuration or database schema. Stop active executors before
 replacing their binary. No data conversion is required. Historical verification
 with Go 1.27.3 describes that original source/toolchain and is not a clean security
 scan for the updated build. See the [Go release notes](https://go.dev/doc/devel/release#go1.27.4).
+
+Opt-in [shell profiles](shell-action.md) add direct command execution under explicit
+operator permissions alongside the existing [HTTP actions](http-actions.md).
+
+Opt-in [Docker actions](docker-actions.md) add exact-container/action grants over
+local Unix sockets or Windows named pipes. No Docker operation is enabled by
+default; HTTP, shell and Docker permissions remain independent.
+
+Opt-in [filesystem actions](filesystem-actions.md) expose metadata checks,
+single-file cleanup and bounded no-overwrite copy under explicit local root/action
+grants. They add no default filesystem capability and remain independent from
+HTTP, shell and Docker policies.
+
+Opt-in [notification actions](notification-actions.md) deliver Telegram, Slack,
+email and webhook messages through fixed administrator profiles and privately
+snapshotted environment credentials. They share the engine, cancellation and
+history contracts. Automatic lifecycle delivery and persistent secrets remain
+later-phase work.

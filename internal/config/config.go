@@ -12,6 +12,11 @@ import (
 	"strings"
 	"time"
 
+	"github.com/PHPDevsr/opsweave/internal/dockeraction"
+	"github.com/PHPDevsr/opsweave/internal/fileaction"
+	"github.com/PHPDevsr/opsweave/internal/httpaction"
+	"github.com/PHPDevsr/opsweave/internal/notificationaction"
+	"github.com/PHPDevsr/opsweave/internal/shellaction"
 	"github.com/PHPDevsr/opsweave/internal/yamlutil"
 	"go.yaml.in/yaml/v3"
 )
@@ -25,6 +30,11 @@ type Config struct {
 	LogLevel     string
 	Execution    execution.Capacity
 	RetentionAge time.Duration
+	HTTP         httpaction.Config
+	Shell        shellaction.Config
+	Docker       dockeraction.Config
+	Filesystem   fileaction.Config
+	Notification notificationaction.Config
 }
 
 // ValidStoragePath rejects driver options/URIs while permitting local paths.
@@ -78,12 +88,51 @@ func Load(ctx context.Context, path, cwd string, environ []string) (Config, erro
 	} else if explicit || !errors.Is(err, os.ErrNotExist) {
 		return Config{}, errors.New("open configuration failed")
 	}
+	secretNames := map[string]bool{}
+	for _, name := range c.Notification.SecretNames() {
+		secretNames[name] = true
+	}
 	for _, entry := range environ {
 		key, value, _ := strings.Cut(entry, "=")
 		if !strings.HasPrefix(key, "OPSWEAVE_") {
 			continue
 		}
 		switch key {
+		case "OPSWEAVE_NOTIFICATION_ENABLED":
+			if value != "true" && value != "false" {
+				return Config{}, errors.New("invalid notification enabled setting")
+			}
+			c.Notification.Enabled = value == "true"
+		case "OPSWEAVE_FILESYSTEM_ENABLED":
+			if value != "true" && value != "false" {
+				return Config{}, errors.New("invalid filesystem enabled setting")
+			}
+			c.Filesystem.Enabled = value == "true"
+		case "OPSWEAVE_DOCKER_ENABLED":
+			if value != "true" && value != "false" {
+				return Config{}, errors.New("invalid Docker enabled setting")
+			}
+			c.Docker.Enabled = value == "true"
+		case "OPSWEAVE_SHELL_ENABLED":
+			if value != "true" && value != "false" {
+				return Config{}, errors.New("invalid shell enabled setting")
+			}
+			c.Shell.Enabled = value == "true"
+		case "OPSWEAVE_HTTP_ENABLED":
+			if value != "true" && value != "false" {
+				return Config{}, errors.New("invalid HTTP enabled setting")
+			}
+			c.HTTP.Enabled = value == "true"
+		case "OPSWEAVE_HTTP_ALLOWED_ORIGINS", "OPSWEAVE_HTTP_ALLOWED_PRIVATE_CIDRS":
+			var values []string
+			if value != "" {
+				values = strings.Split(value, ",")
+			}
+			if key == "OPSWEAVE_HTTP_ALLOWED_ORIGINS" {
+				c.HTTP.AllowedOrigins = values
+			} else {
+				c.HTTP.AllowedPrivateCIDRs = values
+			}
 		case "OPSWEAVE_WEBHOOK_SECRET":
 		// The opt-in server reads the secret only when opening ingress.
 		case "OPSWEAVE_STORAGE_PATH":
@@ -99,8 +148,27 @@ func Load(ctx context.Context, path, cwd string, environ []string) (Config, erro
 				return Config{}, err
 			}
 		default:
+			if strings.HasPrefix(key, "OPSWEAVE_ACTION_SECRET_") && secretNames[key] {
+				// Values are intentionally not retained in exported configuration.
+				continue
+			}
 			return Config{}, errors.New("unknown OpsWeave environment setting")
 		}
+	}
+	if err := c.Notification.Validate(); err != nil {
+		return Config{}, err
+	}
+	if err := c.Filesystem.Validate(); err != nil {
+		return Config{}, err
+	}
+	if err := c.Docker.Validate(); err != nil {
+		return Config{}, err
+	}
+	if err := c.Shell.Validate(); err != nil {
+		return Config{}, err
+	}
+	if err := c.HTTP.Validate(); err != nil {
+		return Config{}, err
 	}
 	if err := c.Execution.Validate(); err != nil {
 		return Config{}, errors.New("invalid execution configuration")
@@ -125,6 +193,11 @@ func decode(n *yaml.Node, c *Config) error {
 		key, group := n.Content[i].Value, n.Content[i+1]
 		var field string
 		switch key {
+		case "actions":
+			if err := decodeActions(group, c); err != nil {
+				return err
+			}
+			continue
 		case "storage":
 			field = "path"
 		case "logging":
@@ -229,6 +302,131 @@ func Init(ctx context.Context, path string) error {
 	closeErr := file.Close()
 	if writeErr != nil || closeErr != nil {
 		return errors.New("write configuration failed; inspect the incomplete file")
+	}
+	return nil
+}
+
+func decodeHTTP(n *yaml.Node, c *httpaction.Config) error {
+	if n.Kind != yaml.MappingNode {
+		return errors.New("invalid HTTP configuration")
+	}
+	for i := 0; i < len(n.Content); i += 2 {
+		key, v := n.Content[i].Value, n.Content[i+1]
+		switch key {
+		case "enabled":
+			if v.Kind != yaml.ScalarNode || v.Tag != "!!bool" || (v.Value != "true" && v.Value != "false") {
+				return errors.New("invalid HTTP enabled setting")
+			}
+			c.Enabled = v.Value == "true"
+		case "allowed_origins", "allowed_private_cidrs":
+			if v.Kind != yaml.SequenceNode || len(v.Content) > 128 {
+				return errors.New("invalid HTTP policy list")
+			}
+			values := []string{}
+			for _, item := range v.Content {
+				if item.Kind != yaml.ScalarNode || item.Tag != "!!str" {
+					return errors.New("invalid HTTP policy entry")
+				}
+				values = append(values, item.Value)
+			}
+			if key == "allowed_origins" {
+				c.AllowedOrigins = values
+			} else {
+				c.AllowedPrivateCIDRs = values
+			}
+		default:
+			return errors.New("unknown HTTP configuration setting")
+		}
+	}
+	return nil
+}
+
+func decodeActions(n *yaml.Node, c *Config) error {
+	if n.Kind != yaml.MappingNode {
+		return errors.New("invalid actions configuration")
+	}
+	for i := 0; i < len(n.Content); i += 2 {
+		switch n.Content[i].Value {
+		case "notification":
+			if err := decodeNotification(n.Content[i+1], &c.Notification); err != nil {
+				return err
+			}
+		case "filesystem":
+			if err := decodeFilesystem(n.Content[i+1], &c.Filesystem); err != nil {
+				return err
+			}
+		case "docker":
+			if err := decodeDocker(n.Content[i+1], &c.Docker); err != nil {
+				return err
+			}
+		case "http":
+			if err := decodeHTTP(n.Content[i+1], &c.HTTP); err != nil {
+				return err
+			}
+		case "shell":
+			if err := decodeShell(n.Content[i+1], &c.Shell); err != nil {
+				return err
+			}
+		default:
+			return errors.New("unknown actions configuration")
+		}
+	}
+	return nil
+}
+func decodeShell(n *yaml.Node, c *shellaction.Config) error {
+	if n.Kind != yaml.MappingNode {
+		return errors.New("invalid shell configuration")
+	}
+	for i := 0; i < len(n.Content); i += 2 {
+		key, v := n.Content[i].Value, n.Content[i+1]
+		switch key {
+		case "enabled":
+			if v.Kind != yaml.ScalarNode || v.Tag != "!!bool" || (v.Value != "true" && v.Value != "false") {
+				return errors.New("invalid shell enabled setting")
+			}
+			c.Enabled = v.Value == "true"
+		case "commands":
+			if v.Kind != yaml.SequenceNode || len(v.Content) > 128 {
+				return errors.New("invalid shell command profiles")
+			}
+			for _, node := range v.Content {
+				if node.Kind != yaml.MappingNode {
+					return errors.New("invalid shell command profile")
+				}
+				var p shellaction.Profile
+				for j := 0; j < len(node.Content); j += 2 {
+					field, value := node.Content[j].Value, node.Content[j+1]
+					if field == "args" {
+						if value.Kind != yaml.SequenceNode || len(value.Content) > 64 {
+							return errors.New("invalid shell arguments")
+						}
+						for _, arg := range value.Content {
+							if arg.Kind != yaml.ScalarNode || arg.Tag != "!!str" {
+								return errors.New("invalid shell argument")
+							}
+							p.Args = append(p.Args, arg.Value)
+						}
+						continue
+					}
+					if value.Kind != yaml.ScalarNode || value.Tag != "!!str" {
+						return errors.New("invalid shell profile field")
+					}
+					switch field {
+					case "name":
+						p.Name = value.Value
+					case "executable":
+						p.Executable = value.Value
+					case "working_directory":
+						p.WorkingDirectory = value.Value
+					default:
+						return errors.New("unknown shell profile field")
+					}
+				}
+				c.Commands = append(c.Commands, p)
+			}
+		default:
+			return errors.New("unknown shell configuration setting")
+		}
 	}
 	return nil
 }

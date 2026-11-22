@@ -5,8 +5,8 @@ The [maintenance guide](maintenance.md) covers `server status`, dispatcher readi
 The accepted [dispatcher contract](../harness/designs/single-node-dispatcher.md)
 extends the [serial reliability core](reliability.md) with a bounded action pool,
 durable queue, workflow concurrency, parallel DAG steps and conservative recovery.
-The production action catalog is still empty; handlers used in tests are not
-installable actions. The server also evaluates persisted cron triggers. See [scheduled workflows](scheduling.md).
+The opt-in [HTTP actions](http-actions.md) use the production runtime. Test-only
+handlers remain unavailable through configuration. The server also evaluates persisted cron triggers. See [scheduled workflows](scheduling.md).
 
 ## Commands and configuration
 
@@ -81,6 +81,11 @@ The dispatcher polls bounded metadata and uses a fixed pool, bounded result
 channel and bounded running set. It allocates no goroutine per queued execution,
 retry or logical step. SQL transactions never span action I/O. Metadata operations
 have their own five-second budget so an interrupt can complete durable cleanup.
+Startup and schedule scans use that same independent budget. If shutdown arrives
+during a scan, the dispatcher joins the bounded transaction before cleanup and
+does not claim waiting work. A startup or schedule intent committed during that
+interval remains queued for the next server; an interrupt does not imply that
+admission was rolled back. Storage failures still stop the dispatcher.
 Infrastructure or ambiguous-commit failures stop further invocation and remain
 visible for conservative recovery.
 

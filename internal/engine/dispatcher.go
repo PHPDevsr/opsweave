@@ -325,12 +325,11 @@ func (d Dispatcher) Run(ctx context.Context, only string) (final execution.Snaps
 			return final, context.DeadlineExceeded
 		}
 		if shutdown == nil && ctx.Err() == nil && only == "" && !startupDone && !time.Now().Before(nextStartupScan) {
-			scanCtx, cancelScan := context.WithTimeout(ctx, 5*time.Second)
+			// Finish durable metadata under its own budget, like other dispatcher
+			// writes. Parent cancellation must not race database/sql's rollback.
+			scanCtx, cancelScan := dispatchContext(ctx, 5*time.Second)
 			done, err := d.Startup(scanCtx)
 			cancelScan()
-			if ctx.Err() != nil && errors.Is(err, ctx.Err()) {
-				continue
-			}
 			if err != nil {
 				return final, safeRepositoryError(err)
 			}
@@ -344,12 +343,9 @@ func (d Dispatcher) Run(ctx context.Context, only string) (final execution.Snaps
 				now = d.Now().UTC()
 			}
 			if !now.Before(nextScheduleScan) {
-				scanCtx, cancelScan := context.WithTimeout(ctx, 5*time.Second)
+				scanCtx, cancelScan := dispatchContext(ctx, 5*time.Second)
 				report, err := d.Scheduler.Tick(scanCtx, d.Fence, d.Capacity, now)
 				cancelScan()
-				if ctx.Err() != nil && errors.Is(err, ctx.Err()) {
-					continue
-				}
 				if err != nil {
 					return final, safeRepositoryError(err)
 				}
@@ -361,6 +357,9 @@ func (d Dispatcher) Run(ctx context.Context, only string) (final execution.Snaps
 					logger.DebugContext(writeCtx(), "scheduled admissions committed", "count", report.Admitted)
 				}
 			}
+		}
+		if shutdown == nil && ctx.Err() != nil {
+			continue
 		}
 		// Drain completed invocations before making any new dispatch decision.
 		for drain := true; drain; {

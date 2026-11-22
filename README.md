@@ -11,21 +11,24 @@ The current foundation provides configuration/init, strict workflow validation,
 planning, a revision registry, single-node SQLite and workflow administration CLI,
 alongside help, version information, JSON output and shell completion. See the
 [foundation guide](docs/foundation.md) and [workflow parsing](docs/workflow-parsing.md).
-The production action catalog is empty: real workflow registration requires later
-action implementations. The [manual execution engine and history CLI](docs/execution.md)
-are implemented with test-only action injection; production execution still needs
-those future integrations. The [single-node dispatcher server](docs/dispatcher.md) drains queued work and evaluates [persisted cron schedules](docs/scheduling.md). See [event triggers](docs/event-triggers.md) for startup, local internal events, and signed loopback webhooks.
+The opt-in [HTTP request and health actions](docs/http-actions.md),
+[configured shell execution](docs/shell-action.md),
+[local Docker actions](docs/docker-actions.md) and
+[granted filesystem actions](docs/filesystem-actions.md) and
+[fixed-profile notification actions](docs/notification-actions.md) provide production integrations through the [manual execution engine and history
+CLI](docs/execution.md). HTTP, shell, Docker, filesystem and notification actions default to disabled and require explicit operator policy
+configuration. The [single-node dispatcher server](docs/dispatcher.md) drains queued work and evaluates [persisted cron schedules](docs/scheduling.md). See [event triggers](docs/event-triggers.md) for startup, local internal events, and signed loopback webhooks.
 The GOALS.md example remains illustrative.
 
 Use the [SQLite maintenance guide](docs/maintenance.md) for opt-in history pruning and local dispatcher status.
 
 Phase 01 and both [workflow](harness/designs/workflow-v1.md) and
 [storage/configuration/CLI](harness/designs/foundation-storage-cli.md) contracts
-are approved. Phases 01 and 02 are accepted and merged. Phase 03 is authorized;
-its first [reliable execution contract](harness/designs/reliable-execution.md) is
+are approved. Phases 01, 02 and 03 are accepted and merged. Phase 04 is authorized.
+The Phase 03 [reliable execution contract](harness/designs/reliable-execution.md) is
 accepted, and the [serial reliability core](docs/reliability.md) adds conditional
 DAG execution, retry/deadline policies, cancellation and exact-revision replay.
-The accepted [dispatcher](docs/dispatcher.md) adds bounded workers, parallel steps, durable queued claims and conservative recovery. Later phases remain unapproved
+The accepted [dispatcher](docs/dispatcher.md) adds bounded workers, parallel steps, durable queued claims and conservative recovery. Phases 05 through 10 remain unapproved
 except the scoped release packaging extension. See [PLANS.md](PLANS.md) for current status.
 
 ## Requirements
