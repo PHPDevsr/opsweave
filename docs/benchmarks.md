@@ -11,7 +11,7 @@ dependency change is included in this measurement baseline.
 From the repository root, with the Go version declared in `go.mod`:
 
 ```sh
-go test -run '^$' -bench '^Benchmark' -benchmem -benchtime=200ms -count=3 -cpu=1 ./internal/httpaction ./internal/webhook ./internal/schedule ./internal/workflow ./internal/registry ./internal/storage/sqlite ./internal/execution ./internal/engine
+go test -run '^$' -bench '^Benchmark' -benchmem -benchtime=200ms -count=3 -cpu=1 ./internal/shellaction ./internal/httpaction ./internal/webhook ./internal/schedule ./internal/workflow ./internal/registry ./internal/storage/sqlite ./internal/execution ./internal/engine
 ```
 
 Use `-benchtime=1x -count=1` for a one-iteration correctness smoke run, or
@@ -122,3 +122,9 @@ JSON validation and receipt serialization with an in-memory admission stub.
 
 `BenchmarkHTTPPolicy` measures URL normalization, origin matching and public-IP
 policy validation without network I/O. It does not measure endpoint latency.
+
+`BenchmarkShellExecution` measures one real isolated compiled fixture process per
+invocation, including policy checks, native ownership, bounded capture and cleanup.
+Fixture compilation and catalog setup are outside timing. The child prints a fixed
+result without invoking an interpreter or external service. Native process startup
+costs differ by OS; these results do not predict arbitrary configured-tool latency.

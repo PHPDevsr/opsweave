@@ -51,9 +51,9 @@ jobs:
             lscpu
           } > benchmark-environment.txt
           go test -run '^$' -bench '^Benchmark' -benchmem -benchtime=200ms -count=3 -cpu=1 \
-            ./internal/httpaction ./internal/webhook ./internal/schedule ./internal/workflow ./internal/registry ./internal/storage/sqlite ./internal/execution ./internal/engine \
+            ./internal/shellaction ./internal/httpaction ./internal/webhook ./internal/schedule ./internal/workflow ./internal/registry ./internal/storage/sqlite ./internal/execution ./internal/engine \
             | tee benchmark-results.txt
-          for family in HTTPPolicy WebhookAuthentication CronScan ScheduleDueScan Parse ValidateCondition EvaluateCondition Prepare SQLiteApply SQLiteGet SQLiteList SQLiteMigrate Transition ManualExecution ExecutionHistory ReliablePolicy ReliableHistory DispatcherClaim DispatcherThroughput ExecutionPrune/Apply100 ExecutionPrune/Preview1000 ServerWorkerStatus; do
+          for family in ShellExecution HTTPPolicy WebhookAuthentication CronScan ScheduleDueScan Parse ValidateCondition EvaluateCondition Prepare SQLiteApply SQLiteGet SQLiteList SQLiteMigrate Transition ManualExecution ExecutionHistory ReliablePolicy ReliableHistory DispatcherClaim DispatcherThroughput ExecutionPrune/Apply100 ExecutionPrune/Preview1000 ServerWorkerStatus; do
             grep -q "^Benchmark${family}" benchmark-results.txt
           done
       - name: Upload benchmark results

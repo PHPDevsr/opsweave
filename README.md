@@ -11,10 +11,10 @@ The current foundation provides configuration/init, strict workflow validation,
 planning, a revision registry, single-node SQLite and workflow administration CLI,
 alongside help, version information, JSON output and shell completion. See the
 [foundation guide](docs/foundation.md) and [workflow parsing](docs/workflow-parsing.md).
-The opt-in [HTTP request and health actions](docs/http-actions.md) provide the
-first production integrations through the [manual execution engine and history
-CLI](docs/execution.md). HTTP defaults to disabled and requires explicit network
-policy configuration. The [single-node dispatcher server](docs/dispatcher.md) drains queued work and evaluates [persisted cron schedules](docs/scheduling.md). See [event triggers](docs/event-triggers.md) for startup, local internal events, and signed loopback webhooks.
+The opt-in [HTTP request and health actions](docs/http-actions.md) and
+[configured shell execution](docs/shell-action.md) provide production integrations through the [manual execution engine and history
+CLI](docs/execution.md). HTTP and shell default to disabled and require explicit operator policy
+configuration. The [single-node dispatcher server](docs/dispatcher.md) drains queued work and evaluates [persisted cron schedules](docs/scheduling.md). See [event triggers](docs/event-triggers.md) for startup, local internal events, and signed loopback webhooks.
 The GOALS.md example remains illustrative.
 
 Use the [SQLite maintenance guide](docs/maintenance.md) for opt-in history pruning and local dispatcher status.

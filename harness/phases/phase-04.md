@@ -1,6 +1,6 @@
 # Phase 04 — Built-in actions
 
-Milestone: v0.3.x. Requirement status: `IN_PROGRESS`. Review state: APPROVED_FOR_PHASE_04; HTTP contract ACCEPTED; HTTP unit COMPLETED; toolchain patch MERGED; shell contract PROPOSED.
+Milestone: v0.3.x. Requirement status: `IN_PROGRESS`. Review state: APPROVED_FOR_PHASE_04; HTTP contract ACCEPTED; HTTP unit COMPLETED; toolchain patch MERGED; shell contract ACCEPTED; runtime IMPLEMENTED; native CI OPEN.
 
 Authorization: the user confirmed Phase 03 was merged and requested continuation
 on 2026-11-22 (Asia/Jakarta). Phase approval is separate from action contract
@@ -49,13 +49,16 @@ Run `gofmt -l .`, `go vet ./...`, `go test -count=1 ./...`, `go test -race -coun
 
 HTTP runtime/tests/docs are implemented. See the [review](../reviews/phase-04-http.md)
 and [security patch decision](../designs/go-http-security-patch.md). The next
-[shell contract](../designs/shell-action.md) is proposed without implementation.
+[shell contract](../designs/shell-action.md) is accepted and implemented; see the
+[shell review](../reviews/phase-04-shell.md) for local evidence and native CI gates.
 
 ## HTTP unit acceptance
 
 Combined local verification and PR checks passed on `dfc0ae5` after rebase to
 main `0033480`. The [review](../reviews/phase-04-http.md) and
 [build log](../build-log.md) record the evidence closing the four HTTP/SSRF rows.
-The phase remains in progress: shell, Docker, filesystem and notification actions
-are still incomplete. Review the [shell contract](../designs/shell-action.md)
-before the next runtime implementation; no Phase 05 work is authorized.
+The phase remains in progress: shell awaits native CI, while Docker, filesystem and notification actions
+remain unimplemented. No Phase 05 work is authorized.
+
+The user accepted the shell contract on 2026-11-22. Implement only that reviewed
+scope; Docker, filesystem and notification contracts remain unaccepted.

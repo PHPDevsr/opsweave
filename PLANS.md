@@ -2,7 +2,7 @@
 
 Assessment date: 2026-11-08 (Asia/Jakarta). Baseline commit: `59c5b3f02a155f5979698bfde53c944063222be5`.
 
-Harness state: `PHASE_04_SHELL_CONTRACT_REVIEW_REQUIRED`. On 2026-11-08 (Asia/Jakarta), the user confirmed merging [PR #4](https://github.com/PHPDevsr/opsweave/pull/4), requested fetch/rebase and explicitly authorized Phase 03. Fetch/rebase completed without conflicts at `e7d7177fe4eb028c91a8dae98322bfbb7ca2daf3`; the new branch is `codex/phase-03-reliable-orchestration`. Phase 02 is accepted by the user. The first Phase 03 work unit is the [reliable execution proposal](harness/designs/reliable-execution.md), accepted by user reply "ACCEPT"; its serial policy implementation has passed local verification and self-review; the dispatcher contract was accepted by the subsequent user reply "ACCEPT" and its implementation has passed local verification and self-review. The user approved the cron contract and requested continuation. The scheduler is implemented and locally verified. Prior CI, benchmarks, native Bun Markdown and six-target release preview passed on `7aa93ed`; CodeQL upload remains blocked by repository Advanced Security configuration. User acceptance does not turn that check into a pass or complete requirements. Phases 04–10 remain unapproved except the narrow early release packaging extension. This harness is a documentation workflow, not an executable autonomous runner.
+Harness state: `PHASE_04_SHELL_VERIFICATION_REQUIRED`. Phases 01-03 are merged and accepted by the user. Phase 04 is authorized; four HTTP/SSRF rows are completed with [HTTP acceptance evidence](harness/reviews/phase-04-http.md). Separate security PR #9 is merged in main `0033480`, supplying Go 1.27.4, govulncheck@latest and PR-only feature-branch checks. The user accepted the [shell contract](harness/designs/shell-action.md) with "ACCEPT" on 2026-11-22 (Asia/Jakarta). Its runtime, tests, benchmark and documentation are implemented and locally verified; native multi-OS CI remains open. See the [shell review](harness/reviews/phase-04-shell.md). Docker, filesystem and notification contracts remain unaccepted. Phases 05-10 remain unapproved except the existing narrow release packaging extension. The harness is a documentation workflow, with no background runner installed.
 
 The user additionally authorized multi-OS release CI before Phase 03 on
 2026-11-08 (Asia/Jakarta). This is a narrow early packaging extension from Phase
@@ -58,7 +58,11 @@ Important dependencies apply before exposure: phase 01 reviews the full DSL cont
 
 ## Review and next action
 
-Phases 01 and 02 are merged and accepted by the user; Phase 03 is authorized. The four [reliable execution decisions](harness/designs/reliable-execution.md) are accepted. Serial retry, conditions, cancellation, replay and idempotency have passed local verification and self-review. The user accepted the [dispatcher contract](harness/designs/single-node-dispatcher.md); bounded parallel capacity, ownership and conservative recovery passed local verification. Verify the accepted [cron scheduler](harness/reviews/phase-03-scheduler.md), and the accepted [event trigger and webhook decisions](harness/designs/event-triggers.md). The user accepted [retention and readiness](harness/designs/retention-readiness.md). See the [maintenance implementation review](harness/reviews/phase-03-maintenance.md). Phase 03 verification and acceptance remain open. Keep the independent CodeQL configuration gate explicit. No Phase 04 work is authorized.
+Phase 04 remains active. HTTP is completed with scoped acceptance evidence.
+The user accepted the [shell contract](harness/designs/shell-action.md); shell
+implementation/tests/docs passed local checks and await native multi-OS CI.
+See the [shell review](harness/reviews/phase-04-shell.md). Keep unrelated rows and
+later phases unchanged. Review the next action contract before implementing it.
 
 See [harness operating instructions](harness/README.md) for resumption, status rules and log requirements. The harness itself remains documentation; no executable runner, background process, scheduled automation or public SDK is installed.
 
@@ -84,5 +88,5 @@ latest-scanner CI and feature-branch PR-only checks from origin/main `0033480`.
 Combined HTTP verification passed, including all PR checks and six-target release
 preview/assemble. Four scoped HTTP/SSRF rows are completed with evidence in the
 HTTP review and build log. The next
-[shell contract](harness/designs/shell-action.md) remains proposed and requires review.
+[shell contract](harness/designs/shell-action.md) was accepted by the subsequent user reply "ACCEPT". Implementation is locally verified; native multi-OS CI is pending.
 No later phase is authorized.

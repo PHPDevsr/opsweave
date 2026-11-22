@@ -13,7 +13,6 @@ import (
 	"time"
 
 	"github.com/PHPDevsr/opsweave/internal/config"
-	"github.com/PHPDevsr/opsweave/internal/httpaction"
 	"github.com/PHPDevsr/opsweave/internal/registry"
 	"github.com/PHPDevsr/opsweave/internal/storage/sqlite"
 	"github.com/PHPDevsr/opsweave/internal/workflow"
@@ -85,7 +84,7 @@ func foundationCommands(out, diagnostics io.Writer, catalog registry.Catalog) []
 				}
 				effectiveCatalog := catalog
 				if effectiveCatalog == nil {
-					_, effectiveCatalog, err = httpaction.Runtime(cfg.HTTP)
+					_, effectiveCatalog, err = configuredActions(cfg)
 					if err != nil {
 						return err
 					}

@@ -1,6 +1,6 @@
 # Phase 04 shell execution proposal
 
-Status `PROPOSED`. This is the next action contract after the accepted HTTP unit.
+Status `ACCEPTED` by the user reply "ACCEPT" on 2026-11-22 (Asia/Jakarta). This is the next action contract after the accepted HTTP unit.
 Runtime implementation requires review of the process/security boundary.
 
 ## Operator profiles and input

@@ -13,6 +13,7 @@ import (
 	"time"
 
 	"github.com/PHPDevsr/opsweave/internal/httpaction"
+	"github.com/PHPDevsr/opsweave/internal/shellaction"
 	"github.com/PHPDevsr/opsweave/internal/yamlutil"
 	"go.yaml.in/yaml/v3"
 )
@@ -27,6 +28,7 @@ type Config struct {
 	Execution    execution.Capacity
 	RetentionAge time.Duration
 	HTTP         httpaction.Config
+	Shell        shellaction.Config
 }
 
 // ValidStoragePath rejects driver options/URIs while permitting local paths.
@@ -86,6 +88,11 @@ func Load(ctx context.Context, path, cwd string, environ []string) (Config, erro
 			continue
 		}
 		switch key {
+		case "OPSWEAVE_SHELL_ENABLED":
+			if value != "true" && value != "false" {
+				return Config{}, errors.New("invalid shell enabled setting")
+			}
+			c.Shell.Enabled = value == "true"
 		case "OPSWEAVE_HTTP_ENABLED":
 			if value != "true" && value != "false" {
 				return Config{}, errors.New("invalid HTTP enabled setting")
@@ -119,6 +126,9 @@ func Load(ctx context.Context, path, cwd string, environ []string) (Config, erro
 			return Config{}, errors.New("unknown OpsWeave environment setting")
 		}
 	}
+	if err := c.Shell.Validate(); err != nil {
+		return Config{}, err
+	}
 	if err := c.HTTP.Validate(); err != nil {
 		return Config{}, err
 	}
@@ -146,7 +156,7 @@ func decode(n *yaml.Node, c *Config) error {
 		var field string
 		switch key {
 		case "actions":
-			if err := decodeActions(group, &c.HTTP); err != nil {
+			if err := decodeActions(group, c); err != nil {
 				return err
 			}
 			continue
@@ -258,11 +268,10 @@ func Init(ctx context.Context, path string) error {
 	return nil
 }
 
-func decodeActions(n *yaml.Node, c *httpaction.Config) error {
-	if n.Kind != yaml.MappingNode || len(n.Content) != 2 || n.Content[0].Value != "http" || n.Content[1].Kind != yaml.MappingNode {
-		return errors.New("invalid actions configuration")
+func decodeHTTP(n *yaml.Node, c *httpaction.Config) error {
+	if n.Kind != yaml.MappingNode {
+		return errors.New("invalid HTTP configuration")
 	}
-	n = n.Content[1]
 	for i := 0; i < len(n.Content); i += 2 {
 		key, v := n.Content[i].Value, n.Content[i+1]
 		switch key {
@@ -289,6 +298,84 @@ func decodeActions(n *yaml.Node, c *httpaction.Config) error {
 			}
 		default:
 			return errors.New("unknown HTTP configuration setting")
+		}
+	}
+	return nil
+}
+
+func decodeActions(n *yaml.Node, c *Config) error {
+	if n.Kind != yaml.MappingNode {
+		return errors.New("invalid actions configuration")
+	}
+	for i := 0; i < len(n.Content); i += 2 {
+		switch n.Content[i].Value {
+		case "http":
+			if err := decodeHTTP(n.Content[i+1], &c.HTTP); err != nil {
+				return err
+			}
+		case "shell":
+			if err := decodeShell(n.Content[i+1], &c.Shell); err != nil {
+				return err
+			}
+		default:
+			return errors.New("unknown actions configuration")
+		}
+	}
+	return nil
+}
+func decodeShell(n *yaml.Node, c *shellaction.Config) error {
+	if n.Kind != yaml.MappingNode {
+		return errors.New("invalid shell configuration")
+	}
+	for i := 0; i < len(n.Content); i += 2 {
+		key, v := n.Content[i].Value, n.Content[i+1]
+		switch key {
+		case "enabled":
+			if v.Kind != yaml.ScalarNode || v.Tag != "!!bool" || (v.Value != "true" && v.Value != "false") {
+				return errors.New("invalid shell enabled setting")
+			}
+			c.Enabled = v.Value == "true"
+		case "commands":
+			if v.Kind != yaml.SequenceNode || len(v.Content) > 128 {
+				return errors.New("invalid shell command profiles")
+			}
+			for _, node := range v.Content {
+				if node.Kind != yaml.MappingNode {
+					return errors.New("invalid shell command profile")
+				}
+				var p shellaction.Profile
+				for j := 0; j < len(node.Content); j += 2 {
+					field, value := node.Content[j].Value, node.Content[j+1]
+					if field == "args" {
+						if value.Kind != yaml.SequenceNode || len(value.Content) > 64 {
+							return errors.New("invalid shell arguments")
+						}
+						for _, arg := range value.Content {
+							if arg.Kind != yaml.ScalarNode || arg.Tag != "!!str" {
+								return errors.New("invalid shell argument")
+							}
+							p.Args = append(p.Args, arg.Value)
+						}
+						continue
+					}
+					if value.Kind != yaml.ScalarNode || value.Tag != "!!str" {
+						return errors.New("invalid shell profile field")
+					}
+					switch field {
+					case "name":
+						p.Name = value.Value
+					case "executable":
+						p.Executable = value.Value
+					case "working_directory":
+						p.WorkingDirectory = value.Value
+					default:
+						return errors.New("unknown shell profile field")
+					}
+				}
+				c.Commands = append(c.Commands, p)
+			}
+		default:
+			return errors.New("unknown shell configuration setting")
 		}
 	}
 	return nil

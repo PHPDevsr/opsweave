@@ -194,3 +194,6 @@ syntax, runtime configuration or database schema. Stop active executors before
 replacing their binary. No data conversion is required. Historical verification
 with Go 1.27.3 describes that original source/toolchain and is not a clean security
 scan for the updated build. See the [Go release notes](https://go.dev/doc/devel/release#go1.27.4).
+
+Opt-in [shell profiles](shell-action.md) add direct command execution under explicit
+operator permissions alongside the existing [HTTP actions](http-actions.md).

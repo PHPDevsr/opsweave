@@ -597,3 +597,84 @@ Illustrative local median observations (three samples, ns/op): Parse/Steps1 23,1
   environment, bounded output/deadlines and native process ownership, including
   the Unix trusted-command/no-daemonization boundary. No shell runtime was added,
   and no Phase 05 work or merge was performed.
+
+## 2026-11-22 (Asia/Jakarta) — Configured shell action implementation
+
+- The user replied `ACCEPT` to the shell execution proposal. Work started at
+  `76387d3` on `codex/phase-04-built-in-actions`, with a clean worktree. Phase 04
+  remains authorized; no Docker, filesystem, notification or Phase 05 runtime
+  scope is inferred.
+- Added shell.exec version 1 with strict opt-in profiles, immutable configuration
+  snapshots, absolute local executable/directory checks, combined argv bounds,
+  minimal native environment and bounded UTF-8 stdout/stderr capture. The existing
+  CLI composes enabled HTTP and shell registrations with independent exact grants.
+  HTTP behavior stays unchanged. No dependency, go.sum, schema or DSL change.
+- Native Windows execution starts suspended, assigns a non-breakaway kill-on-close
+  job, validates the initial thread's process ID and resumes only after assignment.
+  Cleanup terminates/queries the job and checks handle closes. Linux/macOS use
+  process groups under the accepted trusted-command/no-daemonization boundary.
+  Capture goroutines join before output inspection and ownership release. The
+  cancellation and cleanup paths share one two-second budget.
+- Tests cover argument preservation, environment isolation, permission/version
+  gates, fixed cwd, profile revocation/snapshots, invalid input, output/JSON limits,
+  start failure, native pre-execution ownership, failed assignment, cancellation,
+  deadlines, descendant cleanup and CLI-to-SQLite/queued-server shutdown. Fixtures
+  are isolated compiled programs and loopback handshakes, with bounded test-owner
+  cleanup. Windows job termination may produce WSAECONNRESET rather than EOF;
+  corrected the initial closure assertion to accept that exact native result
+  after a readiness handshake, while retaining timeout/survival failures.
+- Initial integration editing had a pointer-level mismatch in decodeActions; fixed
+  it before verification. A sandboxed HTTP regression run lacked loopback access;
+  the same suite passed with isolated loopback permission. No assertion or runtime
+  security control was weakened. Linux and Darwin shell test binaries cross-compiled
+  successfully; native behavior awaits the existing CI matrix.
+- Full `go test -count=1 '-coverprofile=.cache/shell-full-coverage.out' ./...`
+  and full `go test -race -count=1 ./...` exited 0 on Go 1.27.4. Race used CGO and
+  existing Clang. Coverage: shell 83.7%, HTTP 94.9%, engine 83.0%, execution 86.2%,
+  workflow 94.3%, CLI 82.4%, config 96.6%. Added permission-composition and valid-Unicode argv cases
+  subsequently passed targeted ordinary and race tests. No production source
+  changed after the full suites.
+- Vet, build, `go mod verify`, `go mod tidy -diff`, govulncheck@latest, all-workflow
+  actionlint, Go/Markdown formatting and whitespace checks exited 0. Scanner
+  reported "No vulnerabilities found." No build warning was emitted.
+- `go test -run '^$' -bench '^BenchmarkShellExecution$' -benchmem -benchtime=200ms
+-count=3 -cpu=1 ./internal/shellaction` passed. Three Windows samples measured
+  397-439 ms/op, 75,808-83,080 B/op and 148-206 allocs/op with one iteration per
+  sample. Fixture compilation is outside timing; these host/process startup
+  measurements are a baseline, not a production tool latency claim or optimization.
+  Benchmark CI asserts this real isolated-process case.
+- `go test -run '^$' -fuzz '^FuzzShellArguments$' -fuzztime=4s -parallel=2
+./internal/shellaction` exited 0 with 83,022 executions. No fixture binaries,
+  cache output or test data containing real credentials are tracked.
+- Updated the [shell reference](../docs/shell-action.md), configuration/benchmark
+  documentation and [self-review](reviews/phase-04-shell.md). Three shell/security
+  ledger rows are IMPLEMENTED pending native CI. Four completed HTTP/SSRF rows
+  remain unchanged. Next: observe native OS/Go/race/security/benchmark/release
+  checks on the updated draft PR, then close only the fully verified shell rows.
+
+- Prepared the next [Docker contract](designs/docker-actions.md) with explicit
+  local IPC, exact full-ID/action allowlists, bounded safe inspect output and API
+  1.48 compatibility. Checked official Docker transport/version documentation
+  and the pinned API specification. No Docker runtime or daemon access was added.
+  The design remains PROPOSED and requires the next human contract decision.
+
+- Final review amendment: after the earlier passing suites, replaced per-invocation
+  lazy DLL lookup with balanced System32-only LoadLibraryEx/FreeLibrary ownership
+  around GetProcAddress/SyscallN. This avoids accumulating library references.
+  The native source change justified repeating full verification; it is not
+  covered merely by the earlier "source unchanged" observation.
+- Final ordinary suite (`.cache/shell-final-coverage.out`), full race suite, vet,
+  build and govulncheck@latest all exited 0 on this final native implementation.
+  Final coverage: shell 82.7%, HTTP 94.9%, engine 82.7%, execution 86.2%, workflow
+  94.3%. No scanner finding or build warning. No production source changed after
+  these final checks. Argument/environment tests now assert exact OS-specific
+  variables and values, including valid Unicode argv preservation.
+- Refreshed final Windows benchmark passed three single-iteration samples at
+  453-494 ms/op, 75,664-83,256 B/op, 144-209 allocs/op. The same measurement limits
+  apply; no performance improvement or regression conclusion is inferred from
+  these short host-specific startup samples.
+- Final documentation/link, all-workflow actionlint, Markdown, Go formatting and
+  whitespace checks passed. Reconciliation preserves all 561 IDs/static fields,
+  changes exactly the three scoped shell rows from PLANNED to IMPLEMENTED, and
+  preserves all four previously completed HTTP rows. No dependency, migration,
+  generated binary or secret file is included.

@@ -20,7 +20,7 @@ const bodyLimit = 8192
 // Runtime composes exact-version registrations and explicit grants. Disabled
 // configuration yields an empty runtime/catalog without network access.
 func Runtime(c Config) (*action.Runtime, registry.Catalog, error) {
-	p, err := newPolicy(c)
+	entries, err := Registrations(c)
 	if err != nil {
 		return nil, nil, err
 	}
@@ -28,14 +28,26 @@ func Runtime(c Config) (*action.Runtime, registry.Catalog, error) {
 		r, e := action.New(nil, nil)
 		return r, registry.Catalog{}, e
 	}
-	h := handler{policy: p, lookup: net.DefaultResolver.LookupNetIP, dial: (&net.Dialer{Timeout: 5 * time.Second}).DialContext}
-	entries := h.registrations()
+
 	r, err := action.New(entries, []string{"http.request", "http.health_check"})
 	if err != nil {
 		return nil, nil, err
 	}
 	catalog, err := r.Catalog(map[string]string{"http.request": "1", "http.health_check": "1"})
 	return r, catalog, err
+}
+
+// Registrations returns enabled HTTP implementations for application composition.
+func Registrations(c Config) ([]action.Registration, error) {
+	p, err := newPolicy(c)
+	if err != nil {
+		return nil, err
+	}
+	if !c.Enabled {
+		return nil, nil
+	}
+	h := handler{policy: p, lookup: net.DefaultResolver.LookupNetIP, dial: (&net.Dialer{Timeout: 5 * time.Second}).DialContext}
+	return h.registrations(), nil
 }
 
 type handler struct {

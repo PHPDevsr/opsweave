@@ -15,7 +15,6 @@ import (
 	"github.com/PHPDevsr/opsweave/internal/dispatchlock"
 	"github.com/PHPDevsr/opsweave/internal/engine"
 	"github.com/PHPDevsr/opsweave/internal/execution"
-	"github.com/PHPDevsr/opsweave/internal/httpaction"
 	"github.com/PHPDevsr/opsweave/internal/scheduler"
 	"github.com/PHPDevsr/opsweave/internal/storage/sqlite"
 	urfave "github.com/urfave/cli/v3"
@@ -31,7 +30,7 @@ func dispatcherOwner() (string, error) {
 
 func managedRun(ctx context.Context, cfg config.Config, runtime *action.Runtime, out io.Writer, asJSON bool, name string, options engine.RunOptions, enqueue bool) (err error) {
 	if runtime == nil {
-		runtime, _, err = httpaction.Runtime(cfg.HTTP)
+		runtime, _, err = configuredActions(cfg)
 		if err != nil {
 			return err
 		}
@@ -123,7 +122,7 @@ func serverCommand(out, diagnostics io.Writer, runtime *action.Runtime) *urfave.
 		}
 		effectiveRuntime := runtime
 		if effectiveRuntime == nil {
-			effectiveRuntime, _, err = httpaction.Runtime(cfg.HTTP)
+			effectiveRuntime, _, err = configuredActions(cfg)
 			if err != nil {
 				return err
 			}
