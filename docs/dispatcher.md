@@ -81,6 +81,11 @@ The dispatcher polls bounded metadata and uses a fixed pool, bounded result
 channel and bounded running set. It allocates no goroutine per queued execution,
 retry or logical step. SQL transactions never span action I/O. Metadata operations
 have their own five-second budget so an interrupt can complete durable cleanup.
+Startup and schedule scans use that same independent budget. If shutdown arrives
+during a scan, the dispatcher joins the bounded transaction before cleanup and
+does not claim waiting work. A startup or schedule intent committed during that
+interval remains queued for the next server; an interrupt does not imply that
+admission was rolled back. Storage failures still stop the dispatcher.
 Infrastructure or ambiguous-commit failures stop further invocation and remain
 visible for conservative recovery.
 

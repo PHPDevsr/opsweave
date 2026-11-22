@@ -678,3 +678,51 @@ Illustrative local median observations (three samples, ns/op): Parse/Steps1 23,1
   changes exactly the three scoped shell rows from PLANNED to IMPLEMENTED, and
   preserves all four previously completed HTTP rows. No dependency, migration,
   generated binary or secret file is included.
+
+## 2026-11-22 (Asia/Jakarta) — bounded scan shutdown follow-up
+
+- Baseline `c1e2b28`, authorized Phase 04 shell acceptance on PR #8. Native
+  shell tests passed on Linux, macOS and Windows; latest vulnerability, Markdown,
+  benchmark, CodeQL and six-target release/assemble checks passed. CI run
+  [44974954486](https://github.com/PHPDevsr/opsweave/actions/runs/44974954486)
+  failed only Ubuntu/stable `TestDispatcherCLIRequiresUnmanagedAdoption`, reporting
+  sanitized persistence failure during immediate shutdown. No requirement was
+  completed using that failed run. No push-trigger duplicate workflow was created.
+- Investigation found startup/schedule transactions still inherited immediate
+  parent cancellation, unlike other independently bounded dispatcher metadata.
+  database/sql can automatically roll back a canceled transaction before Commit,
+  returning ErrTxDone instead of the parent's cancellation error. The original
+  intermittent CI error's underlying cause was sanitized, so that exact instance
+  is not claimed as locally reproduced: 200 original adoption repetitions passed.
+  Temporary local cause diagnostics were removed without a product change.
+- Startup/schedule scans now use the existing five-second independent metadata
+  budget. The dispatcher joins the scan, then enters shutdown without claiming
+  waiting work. Actual scan errors remain failures. A committed startup admission
+  can remain queued for the next server; docs/dispatcher.md now explains this.
+  No action security policy, schema, dependency or public contract changed.
+- `TestDispatcherShutdownDuringDurableScan` deterministically cancels the parent
+  inside startup/schedule scans and verifies the bounded scan context survives,
+  is released on return, storage failures remain visible, no waiting action runs,
+  and committed startup admission remains durably queued. Replacing only the two
+  fixed scan contexts with their original implementation made all four cases fail
+  as expected; restored implementation passed. Ten initial regression repetitions
+  and 30 adoption repetitions passed. The expanded durable-admission test passed.
+- Initial full ordinary/race runs caught the old scheduler fixture intentionally
+  blocking until parent cancellation, which now reaches the independent five-second
+  deadline. Updated it to explicitly release its scan after cancellation and assert
+  the dispatcher cannot return before joining it. The running-action cancellation
+  and durable trigger assertions remain. Three targeted repetitions passed.
+- Final full ordinary suite with `.cache/shell-shutdown-coverage.out` exited 0.
+  Core coverage: engine 85.6%, execution 86.2%, workflow 94.3%; shell 82.7%, HTTP
+  94.9%. Final vet, build, module verification, Go formatting and whitespace checks
+  passed. Full race and fresh remote checks are pending at this log entry.
+- Self-review: the independent budget is finite, uses existing context value
+  propagation, adds no goroutine or new storage abstraction, and never interprets
+  an infrastructure error as successful shutdown. Existing worker joining and
+  cancellation remain in place. No release/deployment/merge was performed.
+- Final full `go test -race -count=1 ./...` exited 0 with CGO/Clang on Windows,
+  including engine, scheduler storage and shell process ownership. Remote CI is
+  the remaining native combined-source acceptance gate.
+- Final installed govulncheck scan exited 0: no vulnerabilities found. Markdown
+  checks passed across all sources. Diff check passed; Git only warned that
+  PowerShell-written documentation line endings would normalize to repository LF.

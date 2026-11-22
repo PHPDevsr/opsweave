@@ -57,3 +57,17 @@ System32 library load/free, then repeated full checks. Fuzzing passed 83,022 inp
 The final Windows process benchmark measured 453-494 ms/op in three short
 single-iteration samples; no optimization or SLA is claimed. Native Linux/macOS
 execution remains a CI gate; local cross-compilation alone does not close it.
+
+## Shutdown acceptance follow-up
+
+Native shell tests passed on all three supported OS families in the first shell
+CI run. A separate pre-existing immediate server-stop test failed intermittently
+on Ubuntu/stable. Startup and scheduler scans now follow the dispatcher's existing
+five-second independent durable-metadata budget; a completed admission may remain
+queued during shutdown. `TestDispatcherShutdownDuringDurableScan` covers both
+scans, context release, preserved storage errors, no invocation after stop, and
+committed startup intent. The scheduler integration fixture explicitly releases
+its scan and verifies joined shutdown plus cancellation of an already running
+action. No assertion was removed. The regression fails with the original scan
+contexts and passes with the fix. Exact local/remote outcomes are appended to the
+build log; all-check acceptance remains pending until fresh CI passes.
