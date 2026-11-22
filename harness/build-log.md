@@ -860,3 +860,36 @@ Illustrative local median observations (three samples, ns/op): Parse/Steps1 23,1
   PROPOSED with no filesystem runtime. Notification contracts and Phase 05 remain
   unapproved. Next: push updated draft PR and observe every fresh native/scanner/
   benchmark/security/release check before closing any Docker requirement.
+
+## 2026-11-22 (Asia/Jakarta) — native IPC deadline classification correction
+
+- Docker source `62dcf4a` passed benchmark, latest-scanner, Markdown, CodeQL and
+  six-target release/assemble workflows. CI
+  [44979131714](https://github.com/PHPDevsr/opsweave/actions/runs/44979131714)
+  passed Windows minimum/stable, Linux minimum and macOS minimum, but Linux
+  stable, macOS stable and Linux race failed only the deadline=true case of
+  TestDockerCancellationDeadlineAndPeerClosure. The test retained its required
+  DeadlineExceeded assertion; shell and other package tests passed.
+- Native socket deadlines can wake before Go's context timer propagates Err.
+  The handler could therefore return its generic action error while the parent's
+  Err was momentarily nil, and Runtime.Invoke classified it as action failure.
+  This is product behavior, not a reason to relax the deadline assertion.
+- At the action boundary, after owned I/O cleanup, join the action context's
+  cancellation signal if its deadline has elapsed. This covers connection as well
+  as response deadlines and lets the existing runtime observe the parent's proper
+  deadline state. Earlier header-budget failures remain ordinary action failures.
+  The internal 30-second ceiling still fails without changing engine contracts.
+  No context or connection owner is detached, and no infrastructure failure is
+  ignored before the deadline. No dependency or schema change.
+- Five ordinary and five race repetitions of the existing cancellation/deadline
+  regression passed locally. Full ordinary/race suites were restarted for the
+  production change. Final vet/build/module verification and installed latest
+  scanner all exited 0; no vulnerabilities or build warnings. Fresh native CI
+  remains required and all six Docker rows stay IMPLEMENTED.
+- Final full ordinary suite (.cache/docker-deadline-coverage.out) and full race
+  suite both exited 0 after the production correction. Final coverage amendment:
+  Docker 88.0%, engine 85.6%; execution/workflow/HTTP/shell/config/CLI unchanged.
+  Earlier benchmark samples belong to source 62dcf4a; fresh benchmark CI will
+  measure the corrected source, with no performance equivalence claim inferred.
+  Operator docs now explain preservation of the engine deadline outcome. Final
+  Markdown/diff checks passed; fresh native combined-source CI is next.

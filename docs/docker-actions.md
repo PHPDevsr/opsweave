@@ -123,6 +123,8 @@ an unbounded response. No transport goroutine, pooled connection or retry owner
 is left behind. The execution engine owns workflow/step timeouts, retries,
 concurrency and persistence. Existing structured lifecycle logs include action,
 execution and step identities, without endpoint paths or daemon bodies.
+An IPC timeout at the engine deadline retains the deadline outcome, including
+when native I/O reports its timeout before the context timer finishes signaling.
 
 Cancellation or a connection error does not roll back a daemon operation.
 An interrupted request may already have changed a container. Retrying restart

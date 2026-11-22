@@ -81,3 +81,21 @@ Six owned Docker/security rows remain IMPLEMENTED pending fresh native multi-OS
 CI, scanner, benchmark, Markdown, CodeQL and release-preview evidence. The next
 [filesystem proposal](../designs/filesystem-actions.md) is design-only and still
 requires human review. Notification contracts and Phase 05 remain unapproved.
+
+## Native deadline follow-up
+
+Initial native CI on `62dcf4a` exposed the socket-deadline/context-timer race in
+`TestDockerCancellationDeadlineAndPeerClosure`: Linux/macOS sometimes classified
+the deadline as ordinary action failure before the parent timer propagated Err.
+The action now joins context cancellation at an elapsed action deadline, after
+owned I/O cleanup, so the existing runtime sees the correct parent deadline.
+The original DeadlineExceeded assertion is unchanged. Five ordinary/five race
+repetitions passed locally; full suites and fresh native CI are tracked in the
+build log. Other initial workflows, including six release packages plus assembly,
+passed; the failed CI run is not acceptance evidence.
+
+Final correction verification passed full ordinary/race suites, vet/build/module
+checks and scanner. Coverage amendment: Docker 88.0%, engine 85.6%; other core
+coverage unchanged. The earlier Windows benchmark remains attributed to source
+62dcf4a; the final CI benchmark will measure corrected source separately. Native
+all-check acceptance remains pending.

@@ -146,6 +146,19 @@ func Registrations(c Config) ([]action.Registration, error) {
 func invoke(parent context.Context, endpoint, id, container string) (output map[string]any, resultErr error) {
 	ctx, cancel := context.WithTimeout(parent, 30*time.Second)
 	defer cancel()
+	deadline, _ := ctx.Deadline()
+	defer func() {
+		// An IPC deadline can wake before Go's context timer is scheduled.
+		// Join that signal so the runtime observes the parent's deadline rather
+		// than misclassifying its timeout as an ordinary action failure.
+		if !time.Now().Before(deadline) {
+			<-ctx.Done()
+		}
+		if ctx.Err() != nil {
+			output = nil
+			resultErr = errAction
+		}
+	}()
 	dialCtx, stopDial := context.WithTimeout(ctx, 5*time.Second)
 	conn, err := dialLocal(dialCtx, endpoint)
 	stopDial()
@@ -167,7 +180,6 @@ func invoke(parent context.Context, endpoint, id, container string) (output map[
 			resultErr = errAction
 		}
 	}()
-	deadline, _ := ctx.Deadline()
 	if conn.SetDeadline(deadline) != nil {
 		return nil, errAction
 	}
